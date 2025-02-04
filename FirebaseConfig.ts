@@ -4,14 +4,19 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { getFirestore } from "firebase/firestore";
 import firebaseConfig from "./firebasekey";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-console.log("firebase config", firebaseConfig);
+//console.log("🔥 FirebaseConfig.ts has been loaded!", new Error().stack);
 
-// Initialize Firebase Authentication
-const auth = getAuth(app);
+const USE_FIREBASE = false; // Change to true when needed
 
-// Initialize Firestore
-const db = getFirestore(app);
+let app, auth, db;
+
+if (USE_FIREBASE) {
+  app = initializeApp(firebaseConfig);
+  console.log("🔥 Firebase initialized");
+  auth = getAuth(app);
+  db = getFirestore(app);
+} else {
+  console.log("❌ Firebase is disabled");
+}
 
 export { auth, db, app };
