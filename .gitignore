@@ -36,3 +36,7 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Mithila- Ignore Files
+app/index.tsx
+assets/Data/
