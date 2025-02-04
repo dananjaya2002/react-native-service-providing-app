@@ -1,74 +1,154 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, Platform } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const reactLogo = require('../../assets/images/reactLogo.png');
+
+// Sample Data for Shops
+const Shops = [
+  {
+    id: '1',
+    name: 'AutoMaster Works',
+    description: 'From routine maintenance to high-performance upgrades...',
+    rating: '4.9 (363)',
+    image: reactLogo, // Use the imported image
+  },
+  {
+    id: '2',
+    name: 'CarCare Experts',
+    description: 'Specializing in car detailing and custom modifications...',
+    rating: '4.8 (250)',
+    image: reactLogo, // Use the imported image
+  },
+  {
+    id: '3',
+    name: 'SpeedMaster Garage',
+    description: 'Performance upgrades and engine tuning...',
+    rating: '4.7 (180)',
+    image: reactLogo, // Use the imported image
+  },
+];
+
+interface Shop {
+  id: string;
+  name: string;
+  description: string;
+  rating: string;
+  image: any;
+}
+
+const ShopCard = ({ item }: { item: Shop }) => (
+  <TouchableOpacity style={styles.shopCard}>
+    <Image source={item.image} style={styles.shopImage} />
+    <View style={styles.shopDetails}>
+      <Text style={styles.shopName}>{item.name}</Text>
+      <Text style={styles.shopDescription}>{item.description}</Text>
+      <Text style={styles.shopRating}>{item.rating}</Text>
+    </View>
+  </TouchableOpacity>
+);
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TextInput style={styles.searchInput} placeholder="Search for services or shops..." />
+      </View>
+
+      {/* Filter Section */}
+      <View style={styles.filterContainer}>
+        <Text style={styles.filterText}>Filter:</Text>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Category 1</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Category 2</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Category 3</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Shop List */}
+      <FlatList
+        data={Shops}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ShopCard item={item} />}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 16,
+    marginTop: Platform.OS === 'ios' ? 0 : 24,
+  },
+  searchContainer: {
+    marginBottom: 16,
+  },
+  searchInput: {
+    height: 50,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#fff',
+  },
+  filterContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
   },
-  stepContainer: {
-    gap: 8,
+  filterText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+  filterButton: {
+    backgroundColor: '#fff',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginLeft: 8,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  shopCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  shopImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 16,
+  },
+  shopDetails: {
+    flex: 1,
+  },
+  shopName: {
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  shopDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  shopRating: {
+    fontSize: 14,
+    color: '#007bff',
+    fontWeight: 'bold',
   },
 });
