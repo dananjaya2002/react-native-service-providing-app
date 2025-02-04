@@ -1,14 +1,9 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { getFirestore } from "firebase/firestore";
+import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
+import { Auth, getAuth } from "firebase/auth";
+import { Firestore, getFirestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
-//console.log("🔥 FirebaseConfig.ts has been loaded!", new Error().stack);
-
-const USE_FIREBASE = false; // Change to true when needed
-
-let app, auth, db;
+const USE_FIREBASE = true; // Change to true when needed
 
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.FIREBASE_API_KEY,
@@ -20,8 +15,14 @@ const firebaseConfig = {
   measurementId: Constants.expoConfig?.extra?.FIREBASE_MEASUREMENT_ID,
 };
 
+// Define variables before assignment
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
+
 if (USE_FIREBASE) {
-  app = initializeApp(firebaseConfig);
+  // Ensure Firebase is initialized only once
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   db = getFirestore(app);
   auth = getAuth(app);
   console.log("🔥 Firebase initialized");
@@ -29,4 +30,5 @@ if (USE_FIREBASE) {
   console.log("❌ Firebase is disabled");
 }
 
-export { auth, db, app };
+// Export variables (they will be undefined if USE_FIREBASE is false)
+export { app, db, auth };
