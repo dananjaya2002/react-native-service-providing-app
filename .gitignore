@@ -40,6 +40,6 @@ yarn-error.*
 app-example
 
 # Mithila- Ignore Files
-app/index.tsx
-assets/Data/
+#app/index.tsx
+#assets/Data/
 firebasekey.ts
