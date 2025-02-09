@@ -1,0 +1,66 @@
+Document data: {
+    "CommentOverview": {
+        "comment1": {
+            "comment": "Great service and reasonable prices! Highly recommend.",
+            "commentID": "c12045",
+            "date": "2024-02-01",
+            "name": "Kamal Fernando",
+            "profileUrl": "URL",
+            "ratings": 4.8
+        },
+        "comment2": {
+            "comment": "Very professional and quick service. My car runs smoothly now.",
+            "commentID": "c12046",
+            "date": "2024-01-28",
+            "name": "Samantha Wijesinghe",
+            "profileUrl": "URL",
+            "ratings": 4.5
+        },
+        "comment3": {
+            "comment": "Had my AC repaired here. Excellent work!",
+            "commentID": "c12047",
+            "date": "2024-01-25",
+            "name": "Pradeep Rathnayake",
+            "profileUrl": "URL",
+            "ratings": 4.7
+        }
+    },
+    "DashboardInfo": {
+        "agreements": 5,
+        "avgRatings": 4.6,
+        "completed": 45,
+        "items": 85,
+        "messages": 3,
+        "waitings": 12
+    },
+    "ItemList": {
+        "item1": {
+            "description": "High-quality synthetic and mineral engine oil change.",
+            "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022204/pexels-photo-13065690_b6uhwg.jpg",
+            "title": "Engine Oil Change"
+        },
+        "item2": {
+            "description": "Computerized wheel alignment for better stability and tire life.",
+            "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022274/pexels-photo-3806280_h0563i.jpg",
+            "title": "Wheel Alignment & Balancing"
+        },
+        "item3": {
+            "description": "Wide range of vehicle batteries with free installation.",
+            "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022331/pexels-photo-4374843_h6ehxm.jpg",
+            "title": "Battery Replacement"
+        },
+        "item4": {
+            "description": "Comprehensive car AC servicing, repairs, and gas refilling.",
+            "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022409/pexels-photo-6471913_lkwmrs.jpg",
+            "title": "AC Repair & Gas Refill"
+        }
+    },
+    "PersonID": "p3246",
+    "PersonName": "Nimal Perera",
+    "PhoneNumber": "077-345-6789",
+    "RatingCount": 275,
+    "ShopDescription": "Reliable and affordable auto repair services in Colombo.",
+    "ShopName": "Nimal Auto Care",
+    "ShopPageImageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022522/pexels-photo-4480505_zylzvi.jpg",
+    "ShopServiceInfo": "Expert vehicle repairs, servicing, and maintenance with genuine spare parts."
+}
