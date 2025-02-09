@@ -62,5 +62,5 @@ Document data: {
     "ShopDescription": "Reliable and affordable auto repair services in Colombo.",
     "ShopName": "Nimal Auto Care",
     "ShopPageImageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022522/pexels-photo-4480505_zylzvi.jpg",
-    "ShopServiceInfo": "Expert vehicle repairs, servicing, and maintenance with genuine spare parts."
+    "ShopServiceInfo": "Shop at Joe's Fresh Market! 🛒 \\n🥦 Fresh produce \\n🛍️ Daily essentials \\n😊 Friendly service Located in  the heart of the neighborhood, Joe's Fresh Market is your go-to spot for all your grocery needs!"
 }
