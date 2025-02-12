@@ -12,10 +12,10 @@ import { db } from "../../FirebaseConfig"; // Import Firebase db instance
  */
 
 type Item = {
-  description: string;
+  id: string;
   title: string;
   imageUrl: string;
-  items: Item[];
+  description: string;
 };
 
 type HorizontalScrollViewProps = {

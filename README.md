@@ -56,3 +56,4 @@ npm install cloudinary
 expo install expo-image-picker
 npx expo install react-native-webview
 npm install react-native-pell-rich-editor react-native-render-html
+npm install uuid
