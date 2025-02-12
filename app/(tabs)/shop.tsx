@@ -1,4 +1,3 @@
-// app/(tabs)/shop.tsx
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
@@ -15,10 +14,11 @@ import HorizontalScrollView from "../../components/section2/horizontalScrollView
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { getSingleServiceProviderData } from "../../Utility/U_getFirebaseData";
 
-import { RichEditor, RichToolbar, actions } from "react-native-pell-rich-editor";
-import RenderHTML from "react-native-render-html";
 import UserComments from "@/components/section2/userComment";
 import FloatingButtonBar from "@/components/section2/FloatingButtonBar";
+
+import { useShop } from "../../context/ShopContext";
+import { useRouter } from "expo-router";
 
 type Item = {
   description: string;
@@ -36,7 +36,9 @@ interface UserComment {
 }
 
 const Shop = () => {
-  const imageUrl = "https://cdn.pixabay.com/photo/2016/03/02/20/13/grocery-1232944_1280.jpg";
+  const { shop, setShop } = useShop();
+  const router = useRouter();
+
   const [data, setData] = useState<any>(null); // Use state to store fetched data
 
   const hasFetchedData = useRef(false); // Flag to track if data has been fetched ( ⚠️ Development only ⚠️)
@@ -80,6 +82,7 @@ const Shop = () => {
   const handleRightPress = () => {
     // Functionality for the right button
     console.log("Right button triggered in MainScreen");
+    setShop(itemList);
     // For example: open a modal or trigger an API call
   };
 

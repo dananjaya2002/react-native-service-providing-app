@@ -9,6 +9,8 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
+import { ShopProvider } from "../context/ShopContext";
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -32,16 +34,19 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white">
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
-            <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />
-            <Stack.Screen name="Test/Test_TextEditor" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
+          <ShopProvider>
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
+              <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />
+              <Stack.Screen name="Test/Test_TextEditor" options={{ headerShown: false }} />
+              <Stack.Screen name="shopSection" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </ShopProvider>
 
           <StatusBar style="dark" />
         </ThemeProvider>

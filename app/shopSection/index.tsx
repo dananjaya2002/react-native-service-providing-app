@@ -13,12 +13,12 @@ const { width } = Dimensions.get("window");
 const itemWidth = (width / 3) * 2;
 const gap = (width - itemWidth) / 4;
 
-const Testing_UI_Component: React.FC = () => {
+const shopEditService: React.FC = () => {
   // State for multi-select mode and selected items
   const [multiSelectMode, setMultiSelectMode] = useState<boolean>(false);
   const [selectedItems, setSelectedItems] = useState<Shop[]>([]);
 
-  // Use tempItems data directly and add a transparent placeholder if the count is odd
+  // Use tempItems data directly and add a transparent placeholder if the count is odd (Assuming only two columns are displayed)
   const data: Shop[] =
     tempItems.length % 2 !== 0
       ? [...tempItems, { title: "", description: "", imageUrl: "" }]
@@ -82,14 +82,22 @@ const Testing_UI_Component: React.FC = () => {
         }}
         className="flex-1 m-2 p-2 bg-white rounded-xl shadow-xl relative"
       >
+        <View className="h-12 justify-center bg-white">
+          <Text className="text-black font-bold text-md text-center " numberOfLines={1}>
+            {item.title}
+          </Text>
+        </View>
+
         <Image
           source={{ uri: item.imageUrl }}
           resizeMode="contain"
           className="w-full h-40 rounded-lg"
         />
-        <Text className="mt-2 text-lg font-bold" numberOfLines={2} ellipsizeMode="tail">
-          {item.description}
-        </Text>
+        <View className="flex-1 h-auto w-full items-center justify-center my-2 ">
+          <Text className="text-black font-normal text-sm " numberOfLines={5}>
+            {item.description}
+          </Text>
+        </View>
         {/* Overlay a semi-transparent dark view with an icon when selected */}
         {multiSelectMode && isSelected && (
           <View className="absolute inset-0 rounded-xl bg-black/60 justify-center items-center">
@@ -100,8 +108,36 @@ const Testing_UI_Component: React.FC = () => {
     );
   };
 
+  const addNewServiceButtonPress = () => {
+    console.log("New service button pressed");
+  };
+
   return (
     <View className="flex-1 bg-white">
+      <View className="bg-red-200 h-32 w-screen py-2 px-4">
+        {/* Wrapper view with the dashed border */}
+        <View
+          className="h-full w-full flex items-center justify-center"
+          style={{ borderWidth: 2, borderColor: "black", borderStyle: "dashed" }}
+        >
+          <Pressable
+            onPress={addNewServiceButtonPress}
+            android_ripple={{ color: "rgba(0, 0, 0, 0.1)" }}
+            style={({ pressed }) => [
+              {
+                transform: pressed ? [{ scale: 0.95 }] : [{ scale: 1 }],
+                opacity: pressed ? 0.8 : 1,
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+            ]}
+          >
+            <Ionicons name="add" size={36} color="black" />
+          </Pressable>
+        </View>
+      </View>
       <FlatList
         data={data}
         renderItem={renderItem}
@@ -122,4 +158,4 @@ const Testing_UI_Component: React.FC = () => {
   );
 };
 
-export default Testing_UI_Component;
+export default shopEditService;
