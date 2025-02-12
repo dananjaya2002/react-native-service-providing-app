@@ -42,7 +42,7 @@ const Index = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/(tabs)/shop"); //
+      router.push("/shopSection"); //
     }, 50);
     return () => clearTimeout(timer); // Cleanup the timer if the component unmounts before the timeout completes
   }, []); // Empty array ensures this runs once
@@ -51,7 +51,7 @@ const Index = () => {
     <View className="flex-1 bg-gray-400">
       <TouchableOpacity
         className="bg-blue-500 px-6 py-3 rounded-lg justify-center items-center "
-        onPress={() => router.push("../(Main)/exploreService")}
+        onPress={() => router.push("/shopSection")}
       >
         <Text className="text-white font-bold text-lg">Press Me</Text>
       </TouchableOpacity>
