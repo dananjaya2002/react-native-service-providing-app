@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 
 export type SubServiceData = {
   id: string;
-  serviceTitle: string;
+  title: string;
   imageUrl: string;
   description: string;
 };

@@ -3,10 +3,13 @@ import { View, Text, Image, FlatList, Pressable, Dimensions } from "react-native
 import tempItems from "../../assets/Data/data2"; // Ensure this file exports an array of Shop objects
 import { Ionicons } from "@expo/vector-icons";
 
+import { useShop } from "../../context/ShopContext";
+
 type Shop = {
+  id: string;
   title: string;
-  description: string;
   imageUrl: string;
+  description: string;
 };
 
 const { width } = Dimensions.get("window");
@@ -18,11 +21,12 @@ const shopEditService: React.FC = () => {
   const [multiSelectMode, setMultiSelectMode] = useState<boolean>(false);
   const [selectedItems, setSelectedItems] = useState<Shop[]>([]);
 
+  const { shop } = useShop();
+  console.log("\n\nShop data:", shop);
+
   // Use tempItems data directly and add a transparent placeholder if the count is odd (Assuming only two columns are displayed)
   const data: Shop[] =
-    tempItems.length % 2 !== 0
-      ? [...tempItems, { title: "", description: "", imageUrl: "" }]
-      : tempItems;
+    shop.length % 2 !== 0 ? [...shop, { id: "", title: "", description: "", imageUrl: "" }] : shop;
 
   // Toggle the selection state for an item
   const toggleSelection = (item: Shop) => {
@@ -141,7 +145,7 @@ const shopEditService: React.FC = () => {
       <FlatList
         data={data}
         renderItem={renderItem}
-        keyExtractor={(item, index) => (item.title !== "" ? item.title : index.toString())}
+        keyExtractor={(item, index) => (item.id !== "" ? item.id : index.toString())}
         numColumns={2}
         contentContainerStyle={{ padding: 8 }}
       />

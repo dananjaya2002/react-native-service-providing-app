@@ -20,11 +20,11 @@ import FloatingButtonBar from "@/components/section2/FloatingButtonBar";
 import { useShop } from "../../context/ShopContext";
 import { useRouter } from "expo-router";
 
-type Item = {
-  description: string;
+type SubServiceData = {
+  id: string;
   title: string;
   imageUrl: string;
-  items: Item[];
+  description: string;
 };
 
 interface UserComment {
@@ -82,7 +82,8 @@ const Shop = () => {
   const handleRightPress = () => {
     // Functionality for the right button
     console.log("Right button triggered in MainScreen");
-    setShop(itemList);
+    setShop(itemList as SubServiceData[]);
+    router.push("/shopSection");
     // For example: open a modal or trigger an API call
   };
 
@@ -144,7 +145,7 @@ const Shop = () => {
             </Text>
           </View>
           <View className="h-auto bg-primary py-3">
-            <HorizontalScrollView items={itemList as Item[]} />
+            <HorizontalScrollView items={itemList as SubServiceData[]} />
           </View>
           <View className="flex-1 justify-center bg-primary ">
             <Text className="font-semibold mx-4 my-2 text-lg">Comments</Text>
