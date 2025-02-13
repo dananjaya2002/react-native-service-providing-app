@@ -51,7 +51,7 @@ const Index = () => {
     <View className="flex-1 bg-gray-400">
       <TouchableOpacity
         className="bg-blue-500 px-6 py-3 rounded-lg justify-center items-center "
-        onPress={() => router.push("/shopSection")}
+        onPress={() => router.push("/(tabs)/shop")}
       >
         <Text className="text-white font-bold text-lg">Press Me</Text>
       </TouchableOpacity>
