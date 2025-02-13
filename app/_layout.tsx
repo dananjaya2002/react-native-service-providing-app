@@ -35,7 +35,7 @@ export default function RootLayout() {
       <SafeAreaView className="flex-1 bg-white">
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <ShopProvider>
-            <Stack>
+            <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
               <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />

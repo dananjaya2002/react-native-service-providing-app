@@ -1,24 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ImageBackground,
-  Image,
-  ActivityIndicator,
-} from "react-native";
-
-import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
-import HorizontalScrollView from "../../components/section2/horizontalScrollView";
+import { View, Text, ScrollView, ImageBackground, Image, ActivityIndicator } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { getSingleServiceProviderData } from "../../Utility/U_getFirebaseData";
 
+import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
+import HorizontalScrollView from "../../components/section2/horizontalScrollView";
 import UserComments from "@/components/section2/userComment";
 import FloatingButtonBar from "@/components/section2/FloatingButtonBar";
 
 import { useShop } from "../../context/ShopContext";
 import { useRouter } from "expo-router";
+import UpdateSheet, { UpdateSheetRef } from "../../components/section2/slideUpFormPage";
 
 type SubServiceData = {
   id: string;
@@ -36,28 +29,30 @@ interface UserComment {
 }
 
 const Shop = () => {
+  const sheetRef = useRef<UpdateSheetRef>(null);
+  // Shared value to control the FloatingButtonBar's vertical position.
+  const floatingBarY = useSharedValue(0);
+  const floatingBarAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatingBarY.value }],
+  }));
+
   const { shop, setShop } = useShop();
   const router = useRouter();
 
-  const [data, setData] = useState<any>(null); // Use state to store fetched data
+  const [data, setData] = useState<any>(null);
+  const hasFetchedData = useRef(false);
 
-  const hasFetchedData = useRef(false); // Flag to track if data has been fetched ( ⚠️ Development only ⚠️)
-
-  // Fetch data when the component mounts
+  // Fetch data when the component mounts.
   useEffect(() => {
     if (hasFetchedData.current) {
-      // Data already fetched; don't run the effect again.
       console.log("🟡 Data already fetched 🟡");
       return;
     }
     hasFetchedData.current = true;
-
     const fetchData = async () => {
       const fetchedData = await getSingleServiceProviderData();
       setData(fetchedData);
-      // console.log("Fetched data:", fetchedData);
     };
-
     fetchData();
   }, []);
 
@@ -69,29 +64,36 @@ const Shop = () => {
       </View>
     );
 
-  // Safely access data.ItemList and data.CommentOverview
   const itemList = data.ItemList ? Object.values(data.ItemList) : [];
   const userCommentList = data.CommentOverview ? Object.values(data.CommentOverview) : [];
 
   const handleLeftPress = () => {
-    // Functionality for the left button
     console.log("Left button triggered in MainScreen");
-    // For example: navigate to a specific page or perform an action
+    sheetRef.current?.open();
   };
 
   const handleRightPress = () => {
-    // Functionality for the right button
     console.log("Right button triggered in MainScreen");
     setShop(itemList as SubServiceData[]);
     router.push("/shopSection");
-    // For example: open a modal or trigger an API call
+  };
+
+  // Receive updated data from UpdateSheet.
+  const handleUpdate = (data: {
+    title: string;
+    description: string;
+    phoneNumber: string;
+    category: string;
+  }) => {
+    console.log("Received updated values:", data);
+    // Handle the updated data (e.g., update state or call an API)
   };
 
   return (
     <>
       <ScrollView>
         <View className="flex-col bg-white">
-          <View className=" flex-row items-center py-2 bg-primary">
+          <View className="flex-row items-center py-2 bg-primary">
             <View className="w-10" />
             <Text className="text-2xl font-bold flex-1 text-center">Explore Services</Text>
             <View className="px-3">
@@ -101,30 +103,22 @@ const Shop = () => {
 
           <View className="relative w-full h-[200px] items-center justify-center">
             <ImageBackground
-              source={{
-                uri: data.ShopPageImageUrl,
-              }}
+              source={{ uri: data.ShopPageImageUrl }}
               blurRadius={15}
               className="absolute w-full h-full"
             >
               <View className="flex-1" />
             </ImageBackground>
             <Image
-              source={{
-                uri: data.ShopPageImageUrl,
-              }}
+              source={{ uri: data.ShopPageImageUrl }}
               resizeMode="center"
               className="h-full w-full"
             />
           </View>
 
           <View className="h-auto px-4 py-2 bg-white shadow-xl">
-            <Text className="text-2xl text-start font-semibold align-middle flex-1">
-              {data.ShopName}
-            </Text>
-            <Text className="text-md text-start font-normal align-center">
-              {data.ShopDescription}
-            </Text>
+            <Text className="text-2xl text-start font-semibold flex-1">{data.ShopName}</Text>
+            <Text className="text-md text-start font-normal">{data.ShopDescription}</Text>
           </View>
 
           <View className="h-auto mx-6 my-4 flex-row flex-wrap justify-evenly p-2 rounded-2xl bg-primary shadow-lg">
@@ -140,13 +134,15 @@ const Shop = () => {
           </View>
 
           <View className="h-auto px-4 my-5">
-            <Text className="text-sm text-left align-middle px-3">
+            <Text className="text-sm text-left px-3">
               {data.ShopServiceInfo.replace(/\\n/g, "\n")}
             </Text>
           </View>
+
           <View className="h-auto bg-primary py-3">
             <HorizontalScrollView items={itemList as SubServiceData[]} />
           </View>
+
           <View className="flex-1 justify-center bg-primary ">
             <Text className="font-semibold mx-4 my-2 text-lg">Comments</Text>
             {userCommentList.map((userComment, index) => {
@@ -165,13 +161,46 @@ const Shop = () => {
           </View>
         </View>
         <View className="h-20 bg-primary" />
+
+        {/* Pass the onOpen and onClose callbacks to UpdateSheet */}
+        <UpdateSheet
+          ref={sheetRef}
+          title="Initial Title"
+          description="Initial Description"
+          phoneNumber="1234567890"
+          category="Category Example"
+          onUpdate={handleUpdate}
+          onOpen={() => {
+            // Slide the FloatingButtonBar down (off-screen).
+            // Adjust the value (e.g., 60) to match your bar’s height.
+            floatingBarY.value = withTiming(60, { duration: 300 });
+          }}
+          onClose={() => {
+            // Slide the FloatingButtonBar back up.
+            floatingBarY.value = withTiming(0, { duration: 300 });
+          }}
+        />
       </ScrollView>
-      <FloatingButtonBar
-        leftButtonName="Edit Page"
-        rightButtonName="Edit Items"
-        onLeftPress={handleLeftPress}
-        onRightPress={handleRightPress}
-      />
+
+      {/* Wrap the FloatingButtonBar in an Animated.View */}
+      <Animated.View
+        style={[
+          floatingBarAnimatedStyle,
+          {
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+          },
+        ]}
+      >
+        <FloatingButtonBar
+          leftButtonName="Edit Page"
+          rightButtonName="Edit Items"
+          onLeftPress={handleLeftPress}
+          onRightPress={handleRightPress}
+        />
+      </Animated.View>
     </>
   );
 };

@@ -6,7 +6,7 @@ import Constants from "expo-constants";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 
-import { uploadImage, readUploadLog } from "../../Utility/u_uploadImage";
+import { uploadImage, readUploadLog } from "../../../Utility/u_uploadImage";
 
 const UploadScreen = () => {
   return (
