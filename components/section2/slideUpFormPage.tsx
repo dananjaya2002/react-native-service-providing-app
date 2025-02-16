@@ -11,11 +11,17 @@ import {
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
+import {
+  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
+  KeyboardToolbar,
+} from "react-native-keyboard-controller";
+
 /**
  * Get screen dimensions and calculate target positions.
  */
 const { height: screenHeight } = Dimensions.get("window");
-const sheetHeight = screenHeight * 0.8; // Cover 80% of the screen height.
+const sheetHeight = screenHeight * 0.9; // Cover 80% of the screen height.
 const openPosition = screenHeight - sheetHeight; // Start Position to slide up to.
 
 /**
@@ -181,44 +187,44 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
         <Animated.View style={[styles.sheet, animatedStyle]}>
           <View style={styles.sheetContent}>
             <Text style={styles.header}>Update Details</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Title"
-              placeholderTextColor="#888"
-              value={title}
-              onChangeText={setTitle}
-            />
-
-            <TextInput
-              style={[styles.input, styles.multilineInput]}
-              placeholder="Description"
-              placeholderTextColor="#888"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Phone Number"
-              placeholderTextColor="#888"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Category"
-              placeholderTextColor="#888"
-              value={category}
-              onChangeText={setCategory}
-            />
-
-            <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-              <Text style={styles.buttonText}>Updated</Text>
-            </TouchableOpacity>
+            <KeyboardAwareScrollView bottomOffset={84}>
+              <View className="h-32"></View>
+              <TextInput
+                style={styles.input}
+                placeholder="Title"
+                placeholderTextColor="#888"
+                value={title}
+                onChangeText={setTitle}
+              />
+              <TextInput
+                style={[styles.input, styles.multilineInput]}
+                placeholder="Description"
+                placeholderTextColor="#888"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                placeholderTextColor="#888"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+              />
+              <View className="h-8"></View>
+              <TextInput
+                style={styles.input}
+                placeholder="Category"
+                placeholderTextColor="#888"
+                value={category}
+                onChangeText={setCategory}
+              />
+              <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+                <Text style={styles.buttonText}>Updated</Text>
+              </TouchableOpacity>
+            </KeyboardAwareScrollView>
+            {/* <KeyboardToolbar doneText={"Complete"} /> */}
           </View>
         </Animated.View>
       </>
@@ -230,6 +236,10 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
  * Styles for the UpdateSheet component.
  */
 const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+    padding: 16,
+  },
   overlay: {
     position: "absolute",
     top: 0,
