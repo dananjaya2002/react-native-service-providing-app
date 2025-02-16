@@ -1,0 +1,71 @@
+{
+  "Category": "Automobile",
+  "CommentOverview": {
+    "comment1": {
+      "comment": "Great service and reasonable prices! Highly recommend.",
+      "commentID": "c12045",
+      "date": "2024-02-01",
+      "name": "Kamal Fernando",
+      "profileUrl": "https://cdn.pixabay.com/photo/2020/10/11/19/51/cat-5646889_1280.jpg",
+      "ratings": 4
+    },
+    "comment2": {
+      "comment": "Very professional and quick service. My car runs smoothly now.",
+      "commentID": "c12046",
+      "date": "2024-01-28",
+      "name": "Samantha Wijesinghe",
+      "profileUrl": "https://cdn.pixabay.com/photo/2014/11/29/19/33/bald-eagle-550804_1280.jpg",
+      "ratings": 4.5
+    },
+    "comment3": {
+      "comment": "Had my AC repaired here. Excellent work!",
+      "commentID": "c12047",
+      "date": "2024-01-25",
+      "name": "Pradeep Rathnayake",
+      "profileUrl": "https://cdn.pixabay.com/photo/2016/02/11/16/59/dog-1194083_1280.jpg",
+      "ratings": 4.7
+    }
+  },
+  "DashboardInfo": {
+    "agreements": 5,
+    "avgRatings": 4.6,
+    "completed": 45,
+    "items": 85,
+    "messages": 3,
+    "waitings": 12
+  },
+  "ItemList": {
+    "item1": {
+      "description": "High-quality synthetic and mineral engine oil change.",
+      "id": "d3a1a8f0-5f2c-4d59-9842-3e67fc7c8c1a",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022204/pexels-photo-13065690_b6uhwg.jpg",
+      "title": "Engine Oil Change"
+    },
+    "item2": {
+      "description": "Computerized wheel alignment for better stability and tire life.",
+      "id": "9876fedc-ba09-8765-4321-fedcba098765",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022274/pexels-photo-3806280_h0563i.jpg",
+      "title": "Wheel Alignment & Balancing"
+    },
+    "item3": {
+      "description": "Wide range of vehicle batteries with free installation.",
+      "id": "abacabae-1234-5678-9abc-def012345678",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022331/pexels-photo-4374843_h6ehxm.jpg",
+      "title": "Battery Replacement"
+    },
+    "item4": {
+      "description": "Comprehensive car AC servicing, repairs, and gas refilling.",
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022409/pexels-photo-6471913_lkwmrs.jpg",
+      "title": "AC Repair & Gas Refill"
+    }
+  },
+  "PersonID": "p3246",
+  "PersonName": "Nimal Perera",
+  "PhoneNumber": "077-345-6789",
+  "RatingCount": 275,
+  "ShopDescription": "Reliable and affordable auto repair services in Colombo.",
+  "ShopName": "Nimal Auto Care",
+  "ShopPageImageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022522/pexels-photo-4480505_zylzvi.jpg",
+  "ShopServiceInfo": "Shop at Joe's Fresh Market! 🛒 \n🥦 Fresh produce \n🛍️ Daily essentials \n😊 Friendly service \nLocated in the heart of the neighborhood, Joe's Fresh Market is your go-to spot for all your grocery needs!"
+}
