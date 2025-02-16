@@ -1,5 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, ScrollView, ImageBackground, Image, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ImageBackground,
+  Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { getSingleServiceProviderData } from "../../Utility/U_getFirebaseData";
@@ -56,13 +65,16 @@ const Shop = () => {
     fetchData();
   }, []);
 
-  if (!data)
+  if (!data) {
+    const jsonData = require("../DevSection/utilities/shopDoc.json");
+    setData(jsonData);
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#007bff" />
         <Text className="mt-4 text-lg font-semibold text-gray-600">Loading, please wait...</Text>
       </View>
     );
+  }
 
   const itemList = data.ItemList ? Object.values(data.ItemList) : [];
   const userCommentList = data.CommentOverview ? Object.values(data.CommentOverview) : [];
@@ -161,26 +173,26 @@ const Shop = () => {
           </View>
         </View>
         <View className="h-20 bg-primary" />
-
-        {/* Pass the onOpen and onClose callbacks to UpdateSheet */}
-        <UpdateSheet
-          ref={sheetRef}
-          title="Initial Title"
-          description="Initial Description"
-          phoneNumber="1234567890"
-          category="Category Example"
-          onUpdate={handleUpdate}
-          onOpen={() => {
-            // Slide the FloatingButtonBar down (off-screen).
-            // Adjust the value (e.g., 60) to match your bar’s height.
-            floatingBarY.value = withTiming(60, { duration: 300 });
-          }}
-          onClose={() => {
-            // Slide the FloatingButtonBar back up.
-            floatingBarY.value = withTiming(0, { duration: 300 });
-          }}
-        />
       </ScrollView>
+
+      {/* Pass the onOpen and onClose callbacks to UpdateSheet */}
+      <UpdateSheet
+        ref={sheetRef}
+        title={data.ShopName}
+        description={data.ShopDescription}
+        phoneNumber={data.PhoneNumber}
+        category={data.Category}
+        onUpdate={handleUpdate}
+        onOpen={() => {
+          // Slide the FloatingButtonBar down (off-screen).
+          // Adjust the value (e.g., 60) to match your bar’s height.
+          floatingBarY.value = withTiming(80, { duration: 300 });
+        }}
+        onClose={() => {
+          // Slide the FloatingButtonBar back up.
+          floatingBarY.value = withTiming(0, { duration: 300 });
+        }}
+      />
 
       {/* Wrap the FloatingButtonBar in an Animated.View */}
       <Animated.View
