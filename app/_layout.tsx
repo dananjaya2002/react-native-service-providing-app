@@ -8,6 +8,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { ShopProvider } from "../context/ShopContext";
 
@@ -35,17 +36,19 @@ export default function RootLayout() {
       <SafeAreaView className="flex-1 bg-white">
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <ShopProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
-              <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />
-              <Stack.Screen name="Test/Test_TextEditor" options={{ headerShown: false }} />
-              <Stack.Screen name="shopSection" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
+            <KeyboardProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
+                <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />
+                <Stack.Screen name="Test/Test_TextEditor" options={{ headerShown: false }} />
+                <Stack.Screen name="shopSection" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+            </KeyboardProvider>
           </ShopProvider>
 
           <StatusBar style="dark" />
