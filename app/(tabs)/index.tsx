@@ -1,154 +1,82 @@
-import React from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, Image, StyleSheet, Platform } from 'react-native';
+import React, { useState } from "react";
+import { View, Text, TextInput, FlatList, TouchableOpacity, Image, Platform } from "react-native";
 
-const reactLogo = require('../../assets/images/reactLogo.png');
+import ShopCard from "../../components/section2/shopCard";
+import Header from "../../components/section2/header_Main";
+import { Category } from "../../components/section2/categoriesList";
+import CategoriesList from "../../components/section2/categoriesList";
 
-// Sample Data for Shops
-const Shops = [
-  {
-    id: '1',
-    name: 'AutoMaster Works',
-    description: 'From routine maintenance to high-performance upgrades...',
-    rating: '4.9 (363)',
-    image: reactLogo, // Use the imported image
-  },
-  {
-    id: '2',
-    name: 'CarCare Experts',
-    description: 'Specializing in car detailing and custom modifications...',
-    rating: '4.8 (250)',
-    image: reactLogo, // Use the imported image
-  },
-  {
-    id: '3',
-    name: 'SpeedMaster Garage',
-    description: 'Performance upgrades and engine tuning...',
-    rating: '4.7 (180)',
-    image: reactLogo, // Use the imported image
-  },
-];
+import shopData from "../../assets/Data/data2";
+import FilterSection, { City } from "../../components/section2/searchSection";
+
+const reactLogo = require("../../assets/images/reactLogo.png");
 
 interface Shop {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  rating: string;
-  image: any;
+  rating: number;
+  imageUrl: string;
 }
 
-const ShopCard = ({ item }: { item: Shop }) => (
-  <TouchableOpacity style={styles.shopCard}>
-    <Image source={item.image} style={styles.shopImage} />
-    <View style={styles.shopDetails}>
-      <Text style={styles.shopName}>{item.name}</Text>
-      <Text style={styles.shopDescription}>{item.description}</Text>
-      <Text style={styles.shopRating}>{item.rating}</Text>
-    </View>
-  </TouchableOpacity>
-);
+const HomeScreen: React.FC = () => {
+  const dummyData: Record<string, Category> = {
+    cat1: {
+      categoryID: "cat1",
+      categoryName: "Plumbing",
+      iconName: "water-outline", // Make sure "water-outline" exists in Ionicons.glyphMap
+    },
+    cat2: {
+      categoryID: "cat2",
+      categoryName: "Electrician",
+      iconName: "flash-outline",
+    },
+    cat3: {
+      categoryID: "cat3",
+      categoryName: "Cleaning",
+      iconName: "brush-outline",
+    },
+    cat4: {
+      categoryID: "cat4",
+      categoryName: "Cleaning",
+      iconName: "brush-outline",
+    },
+    cat5: {
+      categoryID: "cat5",
+      categoryName: "Cleaning",
+      iconName: "brush-outline",
+    },
+  };
 
-export default function HomeScreen() {
+  const handleFilterSelect = (filterValue: string): void => {
+    console.log("Filter selected:", filterValue);
+    // You can update state or perform navigation based on the filter value here.
+  };
+
+  const [categories, setCategories] = useState<Record<string, Category>>({});
+
+  const dummyCities: Record<string, City> = {
+    city1: { id: "city1", name: "New York" },
+    city2: { id: "city2", name: "Los Angeles" },
+    city3: { id: "city3", name: "Chicago" },
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TextInput style={styles.searchInput} placeholder="Search for services or shops..." />
-      </View>
+    <View className="flex-1 bg-green-900 relative">
+      <Header title="Home" onPressBack={() => console.log("Back pressed")} />
 
-      {/* Filter Section */}
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterText}>Filter:</Text>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Category 1</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Category 2</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Category 3</Text>
-        </TouchableOpacity>
-      </View>
+      <FilterSection data={dummyCities} onSelect={() => console.log("Search Button Pressed")} />
+
+      <CategoriesList data={dummyData} />
 
       {/* Shop List */}
       <FlatList
-        data={Shops}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ShopCard item={item} />}
+        data={shopData}
+        keyExtractor={(item: Shop) => item.id}
+        renderItem={({ item }: { item: Shop }) => <ShopCard item={item} />}
       />
     </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 16,
-    marginTop: Platform.OS === 'ios' ? 0 : 24,
-  },
-  searchContainer: {
-    marginBottom: 16,
-  },
-  searchInput: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    backgroundColor: '#fff',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  filterText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 10,
-  },
-  filterButton: {
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    marginLeft: 8,
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  shopCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  shopImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 16,
-  },
-  shopDetails: {
-    flex: 1,
-  },
-  shopName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  shopDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  shopRating: {
-    fontSize: 14,
-    color: '#007bff',
-    fontWeight: 'bold',
-  },
-});
+export default HomeScreen;

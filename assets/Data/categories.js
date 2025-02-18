@@ -1,12 +1,9 @@
 // tempItems.js
-const tempItems = [
+const categories = [
   {
     id: "1",
-    title: "Item 1",
-    description:
-      "This is a description for item 1. This is a description for item 1 This is a description for item 1",
-    imageUrl: "https://cdn.pixabay.com/photo/2015/07/17/22/42/startup-849804_960_720.jpg",
-    rating: 4,
+    name: "Item 1",
+    icon: 4,
   },
   {
     id: "2",
@@ -67,4 +64,4 @@ const tempItems = [
   },
 ];
 
-export default tempItems;
+export default categories;
