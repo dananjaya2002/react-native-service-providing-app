@@ -3,7 +3,7 @@ import { Auth, getAuth } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
-const USE_FIREBASE = false; // Change to true when needed
+const USE_FIREBASE = true; // Change to true when needed
 
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.FIREBASE_API_KEY,

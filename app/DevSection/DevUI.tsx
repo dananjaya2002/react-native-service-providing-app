@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, TextInput, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, Dimensions, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useSharedValue,
@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { updateItemList } from "./utilities/updateItemList";
 import SearchSection from "@/components/section2/searchSection";
+import DevComponent, { Props } from "./DevComponont";
 
 const DevUI: React.FC = () => {
   const cities = {
@@ -21,14 +22,21 @@ const DevUI: React.FC = () => {
     console.log("Selected city:", selectedCity);
     // Further logic when a city is selected
   };
+  const contactOptions: Props[] = [
+    { text: "Call", iconName: "call" },
+    { text: "Email", iconName: "mail" },
+    { text: "Chat", iconName: "chatbubbles" },
+  ];
 
   return (
     <View className="flex-1 bg-white">
       <View className="h-12 bg-blue-100">
         <Text>Section 1</Text>
       </View>
-      <View className="h-[100] bg-blue-300">
-        <SearchSection data={cities} onSelect={onCitySelect} />
+      <View className="flex-row bg-blue-300 justify-center items-center">
+        {contactOptions.map((option, index) => (
+          <DevComponent key={index} props={option} />
+        ))}
       </View>
       <View className="h-64 bg-blue-600">
         <Text>Section 3</Text>

@@ -87,7 +87,7 @@ const Shop = () => {
   const handleRightPress = () => {
     console.log("Right button triggered in MainScreen");
     setShop(itemList as SubServiceData[]);
-    router.push("/shopSection");
+    router.push("/");
   };
 
   // Receive updated data from UpdateSheet.

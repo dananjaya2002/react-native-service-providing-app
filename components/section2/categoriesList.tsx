@@ -35,7 +35,7 @@ const CategoriesList: React.FC<CategoriesListProps> = ({ data }) => {
   const categoriesArray = Object.values(data);
 
   return (
-    <View className="h-auto bg-stone-600 py-1">
+    <View className="h-auto py-1">
       <FlatList
         data={categoriesArray}
         keyExtractor={(item) => item.categoryID}

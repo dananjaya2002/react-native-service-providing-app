@@ -2,10 +2,10 @@ import React from "react";
 import { View, Text, Image } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-interface UserCommentProps {
+export interface UserCommentProps {
   profileImage: string;
   customerName: string;
-  date: string;
+  date: Date;
   rating: number; // e.g. 4.5 out of 5
   comment: string;
 }
@@ -13,23 +13,37 @@ interface UserCommentProps {
 const UserComments: React.FC<UserCommentProps> = ({
   profileImage = "no data",
   customerName = "no data",
-  date = "no data",
+  date,
   rating = 4.5,
   comment = "no data",
 }) => {
+  // Convert date to ddMMYYYY format
+  const formatDate = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return "invalid data";
+    }
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString();
+    return `${day}${month}${year}`;
+  };
+
+  const starColor = "#003DE6";
+  const starSize = 18;
+
   // Create an array of star icons (full, half, or empty)
   const renderStars = () => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       if (rating >= i) {
         // Full star
-        stars.push(<FontAwesome key={i} name="star" size={16} color="#FFD700" />);
+        stars.push(<FontAwesome key={i} name="star" size={starSize} color={starColor} />);
       } else if (rating >= i - 0.5) {
         // Half star (using "star-half-full" for a half-star icon)
-        stars.push(<FontAwesome key={i} name="star-half-full" size={16} color="#FFD700" />);
+        stars.push(<FontAwesome key={i} name="star-half-full" size={starSize} color={starColor} />);
       } else {
         // Empty star
-        stars.push(<FontAwesome key={i} name="star-o" size={16} color="#FFD700" />);
+        stars.push(<FontAwesome key={i} name="star-o" size={starSize} color={starColor} />);
       }
     }
     return stars;
@@ -48,12 +62,12 @@ const UserComments: React.FC<UserCommentProps> = ({
           />
           <View className="ml-3 ">
             <Text className="font-bold text-base">{customerName}</Text>
-            <Text className="text-xs text-gray-500">{date}</Text>
+            <Text className="text-xs text-gray-500">{formatDate(date)}</Text>
           </View>
         </View>
         <View className="flex-row items-center ">
           {renderStars()}
-          <Text className="ml-2 text-sm ">{rating.toFixed(1)}</Text>
+          <Text className="ml-2 text-sm font-bold ">({rating.toFixed(1)})</Text>
         </View>
       </View>
       <View className="border-t border-gray-300 mb-1" />

@@ -1,6 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { TouchableOpacity, Image, Text, View, StyleSheet } from "react-native";
+import React, { useRef, useState } from "react";
+import { TouchableOpacity, Image, Text, View, StyleSheet, Alert } from "react-native";
+import {
+  TapGestureHandler,
+  State,
+  TapGestureHandlerStateChangeEvent,
+} from "react-native-gesture-handler";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 export interface Shop {
   id: string;
@@ -12,49 +18,89 @@ export interface Shop {
 
 interface ShopCardProps {
   item: Shop;
+  onShopClick?: (event: TapGestureHandlerStateChangeEvent) => void;
 }
 
-const ShopCard: React.FC<ShopCardProps> = ({ item }) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+const ShopCard: React.FC<ShopCardProps> = ({ item, onShopClick }) => {
+  const scale = useSharedValue(1);
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-  };
+  const favoriteRef = useRef<TapGestureHandler>(null);
+
+  // Animated style for scaling the card
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const [isFavorite, setIsFavorite] = useState(false);
+  const toggleFavorite = () => setIsFavorite(!isFavorite);
+
   return (
-    <TouchableOpacity
-      style={styles.card}
-      className="flex-row bg-white h-[120px] w-full items-center mb-2 px-2 rounded-xl border border-gray-200"
+    <TapGestureHandler
+      waitFor={favoriteRef}
+      onHandlerStateChange={(gestureEvent: TapGestureHandlerStateChangeEvent) => {
+        const { state } = gestureEvent.nativeEvent;
+        if (state === State.BEGAN) {
+          scale.value = withTiming(0.95, { duration: 100 });
+        } else if (state === State.ACTIVE) {
+          scale.value = withTiming(1, { duration: 100 });
+          onShopClick && onShopClick(gestureEvent);
+        } else {
+          scale.value = withTiming(1, { duration: 100 });
+        }
+      }}
+      maxDeltaX={10}
+      maxDeltaY={10}
     >
-      <Image source={{ uri: item.imageUrl }} className="mr-4 w-[100px] h-[100px] rounded-md" />
-      <View className="flex-1 h-full pb-1 pr-2 justify-between">
-        <View>
-          <Text className="text-lg font-semibold mb-1">{item.title}</Text>
-          <Text className="text-sm text-gray-600 mb-2" numberOfLines={2}>
-            {item.description}
-          </Text>
-        </View>
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Ionicons name="star" size={16} color="#FFD700" />
-            <Text className="text-sm text-blue-600 font-bold ml-1">{item.rating.toFixed(1)}</Text>
+      <Animated.View style={[styles.card, animatedStyle]}>
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        <View style={styles.contentContainer}>
+          <View>
+            <Text style={styles.titleText}>{item.title}</Text>
+            <Text style={styles.descriptionText} numberOfLines={2}>
+              {item.description}
+            </Text>
           </View>
-          <TouchableOpacity onPress={toggleFavorite} className="pl-4 pr-2 py-1">
-            {isFavorite ? (
-              <Ionicons name="heart" size={25} color="red" />
-            ) : (
-              <Ionicons name="heart-outline" size={25} color="gray" />
-            )}
-          </TouchableOpacity>
+          <View style={styles.row}>
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={16} color="#FFD700" />
+              <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+            </View>
+            <TapGestureHandler
+              ref={favoriteRef}
+              onHandlerStateChange={({ nativeEvent }: TapGestureHandlerStateChangeEvent) => {
+                if (nativeEvent.state === State.ACTIVE) {
+                  toggleFavorite();
+                }
+              }}
+            >
+              <View style={styles.favoriteButton}>
+                {isFavorite ? (
+                  <Ionicons name="heart" size={25} color="red" />
+                ) : (
+                  <Ionicons name="heart-outline" size={25} color="gray" />
+                )}
+              </View>
+            </TapGestureHandler>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </Animated.View>
+    </TapGestureHandler>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    // NativeWind handles layout, background, padding, border radius, and margin.
-    // We'll keep the shadow styles here.
+    flexDirection: "row",
+    backgroundColor: "white",
+    height: 120,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 4,
+    marginHorizontal: 0,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -64,7 +110,44 @@ const styles = StyleSheet.create({
   image: {
     width: 100,
     height: 100,
-    borderRadius: 8,
+    borderRadius: 0,
+    marginRight: 16,
+  },
+  contentContainer: {
+    flex: 1,
+    height: "100%",
+    paddingBottom: 4,
+    paddingRight: 8,
+    justifyContent: "space-between",
+  },
+  titleText: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  descriptionText: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  ratingText: {
+    fontSize: 14,
+    color: "#2563eb",
+    fontWeight: "bold",
+    marginLeft: 4,
+  },
+  favoriteButton: {
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 4,
   },
 });
 
