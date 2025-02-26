@@ -51,11 +51,10 @@ const HorizontalScrollView: React.FC<HorizontalScrollViewProps> = ({ items }) =>
               {item.title}
             </Text>
           </View>
-
           <View className="h-64">
             <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
           </View>
-          <View className="flex-1 h-auto w-full items-center justify-center my-2 ">
+          <View className="flex-1 h-auto w-full items-center justify-center my-2 px-4">
             <Text className="text-black font-normal text-sm " numberOfLines={5}>
               {item.description}
             </Text>

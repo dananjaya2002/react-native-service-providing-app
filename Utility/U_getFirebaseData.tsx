@@ -1,33 +1,57 @@
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../FirebaseConfig"; // Adjust the path if needed
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { db } from "../FirebaseConfig";
 import fs from "fs"; // Import the 'fs' module
 
-export const getSingleServiceProviderData = async () => {
+// interface RatingData {
+//   id: string;
+//   comments: string;
+//   date: Date;
+//   name: string;
+//   ratings: number;
+//   profileImageUrl: string;
+//   // For example:
+//   // name: string;
+//   // rating: number;
+// }
+let cachedShopPageData: any = null;
+
+export const getShopPageData = async () => {
+  if (cachedShopPageData) {
+    console.warn(" ⚠️  Using cached shop page data. ⚠️ ");
+    return cachedShopPageData;
+  }
+
   if (!db) {
     console.warn("❌ Firestore is invalid.");
     return null;
   }
 
   try {
-    console.warn(" ✅ Firestore is being accessed...");
+    console.warn("Getting Shop Page Data from Firebase 🔄");
 
-    const docRef = doc(db, "Service Providers", "p3246"); // Fetch by document ID
+    // Fetch the main document data
+    const docRef = doc(db, "Users/user1/Shop", "shopPageInfo");
     const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      console.log("\nDocument data:", docSnap.data());
-
-      // // Write the JSON data to a file
-      // const filePath = "/app/DevSection/utilities/shopDoc.json";
-      // const jsonData = JSON.stringify(docSnap.data());
-      // fs.writeFileSync(filePath, jsonData);
-      //console.log("JSON data stored in file:", filePath);
-
-      return docSnap.data(); // Returning the document data
-    } else {
-      console.warn("No service provider found with ID p3246.");
+    if (!docSnap.exists()) {
+      console.warn("Shop page info not found.");
       return null;
     }
+    const shopData = docSnap.data();
+
+    // // Fetch the Ratings subcollection using the document reference
+    // const ratingsRef = collection(docRef, "Ratings");
+    // const querySnapshot = await getDocs(ratingsRef);
+    // const ratingsData: any[] = [];
+    // querySnapshot.forEach((doc) => {
+    //   ratingsData.push({ id: doc.id, ...doc.data() });
+    // });
+
+    // // Combine the shop page info with the ratings
+    // const data = { ...shopData, ratings: ratingsData };
+
+    // Cache the data so subsequent calls use this value during development
+    cachedShopPageData = shopData;
+    return shopData;
   } catch (error) {
     console.error("Error fetching data: ", error);
     return null;

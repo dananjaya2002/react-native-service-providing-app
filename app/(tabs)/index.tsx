@@ -8,6 +8,8 @@ import CategoriesList from "../../components/section2/categoriesList";
 
 import shopData from "../../assets/Data/data2";
 import FilterSection, { City } from "../../components/section2/searchSection";
+import { Link, router } from "expo-router";
+import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
 
@@ -50,6 +52,7 @@ const HomeScreen: React.FC = () => {
 
   const handleFilterSelect = (filterValue: string): void => {
     console.log("Filter selected:", filterValue);
+
     // You can update state or perform navigation based on the filter value here.
   };
 
@@ -61,20 +64,35 @@ const HomeScreen: React.FC = () => {
     city3: { id: "city3", name: "Chicago" },
   };
 
+  const handleShopClick = (gestureEvent: TapGestureHandlerStateChangeEvent) => {
+    console.log("Shop tapped!", gestureEvent.nativeEvent);
+    const shopId = "123";
+    router.push(`../customer/${shopId}`);
+  };
+
   return (
-    <View className="flex-1 bg-green-900 relative">
+    <View className="flex-1 bg-primary">
       <Header title="Home" onPressBack={() => console.log("Back pressed")} />
 
-      <FilterSection data={dummyCities} onSelect={() => console.log("Search Button Pressed")} />
+      <FilterSection
+        data={dummyCities}
+        onSelect={() => {
+          console.log("City selected");
+        }}
+      />
 
       <CategoriesList data={dummyData} />
 
       {/* Shop List */}
-      <FlatList
-        data={shopData}
-        keyExtractor={(item: Shop) => item.id}
-        renderItem={({ item }: { item: Shop }) => <ShopCard item={item} />}
-      />
+      <View className="flex-1 px-2">
+        <FlatList
+          data={shopData}
+          keyExtractor={(item: Shop) => item.id}
+          renderItem={({ item }: { item: Shop }) => (
+            <ShopCard item={item} onShopClick={handleShopClick} />
+          )}
+        />
+      </View>
     </View>
   );
 };
