@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Image, FlatList, Pressable, Dimensions } from "react-native";
 import tempItems from "../../assets/Data/data2"; // Ensure this file exports an array of Shop objects
 import { Ionicons } from "@expo/vector-icons";
+import { v4 as uuidv4 } from "uuid";
 
-import { useShop } from "../../context/ShopContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Shop = {
   id: string;
@@ -21,12 +22,40 @@ const shopEditService: React.FC = () => {
   const [multiSelectMode, setMultiSelectMode] = useState<boolean>(false);
   const [selectedItems, setSelectedItems] = useState<Shop[]>([]);
 
-  const { shop } = useShop();
-  console.log("\n\nShop data:", shop);
+  const [shopData, setShopData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Use tempItems data directly and add a transparent placeholder if the count is odd (Assuming only two columns are displayed)
-  const data: Shop[] =
-    shop.length % 2 !== 0 ? [...shop, { id: "", title: "", description: "", imageUrl: "" }] : shop;
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem("shop_data");
+        if (jsonValue !== null) {
+          setShopData(JSON.parse(jsonValue));
+        }
+      } catch (error) {
+        console.error("Error retrieving data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  // Extract the items from the object and create a desired array of items with unique IDs
+  const itemsArray = Object.values(shopData.ItemList) as Shop[];
+  const data: Shop[] = (
+    itemsArray.length % 2 !== 0
+      ? [...itemsArray, { id: "", title: "", description: "", imageUrl: "" }]
+      : itemsArray
+  ).map((item, index) => ({
+    ...item,
+    id: item.id || index.toString(), // Assigns a sequential id if one isn't provided
+  }));
 
   // Toggle the selection state for an item
   const toggleSelection = (item: Shop) => {

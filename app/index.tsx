@@ -42,10 +42,11 @@ const Index = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      //router.push("/(tabs)"); //
+      //router.push("/(tabs)");
+      router.push("/(tabs)/shop");
 
       const shopId = "123";
-      router.push(`../customer/${shopId}`);
+      //router.push(`../customer/${shopId}`);
     }, 50);
     return () => clearTimeout(timer); // Cleanup the timer if the component unmounts before the timeout completes
   }, []); // Empty array ensures this runs once
