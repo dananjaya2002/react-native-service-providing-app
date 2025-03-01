@@ -16,9 +16,9 @@ const firebaseConfig = {
 };
 
 // Define variables before assignment
-let app: FirebaseApp | undefined;
-let db: Firestore | undefined;
-let auth: Auth | undefined;
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth;
 
 if (USE_FIREBASE) {
   // Ensure Firebase is initialized only once
@@ -28,6 +28,10 @@ if (USE_FIREBASE) {
   console.log("🔥 Firebase initialized");
 } else {
   console.log("❌ Firebase is disabled");
+  // **Fallback empty objects to prevent undefined errors**
+  app = {} as FirebaseApp;
+  db = {} as Firestore;
+  auth = {} as Auth;
 }
 
 // Export variables (they will be undefined if USE_FIREBASE is false)
