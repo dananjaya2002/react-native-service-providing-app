@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -6,205 +6,108 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Alert,
+  BackHandler,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
-// Define types for TypeScript
-type ChatItem = {
+// Define types
+type ChatRoom = {
   id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount?: number;
+  customerRef: string;
+  serviceProviderRef: string;
+  name?: string;
+  lastMessage?: string;
+  timestamp?: string;
 };
+/**
+ * Currently we trying to simulate both roles in the same page section. So we have to use dynamic userRoleType
+ * Goal is to find the all document where the user role field is match with the userRef
+ */
 
 export default function ChatList() {
-  const [chats, setChats] = useState<ChatItem[]>([]);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter(); // Initialize the router once outside of renderItem
+  const router = useRouter();
 
-  // Simulate fetching chat data
+  const { role, customerDocRef, serviceProviderDocRef } = useLocalSearchParams();
+
+  // Identify user type
+  const userRef = role === "provider" ? serviceProviderDocRef : customerDocRef;
+  const userRoleType = role === "provider" ? "serviceProviderRef" : "customerRef";
+
+  // Handle back button navigation -- Development purpose only
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        router.replace("/DevSection/D_SimulateChat/roleSelection");
+        return true; // Prevent default back action
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+    }, [])
+  );
+
+  // Fetch chat data
   useEffect(() => {
     const fetchChats = async () => {
-      // Simulate API call delay
-      setTimeout(() => {
-        setChats([
-          {
-            id: "1",
-            name: "John Doe",
-            lastMessage: "Hey! How are you?",
-            timestamp: "10:30 AM",
-            unreadCount: 2,
-          },
-          {
-            id: "2",
-            name: "Jane Smith",
-            lastMessage: "See you tomorrow!",
-            timestamp: "Yesterday",
-          },
-          {
-            id: "3",
-            name: "Alice Johnson",
-            lastMessage: "Sent a photo",
-            timestamp: "2 days ago",
-          },
-          {
-            id: "4",
-            name: "Michael Brown",
-            lastMessage: "Let’s catch up later!",
-            timestamp: "11:45 AM",
-          },
-          {
-            id: "5",
-            name: "Emily Davis",
-            lastMessage: "Got your message",
-            timestamp: "4:30 PM",
-            unreadCount: 1,
-          },
-          {
-            id: "6",
-            name: "David Wilson",
-            lastMessage: "Thanks for the update!",
-            timestamp: "Monday",
-          },
-          {
-            id: "7",
-            name: "Sarah Miller",
-            lastMessage: "Looking forward to it!",
-            timestamp: "3 days ago",
-          },
-          {
-            id: "8",
-            name: "Chris Lee",
-            lastMessage: "I’ll be there soon.",
-            timestamp: "5:15 PM",
-            unreadCount: 3,
-          },
-          {
-            id: "9",
-            name: "Sophia Anderson",
-            lastMessage: "Meeting postponed",
-            timestamp: "6:50 AM",
-          },
-          {
-            id: "10",
-            name: "Daniel Martin",
-            lastMessage: "On my way!",
-            timestamp: "2:00 PM",
-          },
-          {
-            id: "11",
-            name: "Grace Thompson",
-            lastMessage: "Call me later",
-            timestamp: "Yesterday",
-          },
-          {
-            id: "12",
-            name: "James White",
-            lastMessage: "Sent a document",
-            timestamp: "Last week",
-          },
-          {
-            id: "13",
-            name: "Mia Harris",
-            lastMessage: "Great job!",
-            timestamp: "1:30 PM",
-            unreadCount: 1,
-          },
-          {
-            id: "14",
-            name: "Lucas Clark",
-            lastMessage: "Let me know when free",
-            timestamp: "9:00 AM",
-          },
-          {
-            id: "15",
-            name: "Charlotte Lewis",
-            lastMessage: "Thanks for the invite!",
-            timestamp: "10:00 AM",
-          },
-          {
-            id: "16",
-            name: "Oliver Walker",
-            lastMessage: "Busy right now",
-            timestamp: "8:20 AM",
-            unreadCount: 2,
-          },
-          {
-            id: "17",
-            name: "Amelia Hall",
-            lastMessage: "Let’s reschedule",
-            timestamp: "Saturday",
-          },
-          {
-            id: "18",
-            name: "Henry Young",
-            lastMessage: "Sent a voice note",
-            timestamp: "5 days ago",
-          },
-          {
-            id: "19",
-            name: "Isabella King",
-            lastMessage: "Looking forward to our trip!",
-            timestamp: "Thursday",
-          },
-          {
-            id: "20",
-            name: "Ethan Scott",
-            lastMessage: "Talk to you soon",
-            timestamp: "Wednesday",
-          },
-          {
-            id: "21",
-            name: "Harper Green",
-            lastMessage: "Just finished the project",
-            timestamp: "12:00 PM",
-          },
-          {
-            id: "22",
-            name: "Jackson Baker",
-            lastMessage: "I’ll get back to you",
-            timestamp: "Yesterday",
-          },
-          {
-            id: "23",
-            name: "Ava Roberts",
-            lastMessage: "Check your email",
-            timestamp: "2:45 PM",
-          },
-        ]);
+      try {
+        if (!db) {
+          console.warn("❌ Firebase not initialized.");
+          Alert.alert("Error", "Failed to access Firebase");
+          return;
+        }
+
+        if (!userRef) {
+          console.warn("❌ User reference is undefined.");
+          return;
+        }
+
+        setIsLoading(true);
+        const usersRef = collection(db, "Chat");
+        const q = query(usersRef, where(userRoleType, "==", userRef));
+
+        const querySnapshot = await getDocs(q);
+        const chatRooms = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as ChatRoom[];
+
+        console.log("Fetched chat rooms:", chatRooms);
+        setChatRooms(chatRooms);
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+      } finally {
         setIsLoading(false);
-      }, 1000);
+      }
     };
 
     fetchChats();
-  }, []);
+  }, [role, userRef]);
 
-  const navigateToChat = (chatId: string) => {
-    router.push(`/chat/chatUi?itemId=${chatId}`);
+  // Navigate to chat screen
+  const navigateToChat = (chatRoom: string) => {
+    router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
+    //console.log("Navigating to chat room:", chatRoom);
   };
 
-  const renderChatItem = ({ item }: { item: ChatItem }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() => navigateToChat(item.id)}
-    >
+  // Render each chat item
+  const renderChatItem = ({ item }: { item: ChatRoom }) => (
+    <TouchableOpacity style={styles.chatItem} onPress={() => navigateToChat(item.id)}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{item.name[0]}</Text>
+        <Text style={styles.avatarText}>{item.name ? item.name.charAt(0) : "?"}</Text>
       </View>
       <View style={styles.chatContent}>
-        <Text style={styles.chatName}>{item.name}</Text>
+        <Text style={styles.chatName}>{item.name || "Unknown User"}</Text>
         <Text style={styles.chatMessage} numberOfLines={1}>
-          {item.lastMessage}
+          {item.lastMessage || "No messages yet"}
         </Text>
       </View>
       <View style={styles.chatMeta}>
-        <Text style={styles.chatTimestamp}>{item.timestamp}</Text>
-        {item.unreadCount && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadText}>{item.unreadCount}</Text>
-          </View>
-        )}
+        <Text style={styles.chatTimestamp}>{item.timestamp || "Just now"}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -216,9 +119,8 @@ export default function ChatList() {
       ) : (
         <View>
           <Text style={styles.header}>Chats</Text>
-
           <FlatList
-            data={chats}
+            data={chatRooms}
             keyExtractor={(item) => item.id}
             renderItem={renderChatItem}
             contentContainerStyle={styles.listContainer}
