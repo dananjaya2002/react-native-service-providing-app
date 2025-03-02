@@ -21,7 +21,7 @@ import {
   query,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../../FirebaseConfig"; // Ensure Firebase is configured
+import { db } from "../../../FirebaseConfig"; // Ensure Firebase is configured
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 // Define Firestore Message Format

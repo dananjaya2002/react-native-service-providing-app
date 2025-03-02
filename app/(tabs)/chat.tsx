@@ -22,6 +22,7 @@ type ChatRoom = {
   lastMessage?: string;
   timestamp?: string;
 };
+
 /**
  * Currently we trying to simulate both roles in the same page section. So we have to use dynamic userRoleType
  * Goal is to find the all document where the user role field is match with the userRef
@@ -32,10 +33,10 @@ export default function ChatList() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const { role, customerDocRef, serviceProviderDocRef } = useLocalSearchParams();
+  const { userID, role } = useLocalSearchParams();
 
   // Identify user type
-  const userRef = role === "provider" ? serviceProviderDocRef : customerDocRef;
+  const userRef = userID;
   const userRoleType = role === "provider" ? "serviceProviderRef" : "customerRef";
 
   // Handle back button navigation -- Development purpose only
@@ -90,7 +91,15 @@ export default function ChatList() {
 
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string) => {
-    router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
+    //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
+
+    router.push({
+      pathname: "/chat/chatUi",
+      params: {
+        userID: userRef,
+        chatRoomDocRefId: chatRoom,
+      },
+    });
     //console.log("Navigating to chat room:", chatRoom);
   };
 

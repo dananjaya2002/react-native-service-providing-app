@@ -12,6 +12,9 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
-    "app/DevSection/utilities/backup.tsx.bak"
+    "app/DevSection/utilities/backup.tsx"
+  ],
+  "exclude": [
+    "app/DevSection/utilities/backup.tsx" // Exclude your temporary file
   ]
 }

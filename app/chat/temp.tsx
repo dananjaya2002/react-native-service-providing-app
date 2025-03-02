@@ -24,56 +24,47 @@ import {
 import { db } from "../../FirebaseConfig"; // Ensure Firebase is configured
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
-// Define Message Format
+// Define Firestore Message Format
 interface ChatMessage {
   id: string; // Firestore doc.id
-  senderId: string;
+  type: "send" | "receive";
   text?: string;
   image?: string;
   timestamp?: any;
 }
-type RouterParams = {
-  userID: string; // Or number, or whatever type userID is
-  chatRoomDocRefId: string;
-};
 
-export default function ChatScreen() {
-  const chatListRef = useRef<FlatList>(null);
-  const { chatRoomDocRefId, userID } = useLocalSearchParams<RouterParams>();
-
-  // Main Chat message array
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-
-  // User input message state
+export default function tempChat() {
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: "1", type: "receive", text: "Initial message 1" }, // Initial Dummy Data
+    { id: "2", type: "send", text: "Initial message 2" },
+  ]);
   const [currentMessage, setCurrentMessage] = useState("");
+  const [isUserTyping, setIsUserTyping] = useState(false);
 
-  // Fetch data from Firestore
-  useEffect(() => {
-    if (!chatRoomDocRefId) return;
+  // Get chat room ID from navigation params
+  const { chatRoomDocRefId } = useLocalSearchParams<{ chatRoomDocRefId: string }>();
 
-    const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-    const q = query(messagesRef, orderBy("timestamp", "desc"));
+  // References
+  const chatListRef = useRef<FlatList>(null);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messages = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as ChatMessage[];
+  const dummyMessages: ChatMessage[] = [
+    {
+      id: Math.floor(Math.random() * 1000000).toString(),
+      type: "receive",
+      text: "New message from other user",
+    },
+    {
+      id: Math.floor(Math.random() * 1000000).toString(),
+      type: "send",
+      text: "Another message from you",
+    },
+  ];
 
-      setChatMessages(messages);
-    });
+  const simulateDataFetch = () => {
+    setChatMessages((prevMessages) => [...dummyMessages, ...prevMessages]); // Append new messages
+  };
 
-    return () => unsubscribe(); // Cleanup listener
-  }, [chatRoomDocRefId]);
-
-  // Scroll to bottom on initial load
-  useEffect(() => {
-    if (chatMessages.length > 0) {
-      chatListRef.current?.scrollToIndex({ index: 0, animated: false }); // No animation on first load
-    }
-  }, []);
-
-  // trigger scroll down when new message is added
+  // trigger when [chatMessages] changes
   useEffect(() => {
     if (chatMessages.length > 0) {
       chatListRef.current?.scrollToIndex({ index: 0, animated: true });
@@ -87,22 +78,15 @@ export default function ChatScreen() {
     // Ignore empty messages
     if (!currentMessage.trim()) return;
 
-    const newMessage = {
-      senderId: userID,
+    const newMessage: ChatMessage = {
+      id: String(Date.now()),
+      type: "send",
       text: currentMessage.trim(),
-      timestamp: serverTimestamp(),
+      timestamp: new Date(), // Simulate timestamp
     };
 
-    try {
-      const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-      console.log("Sending message:", newMessage);
-      console.log("\nMessages Ref:", messagesRef);
-      console.log("\nChat Room Doc Ref:", chatRoomDocRefId);
-      await addDoc(messagesRef, newMessage);
-      setCurrentMessage(""); // Clear input after sending
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+    setChatMessages((prevMessages) => [newMessage, ...prevMessages]);
+    setCurrentMessage("");
   };
 
   /**
@@ -133,7 +117,7 @@ export default function ChatScreen() {
   const handleSendImageMessage = async (imageUri: string) => {
     const newMessage: ChatMessage = {
       id: String(Date.now()),
-      senderId: userID,
+      type: "send",
       image: imageUri,
       timestamp: new Date(), // Simulate timestamp
     };
@@ -148,7 +132,7 @@ export default function ChatScreen() {
     <View
       style={[
         styles.messageContainer,
-        item.senderId === userID ? styles.sentMessage : styles.receivedMessage,
+        item.type === "send" ? styles.sentMessage : styles.receivedMessage,
       ]}
     >
       {item.image ? (
@@ -157,17 +141,14 @@ export default function ChatScreen() {
         <Text
           style={[
             styles.messageText,
-            item.senderId === userID ? styles.sentMessageText : styles.receivedMessageText,
+            item.type === "send" ? styles.sentMessageText : styles.receivedMessageText,
           ]}
         >
           {item.text}
         </Text>
       )}
       <Text
-        style={[
-          styles.messageTimestamp,
-          item.senderId === userID ? styles.sentMessageTimestamp : null,
-        ]}
+        style={[styles.messageTimestamp, item.type === "send" ? styles.sentMessageTimestamp : null]}
       >
         {item.timestamp instanceof Date ? item.timestamp.toLocaleTimeString() : "Now"}
       </Text>
@@ -180,7 +161,7 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
-      <TouchableOpacity style={styles.dataFetchButton} onPress={() => {}}>
+      <TouchableOpacity style={styles.dataFetchButton} onPress={simulateDataFetch}>
         <Text style={styles.dataFetchButtonText}>Fetch Data</Text>
       </TouchableOpacity>
 
