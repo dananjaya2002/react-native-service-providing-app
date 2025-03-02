@@ -24,19 +24,25 @@ export default function RoleSelection() {
   let serviceProviderDocRef = "M4NdXpFLu4hjwWde2r1r"; // Simulate provider doc reference
   let chatRoomDocRef = ""; // Simulate chat room reference
 
+  let selfID = ""; // Simulate self ID
+
   const selectRole = (role: "provider" | "customer") => {
     // Navigate to chat screen and pass the role as a query parameter
     // if (!chatRoomDocRef) {
     //   Alert.alert("Error", `Char Room Ref is empty: ${chatRoomDocRef}`);
     //   return;
     // }
+    if (role === "provider") {
+      selfID = serviceProviderDocRef;
+    } else {
+      selfID = customerDocRef;
+    }
 
     router.push({
       pathname: "/(tabs)/chat",
       params: {
         role: role,
-        customerDocRef: customerDocRef,
-        serviceProviderDocRef: serviceProviderDocRef,
+        userID: selfID,
         chatRoomDocRef: chatRoomDocRef,
       },
     });
