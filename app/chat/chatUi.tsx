@@ -16,55 +16,117 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import {
   addDoc,
   collection,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  startAfter,
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig"; // Ensure Firebase is configured
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+import { uploadImageToCloud } from "../../Utility/u_uploadImageNew";
 
-// Define Message Format
+// Receive Message Format
 interface ChatMessage {
   id: string; // Firestore doc.id
   senderId: string;
-  text?: string;
-  image?: string;
+  textChat?: string;
+  imageUrl?: string;
   timestamp?: any;
 }
 type RouterParams = {
-  userID: string; // Or number, or whatever type userID is
+  userID: string;
   chatRoomDocRefId: string;
 };
+
+type SendingChat = {
+  senderId: string;
+  textChat?: string;
+  imageUrl?: string;
+  timestamp: any;
+};
+
+const PAGE_SIZE = 10; // Number of messages to load per page
 
 export default function ChatScreen() {
   const chatListRef = useRef<FlatList>(null);
   const { chatRoomDocRefId, userID } = useLocalSearchParams<RouterParams>();
+  if (!chatRoomDocRefId || !userID) return null; // Prevent crashes
 
   // Main Chat message array
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-
   // User input message state
   const [currentMessage, setCurrentMessage] = useState("");
+  // Load More chat messages
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // To prevent scroll down when user is scrolling up to view old messages
+  const [shouldScroll, setShouldScroll] = useState(true);
+
+  /**
+   *
+   * Helper Functions
+   *
+   */
 
   // Fetch data from Firestore
   useEffect(() => {
     if (!chatRoomDocRefId) return;
 
     const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-    const q = query(messagesRef, orderBy("timestamp", "desc"));
+    const initialQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(PAGE_SIZE));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(initialQuery, (snapshot) => {
       const messages = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as ChatMessage[];
 
       setChatMessages(messages);
+      if (snapshot.docs.length > 0) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      }
     });
 
     return () => unsubscribe(); // Cleanup listener
   }, [chatRoomDocRefId]);
+
+  // Load more messages from Firestore
+  const loadMoreMessages = async () => {
+    console.log("\nLoading more messages...");
+    if (!lastDoc || loadingMore) return; // Prevent duplicate loads
+    setLoadingMore(true);
+
+    try {
+      const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
+      const moreQuery = query(
+        messagesRef,
+        orderBy("timestamp", "desc"),
+        startAfter(lastDoc),
+        limit(PAGE_SIZE)
+      );
+
+      const snapshot = await getDocs(moreQuery);
+      const moreMessages = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as ChatMessage[];
+
+      if (snapshot.docs.length > 0) {
+        setChatMessages((prevMessages) => [...prevMessages, ...moreMessages]);
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setLastDoc(null); // If No more messages to load
+      }
+    } catch (error) {
+      console.error("Error loading more messages:", error);
+    }
+
+    setLoadingMore(false);
+  };
 
   // Scroll to bottom on initial load
   useEffect(() => {
@@ -73,32 +135,18 @@ export default function ChatScreen() {
     }
   }, []);
 
-  // trigger scroll down when new message is added
+  // Trigger scroll down when new message is added
   useEffect(() => {
-    if (chatMessages.length > 0) {
+    if (shouldScroll && chatMessages.length > 0) {
       chatListRef.current?.scrollToIndex({ index: 0, animated: true });
     }
-  }, [chatMessages]);
+  }, [chatMessages, shouldScroll]);
 
-  /**
-   * Send Text Message
-   */
-  const handleSendTextMessage = async () => {
-    // Ignore empty messages
-    if (!currentMessage.trim()) return;
-
-    const newMessage = {
-      senderId: userID,
-      text: currentMessage.trim(),
-      timestamp: serverTimestamp(),
-    };
-
+  // Send message to Firestore
+  const sendMessages = async (message: SendingChat) => {
     try {
       const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-      console.log("Sending message:", newMessage);
-      console.log("\nMessages Ref:", messagesRef);
-      console.log("\nChat Room Doc Ref:", chatRoomDocRefId);
-      await addDoc(messagesRef, newMessage);
+      await addDoc(messagesRef, message);
       setCurrentMessage(""); // Clear input after sending
     } catch (error) {
       console.error("Error sending message:", error);
@@ -106,7 +154,29 @@ export default function ChatScreen() {
   };
 
   /**
-   * Pick Image & Send
+   *
+   * ------------------------------------------------------------------------------------
+   *
+   */
+
+  /**
+   * Handle Send Text Message
+   */
+  const handleSendTextMessage = async () => {
+    // Ignore empty messages
+    if (!currentMessage.trim()) return;
+
+    const newMessage = {
+      senderId: userID,
+      textChat: currentMessage.trim(),
+      timestamp: serverTimestamp(),
+    };
+
+    await sendMessages(newMessage);
+  };
+
+  /**
+   * Pick Image
    */
   const handleImageSelection = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -118,7 +188,7 @@ export default function ChatScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.5,
     });
 
     if (!result.canceled) {
@@ -131,14 +201,22 @@ export default function ChatScreen() {
    * Send Image Message
    */
   const handleSendImageMessage = async (imageUri: string) => {
-    const newMessage: ChatMessage = {
-      id: String(Date.now()),
-      senderId: userID,
-      image: imageUri,
-      timestamp: new Date(), // Simulate timestamp
-    };
+    try {
+      const imageUrl = await uploadImageToCloud(imageUri);
+      if (!imageUrl) {
+        console.error("Image upload failed");
+        return;
+      }
+      const newMessage: SendingChat = {
+        senderId: userID,
+        imageUrl: imageUrl,
+        timestamp: serverTimestamp(),
+      };
 
-    setChatMessages((prevMessages) => [newMessage, ...prevMessages]);
+      await sendMessages(newMessage);
+    } catch (error) {
+      console.error("Error sending image message:", error);
+    }
   };
 
   /**
@@ -151,8 +229,8 @@ export default function ChatScreen() {
         item.senderId === userID ? styles.sentMessage : styles.receivedMessage,
       ]}
     >
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.messageImage} />
+      {item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
       ) : (
         <Text
           style={[
@@ -160,7 +238,7 @@ export default function ChatScreen() {
             item.senderId === userID ? styles.sentMessageText : styles.receivedMessageText,
           ]}
         >
-          {item.text}
+          {item.textChat}
         </Text>
       )}
       <Text
@@ -169,7 +247,7 @@ export default function ChatScreen() {
           item.senderId === userID ? styles.sentMessageTimestamp : null,
         ]}
       >
-        {item.timestamp instanceof Date ? item.timestamp.toLocaleTimeString() : "Now"}
+        {item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString() : "Now"}
       </Text>
     </View>
   );
@@ -191,6 +269,20 @@ export default function ChatScreen() {
         renderItem={renderChatMessage}
         inverted
         contentContainerStyle={styles.chatListContainer}
+        onEndReached={loadMoreMessages}
+        onEndReachedThreshold={0.1}
+        onScroll={(e) => {
+          const offsetY = e.nativeEvent.contentOffset.y;
+          // If the offset is low, assume the user is near the bottom
+          if (offsetY < 50) {
+            setShouldScroll(true);
+            console.log("User is near the bottom");
+          } else {
+            setShouldScroll(false);
+            console.log("User is scrolling up");
+          }
+        }}
+        scrollEventThrottle={16}
       />
 
       <View style={styles.messageInputContainer}>
