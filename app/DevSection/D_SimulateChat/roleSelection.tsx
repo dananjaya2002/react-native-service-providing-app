@@ -23,6 +23,12 @@ export default function RoleSelection() {
   let customerDocRef = "HuzthgFKQGOPO1D884V9"; // Simulate customer doc reference
   let serviceProviderDocRef = "M4NdXpFLu4hjwWde2r1r"; // Simulate provider doc reference
   let chatRoomDocRef = ""; // Simulate chat room reference
+  const customerName = "Chandana";
+  const serviceProviderName = "Vikum Repair";
+  const customerProfileImageUrl =
+    "https://images.pexels.com/photos/30909945/pexels-photo-30909945/free-photo-of-young-boy-in-traditional-blue-attire-outdoors.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1";
+  const serviceProviderProfileImageUrl =
+    "https://cdn.pixabay.com/photo/2018/03/31/21/18/african-american-3279360_1280.jpg";
 
   let selfID = ""; // Simulate self ID
 
@@ -48,6 +54,11 @@ export default function RoleSelection() {
     });
   };
 
+  /**
+   *
+   * @requires
+   */
+
   const createChatRoom = async () => {
     if (!db) {
       console.warn("❌ Failed to get access access Firebase - roleSelection.tsx");
@@ -58,8 +69,16 @@ export default function RoleSelection() {
     try {
       const chatCollectionRef = collection(db, "Chat");
       const docRef = await addDoc(chatCollectionRef, {
-        serviceProviderRef: serviceProviderDocRef,
-        customerRef: customerDocRef,
+        serviceProvider: {
+          docRef: serviceProviderDocRef,
+          name: serviceProviderName,
+          profileImageUrl: serviceProviderProfileImageUrl,
+        },
+        customer: {
+          docRef: customerDocRef,
+          name: customerName,
+          profileImageUrl: customerProfileImageUrl,
+        },
       });
 
       chatRoomDocRef = docRef.id;

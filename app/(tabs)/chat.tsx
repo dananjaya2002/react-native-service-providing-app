@@ -8,24 +8,43 @@ import {
   ActivityIndicator,
   Alert,
   BackHandler,
+  Image,
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
-
+import { Timestamp, DocumentReference } from "firebase/firestore";
 // Define types
+
+type UserInfo = {
+  docRef: DocumentReference; // Reference to the user document in Firestore
+  name: string;
+  profileImageUrl: string;
+};
+
 type ChatRoom = {
   id: string;
   customerRef: string;
-  serviceProviderRef: string;
+  serviceProvider: UserInfo;
+  customer: UserInfo;
   name?: string;
   lastMessage?: string;
-  timestamp?: string;
+  timestamp?: Timestamp;
 };
 
 /**
  * Currently we trying to simulate both roles in the same page section. So we have to use dynamic userRoleType
  * Goal is to find the all document where the user role field is match with the userRef
+ */
+
+/**
+ * @userRole must be either "provider" or "customer"
+ * There are some thing we should need to be aware for now.
+ * This file required @userRole and @userDocRefId
+ * We use them to filter documents based on field in chatroom documents.
+ *
+ * Keep in mind that the service provider can switch between two @userRole . so we need focus on that later.
+ *
  */
 
 export default function ChatList() {
@@ -38,6 +57,7 @@ export default function ChatList() {
   // Identify user type
   const userRef = userID;
   const userRoleType = role === "provider" ? "serviceProviderRef" : "customerRef";
+  const userRoleDocFieldPath = role === "provider" ? "serviceProvider.docRef" : "customer.docRef";
 
   // Handle back button navigation -- Development purpose only
   useFocusEffect(
@@ -52,7 +72,11 @@ export default function ChatList() {
     }, [])
   );
 
-  // Fetch chat data
+  /**
+   *
+   * Fetch Data from the firebase
+   *
+   */
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -68,17 +92,50 @@ export default function ChatList() {
         }
 
         setIsLoading(true);
-        const usersRef = collection(db, "Chat");
-        const q = query(usersRef, where(userRoleType, "==", userRef));
+        const chatCollectionRef = collection(db, "Chat");
+        const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userRef));
+        const chatSnapshot = await getDocs(chatQuery);
 
-        const querySnapshot = await getDocs(q);
-        const chatRooms = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as ChatRoom[];
+        const chatRoomsWithLatestMessages = await Promise.all(
+          chatSnapshot.docs.map(async (doc) => {
+            const chatData = doc.data();
+            // Default to no additional message data
+            let lastMessageData = {};
+            try {
+              // Define the sub collection reference
+              const messagesRef = collection(doc.ref, "Messages");
 
-        console.log("Fetched chat rooms:", chatRooms);
-        setChatRooms(chatRooms);
+              // Query for the latest message, sorting by "timestamp" descending
+              const messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+              const messagesSnapshot = await getDocs(messagesQuery);
+
+              if (!messagesSnapshot.empty) {
+                const latestMessageDoc = messagesSnapshot.docs[0];
+                const latestData = latestMessageDoc.data();
+
+                // Here we assume the message text is stored in a field named "message"
+                lastMessageData = {
+                  lastMessage: latestData?.textChat || "Image",
+                  timestamp: latestData.timestamp
+                    ? new Date(latestData.timestamp.seconds * 1000).toLocaleString() // Convert to readable date
+                    : "No timestamp",
+                };
+              }
+            } catch (subError) {
+              console.error(
+                `Error fetching messages subcollection for chat room ${doc.id}:`,
+                subError
+              );
+            }
+            return {
+              id: doc.id,
+              ...chatData,
+              ...lastMessageData,
+            } as ChatRoom;
+          })
+        );
+        console.log("Fetched chat rooms:", chatRoomsWithLatestMessages);
+        setChatRooms(chatRoomsWithLatestMessages);
       } catch (error) {
         console.error("Error fetching documents:", error);
       } finally {
@@ -104,22 +161,54 @@ export default function ChatList() {
   };
 
   // Render each chat item
-  const renderChatItem = ({ item }: { item: ChatRoom }) => (
-    <TouchableOpacity style={styles.chatItem} onPress={() => navigateToChat(item.id)}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{item.name ? item.name.charAt(0) : "?"}</Text>
-      </View>
-      <View style={styles.chatContent}>
-        <Text style={styles.chatName}>{item.name || "Unknown User"}</Text>
-        <Text style={styles.chatMessage} numberOfLines={1}>
-          {item.lastMessage || "No messages yet"}
-        </Text>
-      </View>
-      <View style={styles.chatMeta}>
-        <Text style={styles.chatTimestamp}>{item.timestamp || "Just now"}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderChatItem = ({ item }: { item: ChatRoom }) => {
+    console.log("\n\nitem data: ", item);
+    let otherUserName;
+    let otherUserProfilePicURL;
+    let timestampText;
+
+    // Finding out who is the other party
+    if (role === "provider") {
+      otherUserName = item.serviceProvider.name;
+      otherUserProfilePicURL = item.serviceProvider.profileImageUrl;
+    } else if (role === "customer") {
+      otherUserName = item.customer.name;
+      otherUserProfilePicURL = item.serviceProvider.profileImageUrl;
+    } else {
+      otherUserName = "Not Found";
+      otherUserProfilePicURL = "Not Found";
+    }
+    console.log("profile image: ", otherUserProfilePicURL);
+
+    // Converting Time
+    if (!item.timestamp) {
+      timestampText = "Just now";
+    } else if (typeof item.timestamp === "string") {
+      timestampText = item.timestamp;
+    } else {
+      timestampText = item.timestamp.toDate().toLocaleString(); // Convert Firestore Timestamp to readable format
+    }
+    return (
+      <TouchableOpacity style={styles.chatItem} onPress={() => navigateToChat(item.id)}>
+        <View style={styles.avatar}>
+          <Image
+            source={{ uri: otherUserProfilePicURL }}
+            resizeMode="cover"
+            style={{ width: 50, height: 50, borderRadius: 20 }}
+          />
+        </View>
+        <View style={styles.chatContent}>
+          <Text style={styles.chatName}>{otherUserName || "Unknown User"}</Text>
+          <Text style={styles.chatMessage} numberOfLines={1}>
+            {item.lastMessage || "No messages yet"}
+          </Text>
+        </View>
+        <View style={styles.chatMeta}>
+          <Text style={styles.chatTimestamp}>{timestampText}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>

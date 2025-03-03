@@ -24,37 +24,37 @@ import {
 import { db } from "../../../FirebaseConfig"; // Ensure Firebase is configured
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
-// Define Firestore Message Format
+// Define Message Format
 interface ChatMessage {
   id: string; // Firestore doc.id
-  type: "send" | "receive";
+  senderId: string;
   text?: string;
   image?: string;
   timestamp?: any;
 }
+type RouterParams = {
+  userID: string; // Or number, or whatever type userID is
+  chatRoomDocRefId: string;
+};
+
+const PAGE_SIZE = 20;
 
 export default function ChatScreen() {
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [currentMessage, setCurrentMessage] = useState("");
-  const [isUserTyping, setIsUserTyping] = useState(false);
-
-  // Get chat room ID from navigation params
-  const { chatRoomDocRefId } = useLocalSearchParams<{ chatRoomDocRefId: string }>();
-
-  // References
   const chatListRef = useRef<FlatList>(null);
+  const { chatRoomDocRefId, userID } = useLocalSearchParams<RouterParams>();
 
-  /**
-   * Listen for real-time updates from Firestore
-   *
-   */
+  // Main Chat message array
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
-  // Listen for new messages
+  // User input message state
+  const [currentMessage, setCurrentMessage] = useState("");
+
+  // Fetch data from Firestore
   useEffect(() => {
     if (!chatRoomDocRefId) return;
 
     const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    const q = query(messagesRef, orderBy("timestamp", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const messages = snapshot.docs.map((doc) => ({
@@ -68,10 +68,14 @@ export default function ChatScreen() {
     return () => unsubscribe(); // Cleanup listener
   }, [chatRoomDocRefId]);
 
+  // Scroll to bottom on initial load
   useEffect(() => {
-    setIsUserTyping(currentMessage.length > 0);
-  }, [currentMessage]);
+    if (chatMessages.length > 0) {
+      chatListRef.current?.scrollToIndex({ index: 0, animated: false }); // No animation on first load
+    }
+  }, []);
 
+  // trigger scroll down when new message is added
   useEffect(() => {
     if (chatMessages.length > 0) {
       chatListRef.current?.scrollToIndex({ index: 0, animated: true });
@@ -86,7 +90,7 @@ export default function ChatScreen() {
     if (!currentMessage.trim()) return;
 
     const newMessage = {
-      type: "send",
+      senderId: userID,
       text: currentMessage.trim(),
       timestamp: serverTimestamp(),
     };
@@ -129,18 +133,14 @@ export default function ChatScreen() {
    * Send Image Message
    */
   const handleSendImageMessage = async (imageUri: string) => {
-    const newMessage = {
-      type: "send",
+    const newMessage: ChatMessage = {
+      id: String(Date.now()),
+      senderId: userID,
       image: imageUri,
-      timestamp: serverTimestamp(),
+      timestamp: new Date(), // Simulate timestamp
     };
 
-    try {
-      const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-      await addDoc(messagesRef, newMessage);
-    } catch (error) {
-      console.error("Error sending image:", error);
-    }
+    setChatMessages((prevMessages) => [newMessage, ...prevMessages]);
   };
 
   /**
@@ -148,34 +148,44 @@ export default function ChatScreen() {
    */
   const renderChatMessage = ({ item }: { item: ChatMessage }) => (
     <View
-      style={{
-        marginBottom: 10,
-        padding: 10,
-        borderRadius: 10,
-        maxWidth: "75%",
-        alignSelf: item.type === "send" ? "flex-end" : "flex-start",
-        backgroundColor: item.type === "send" ? "#007BFF" : "#ddd",
-      }}
+      style={[
+        styles.messageContainer,
+        item.senderId === userID ? styles.sentMessage : styles.receivedMessage,
+      ]}
     >
       {item.image ? (
-        <Image source={{ uri: item.image }} style={{ width: 200, height: 200, borderRadius: 10 }} />
+        <Image source={{ uri: item.image }} style={styles.messageImage} />
       ) : (
-        <Text style={{ fontSize: 16, color: item.type === "send" ? "white" : "#333" }}>
+        <Text
+          style={[
+            styles.messageText,
+            item.senderId === userID ? styles.sentMessageText : styles.receivedMessageText,
+          ]}
+        >
           {item.text}
         </Text>
       )}
-      <Text style={{ fontSize: 12, color: "#aaa", alignSelf: "flex-end", marginTop: 5 }}>
-        {item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString() : "Now"}
+      <Text
+        style={[
+          styles.messageTimestamp,
+          item.senderId === userID ? styles.sentMessageTimestamp : null,
+        ]}
+      >
+        {item.timestamp instanceof Date ? item.timestamp.toLocaleTimeString() : "Now"}
       </Text>
     </View>
   );
 
   return (
     <KeyboardAvoidingView
-      keyboardVerticalOffset={30}
-      style={styles.screenContainer}
+      style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
+      <TouchableOpacity style={styles.dataFetchButton} onPress={() => {}}>
+        <Text style={styles.dataFetchButtonText}>Fetch Data</Text>
+      </TouchableOpacity>
+
       <FlatList
         ref={chatListRef}
         data={chatMessages}
@@ -190,7 +200,7 @@ export default function ChatScreen() {
           <ActivityIndicator style={styles.typingIndicator} size="small" color="#888" />
         )} */}
 
-        <TouchableOpacity onPress={() => {}} style={styles.imageButtonContainer}>
+        <TouchableOpacity onPress={handleImageSelection} style={styles.imageButtonContainer}>
           <MaterialIcons name="image" size={24} color="#007BFF" />
         </TouchableOpacity>
 
@@ -199,13 +209,13 @@ export default function ChatScreen() {
           value={currentMessage}
           placeholder="Type your message"
           onChangeText={setCurrentMessage}
-          onSubmitEditing={handleImageSelection}
+          onSubmitEditing={handleSendTextMessage}
         />
 
         <TouchableOpacity
           onPress={handleSendTextMessage}
           disabled={!currentMessage.trim()}
-          style={{ opacity: currentMessage.trim() ? 1 : 0.5 }}
+          style={[styles.sendButton, { opacity: currentMessage.trim() ? 1 : 0.5 }]}
         >
           <Ionicons name="send" size={30} color="#333" />
         </TouchableOpacity>
@@ -219,6 +229,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 50,
   },
+  dataFetchButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    backgroundColor: "#007BFF",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    zIndex: 1, // Ensure it's above other components
+  },
+  dataFetchButtonText: {
+    color: "white",
+    fontSize: 16,
+  },
   messageInputContainer: {
     height: 70,
     backgroundColor: "#eee",
@@ -230,6 +254,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     padding: 10,
     backgroundColor: "#aee",
+    borderRadius: 5,
   },
   messageInputField: {
     flex: 1,
@@ -239,15 +264,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 10,
   },
-  sendButtonText: {
-    fontSize: 18,
-    color: "#007BFF",
+  sendButton: {
+    // No style changes for the button itself, opacity handled directly inline
   },
   messageContainer: {
     marginBottom: 10,
     padding: 10,
     borderRadius: 10,
     maxWidth: "75%",
+  },
+  messageText: {
+    fontSize: 16,
   },
   sentMessage: {
     alignSelf: "flex-end",
