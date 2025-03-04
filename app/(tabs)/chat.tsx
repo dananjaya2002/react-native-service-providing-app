@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -49,6 +49,7 @@ type ChatRoom = {
 
 export default function ChatList() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const chatRoomsRef = useRef<ChatRoom[]>([]); // dev only
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -78,6 +79,12 @@ export default function ChatList() {
    *
    */
   useEffect(() => {
+    // below if else code is for development purpose only
+    if (chatRoomsRef.current.length > 0) {
+      console.log("✅ Using cached chat rooms");
+      setChatRooms(chatRoomsRef.current);
+      return; // Skip fetching if data exists
+    }
     const fetchChats = async () => {
       try {
         if (!db) {
@@ -116,9 +123,7 @@ export default function ChatList() {
                 // Here we assume the message text is stored in a field named "message"
                 lastMessageData = {
                   lastMessage: latestData?.textChat || "Image",
-                  timestamp: latestData.timestamp
-                    ? new Date(latestData.timestamp.seconds * 1000).toLocaleString() // Convert to readable date
-                    : "No timestamp",
+                  timestamp: latestData.timestamp || null,
                 };
               }
             } catch (subError) {
@@ -136,6 +141,7 @@ export default function ChatList() {
         );
         console.log("Fetched chat rooms:", chatRoomsWithLatestMessages);
         setChatRooms(chatRoomsWithLatestMessages);
+        chatRoomsRef.current = chatRoomsWithLatestMessages; // dev only
       } catch (error) {
         console.error("Error fetching documents:", error);
       } finally {
@@ -144,7 +150,7 @@ export default function ChatList() {
     };
 
     fetchChats();
-  }, [role, userRef]);
+  }, []);
 
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string) => {
@@ -162,7 +168,6 @@ export default function ChatList() {
 
   // Render each chat item
   const renderChatItem = ({ item }: { item: ChatRoom }) => {
-    console.log("\n\nitem data: ", item);
     let otherUserName;
     let otherUserProfilePicURL;
     let timestampText;
@@ -178,15 +183,31 @@ export default function ChatList() {
       otherUserName = "Not Found";
       otherUserProfilePicURL = "Not Found";
     }
-    console.log("profile image: ", otherUserProfilePicURL);
 
     // Converting Time
     if (!item.timestamp) {
       timestampText = "Just now";
     } else if (typeof item.timestamp === "string") {
       timestampText = item.timestamp;
+      console.log("\n\nis timestampText: ", typeof item.timestamp === "string");
     } else {
-      timestampText = item.timestamp.toDate().toLocaleString(); // Convert Firestore Timestamp to readable format
+      const date = item.timestamp.toDate();
+      const today = new Date();
+
+      const isToday =
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+
+      if (isToday) {
+        timestampText = date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } else {
+        timestampText = date.toLocaleDateString();
+      }
     }
     return (
       <TouchableOpacity style={styles.chatItem} onPress={() => navigateToChat(item.id)}>
@@ -283,6 +304,7 @@ const styles = StyleSheet.create({
   },
   chatMeta: {
     alignItems: "flex-end",
+    marginLeft: 20,
   },
   chatTimestamp: {
     fontSize: 12,

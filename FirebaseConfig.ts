@@ -1,9 +1,11 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth } from "firebase/auth";
-import { Firestore, getFirestore } from "firebase/firestore";
+import { Auth, connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, Firestore, getFirestore } from "firebase/firestore";
 import Constants from "expo-constants";
 
-const USE_FIREBASE = true; // Change to true when needed
+const USE_FIREBASE = true; // Change to true when needed - Development only
+
+const useEmulator = process.env.NODE_ENV === "development"; // Use Firebase Emulator in development
 
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.FIREBASE_API_KEY,
@@ -20,19 +22,22 @@ let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth;
 
-if (USE_FIREBASE) {
-  // Ensure Firebase is initialized only once
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  console.log("🔥 Firebase initialized");
-} else {
-  console.log("❌ Firebase is disabled");
-  // **Fallback empty objects to prevent undefined errors**
-  app = {} as FirebaseApp;
-  db = {} as Firestore;
-  auth = {} as Auth;
-}
+// Initialize Firebase (only once)
+app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+db = getFirestore(app);
+auth = getAuth(app);
+
+console.log("🔥 Connected to Firebase Production");
+
+// if (useEmulator) {
+//   const emulatorHost = "localhost";
+
+//   connectFirestoreEmulator(db, emulatorHost, 8080);
+//   //connectAuthEmulator(auth, `http://${emulatorHost}:9099`); // Add this if you are using Firebase Authentication
+//   console.log("🔥 Connected to Firebase Emulators");
+// } else {
+//   console.log("🔥 Connected to Firebase Production");
+// }
 
 // Export variables (they will be undefined if USE_FIREBASE is false)
 export { app, db, auth };
