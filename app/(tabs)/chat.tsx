@@ -11,7 +11,7 @@ import {
   Image,
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
 import { Timestamp, DocumentReference } from "firebase/firestore";
 // Define types
@@ -79,77 +79,46 @@ export default function ChatList() {
    *
    */
   useEffect(() => {
-    // below if else code is for development purpose only
+    // Use cached chat rooms if available
     if (chatRoomsRef.current.length > 0) {
       console.log("✅ Using cached chat rooms");
       setChatRooms(chatRoomsRef.current);
-      return; // Skip fetching if data exists
+      setIsLoading(false);
+      return;
     }
-    const fetchChats = async () => {
-      try {
-        if (!db) {
-          console.warn("❌ Firebase not initialized.");
-          Alert.alert("Error", "Failed to access Firebase");
-          return;
-        }
 
-        if (!userRef) {
-          console.warn("❌ User reference is undefined.");
-          return;
-        }
+    // Indicate loading has started
+    setIsLoading(true);
 
-        setIsLoading(true);
-        const chatCollectionRef = collection(db, "Chat");
-        const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userRef));
-        const chatSnapshot = await getDocs(chatQuery);
+    const chatCollectionRef = collection(db, "Chat");
+    const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userRef));
 
-        const chatRoomsWithLatestMessages = await Promise.all(
-          chatSnapshot.docs.map(async (doc) => {
-            const chatData = doc.data();
-            // Default to no additional message data
-            let lastMessageData = {};
-            try {
-              // Define the sub collection reference
-              const messagesRef = collection(doc.ref, "Messages");
+    // Attach the real-time listener
+    const unsubscribe = onSnapshot(
+      chatQuery,
+      (chatSnapshot) => {
+        // Map over documents to build chat rooms with latest message info
+        const chatRooms = chatSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as ChatRoom[];
 
-              // Query for the latest message, sorting by "timestamp" descending
-              const messagesQuery = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
-              const messagesSnapshot = await getDocs(messagesQuery);
+        console.log("Fetched chat rooms:", chatRooms);
+        setChatRooms(chatRooms);
+        chatRoomsRef.current = chatRooms; // For caching during development
 
-              if (!messagesSnapshot.empty) {
-                const latestMessageDoc = messagesSnapshot.docs[0];
-                const latestData = latestMessageDoc.data();
-
-                // Here we assume the message text is stored in a field named "message"
-                lastMessageData = {
-                  lastMessage: latestData?.textChat || "Image",
-                  timestamp: latestData.timestamp || null,
-                };
-              }
-            } catch (subError) {
-              console.error(
-                `Error fetching messages subcollection for chat room ${doc.id}:`,
-                subError
-              );
-            }
-            return {
-              id: doc.id,
-              ...chatData,
-              ...lastMessageData,
-            } as ChatRoom;
-          })
-        );
-        console.log("Fetched chat rooms:", chatRoomsWithLatestMessages);
-        setChatRooms(chatRoomsWithLatestMessages);
-        chatRoomsRef.current = chatRoomsWithLatestMessages; // dev only
-      } catch (error) {
-        console.error("Error fetching documents:", error);
-      } finally {
+        // Data has been fetched—turn off loading indicator
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching chat rooms:", error);
+        // On error, also stop loading
         setIsLoading(false);
       }
-    };
+    );
 
-    fetchChats();
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
   // Navigate to chat screen
@@ -253,8 +222,7 @@ export default function ChatList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    marginTop: 30,
+    backgroundColor: "#FEFEFA",
   },
   header: {
     marginTop: 16,
@@ -272,7 +240,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     marginBottom: 10,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#F2F3F4",
     borderRadius: 10,
   },
   avatar: {
@@ -297,10 +265,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+    marginLeft: 5,
   },
   chatMessage: {
     fontSize: 14,
     color: "#666",
+    marginLeft: 5,
   },
   chatMeta: {
     alignItems: "flex-end",
