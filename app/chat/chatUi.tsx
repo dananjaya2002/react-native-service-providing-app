@@ -16,6 +16,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import {
   addDoc,
   collection,
+  doc,
   getDocs,
   limit,
   onSnapshot,
@@ -23,6 +24,7 @@ import {
   query,
   serverTimestamp,
   startAfter,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../../FirebaseConfig"; // Ensure Firebase is configured
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -66,6 +68,8 @@ export default function ChatScreen() {
   // To prevent scroll down when user is scrolling up to view old messages
   const [shouldScroll, setShouldScroll] = useState(true);
 
+  const messagesRefDevOnly = useRef<ChatMessage[]>([]); // dev only
+
   /**
    *
    * Helper Functions
@@ -74,6 +78,13 @@ export default function ChatScreen() {
 
   // Fetch data from Firestore
   useEffect(() => {
+    // Use cached chat rooms if available
+    if (messagesRefDevOnly.current.length > 0) {
+      console.log("✅ Using cached chat rooms");
+      setChatMessages(messagesRefDevOnly.current);
+      setLoadingMore(false);
+      return;
+    }
     if (!chatRoomDocRefId) return;
 
     const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
@@ -84,6 +95,8 @@ export default function ChatScreen() {
         id: doc.id,
         ...doc.data(),
       })) as ChatMessage[];
+
+      messagesRefDevOnly.current = messages; // Dev only
 
       setChatMessages(messages);
       if (snapshot.docs.length > 0) {
@@ -146,7 +159,19 @@ export default function ChatScreen() {
   const sendMessages = async (message: SendingChat) => {
     try {
       const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
-      await addDoc(messagesRef, message);
+      const batch = writeBatch(db);
+      // Create a new message document reference and add the message
+      const newMessageRef = doc(messagesRef);
+      batch.set(newMessageRef, message);
+      // Reference to the parent Chat document
+      const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
+      // Update the parent document with latest message details
+      batch.update(chatDocRef, {
+        lastMessage: message.textChat || message.imageUrl,
+        timestamp: message.timestamp || new Date(),
+      });
+      // Commit the batch
+      await batch.commit();
       setCurrentMessage(""); // Clear input after sending
     } catch (error) {
       console.error("Error sending message:", error);
@@ -254,7 +279,7 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: "#F2F3F4" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
@@ -291,7 +316,7 @@ export default function ChatScreen() {
         )} */}
 
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageButtonContainer}>
-          <MaterialIcons name="image" size={24} color="#007BFF" />
+          <MaterialIcons name="image" size={24} color="#333" />
         </TouchableOpacity>
 
         <TextInput
@@ -317,66 +342,90 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    marginTop: 50,
+    backgroundColor: "#F2F3F4",
   },
   dataFetchButton: {
     position: "absolute",
     top: 20,
     left: 20,
-    backgroundColor: "#007BFF",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 5,
-    zIndex: 1, // Ensure it's above other components
+    backgroundColor: "#3498db",
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    zIndex: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   dataFetchButtonText: {
-    color: "white",
+    color: "#fff",
     fontSize: 16,
+    fontWeight: "600",
   },
   messageInputContainer: {
-    height: 70,
-    backgroundColor: "#eee",
+    height: 60,
+    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
   imageButtonContainer: {
     marginRight: 10,
-    padding: 10,
-    backgroundColor: "#aee",
-    borderRadius: 5,
+    padding: 8,
+    borderRadius: 8,
   },
   messageInputField: {
     flex: 1,
-    padding: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     fontSize: 16,
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 20,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   sendButton: {
-    // No style changes for the button itself, opacity handled directly inline
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 4,
   },
   messageContainer: {
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 10,
-    maxWidth: "75%",
+    marginVertical: 6,
+    padding: 12,
+    borderRadius: 12,
+    maxWidth: "80%",
+    // Add subtle shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   messageText: {
     fontSize: 16,
+    lineHeight: 22,
   },
   sentMessage: {
     alignSelf: "flex-end",
-    backgroundColor: "#007BFF",
+    backgroundColor: "#0d6efd",
   },
   receivedMessage: {
     alignSelf: "flex-start",
-    backgroundColor: "#ddd",
+    backgroundColor: "#e9ecef",
   },
   sentMessageText: {
     fontSize: 16,
-    color: "white",
+    color: "#fff",
   },
   receivedMessageText: {
     fontSize: 16,
@@ -384,15 +433,15 @@ const styles = StyleSheet.create({
   },
   messageTimestamp: {
     fontSize: 12,
-    color: "#aaa",
+    color: "#888",
     alignSelf: "flex-end",
-    marginTop: 5,
+    marginTop: 6,
   },
   sentMessageTimestamp: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.8)",
   },
   chatListContainer: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 15,
     paddingBottom: 20,
   },
   typingIndicator: {
@@ -404,7 +453,7 @@ const styles = StyleSheet.create({
   messageImage: {
     width: 200,
     height: 200,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 5,
   },
 });
