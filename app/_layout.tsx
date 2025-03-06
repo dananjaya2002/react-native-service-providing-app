@@ -37,7 +37,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView style={{ flex: 1 }}>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <ShopProvider>
               <KeyboardProvider>

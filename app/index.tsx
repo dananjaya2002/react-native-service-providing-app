@@ -43,7 +43,7 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       //router.push("/(tabs)");
-      router.push("/DevSection/D_SimulateChat/roleSelection");
+      router.push("/DevSection/DevUI");
 
       const shopId = "123";
       //router.push(`../customer/${shopId}`);

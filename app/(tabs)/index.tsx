@@ -10,6 +10,8 @@ import shopData from "../../assets/Data/data2";
 import FilterSection, { City } from "../../components/section2/searchSection";
 import { Link, router } from "expo-router";
 import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
+import { Drawer } from "react-native-drawer-layout";
+import { Ionicons } from "@expo/vector-icons";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
 
@@ -22,6 +24,8 @@ interface Shop {
 }
 
 const HomeScreen: React.FC = () => {
+  const [open, setOpen] = useState(false);
+
   const dummyData: Record<string, Category> = {
     cat1: {
       categoryID: "cat1",
@@ -71,29 +75,61 @@ const HomeScreen: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-primary">
-      <Header title="Home" onPressBack={() => console.log("Back pressed")} />
-
-      <FilterSection
-        data={dummyCities}
-        onSelect={() => {
-          console.log("City selected");
-        }}
-      />
-
-      <CategoriesList data={dummyData} />
-
-      {/* Shop List */}
-      <View className="flex-1 px-2">
-        <FlatList
-          data={shopData}
-          keyExtractor={(item: Shop) => item.id}
-          renderItem={({ item }: { item: Shop }) => (
-            <ShopCard item={item} onShopClick={handleShopClick} />
-          )}
-        />
+    <Drawer
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      drawerPosition="right" // Slide from right to left
+      drawerStyle={{
+        backgroundColor: "#ecf0f1",
+        width: 300,
+        padding: 20,
+      }}
+      renderDrawerContent={() => (
+        <View>
+          <Text style={{ fontSize: 18, fontWeight: "bold" }}>Filter Options</Text>
+          {/* Add filter components here */}
+        </View>
+      )}
+    >
+      <View className="flex-1 bg-primary">
+        <Header title="Home" onPressBack={() => console.log("Back pressed")} />
+        <View className="flex-row h-[50] mx-2">
+          <View className="flex-1 mr-1">
+            <FilterSection
+              data={dummyCities}
+              onSelect={() => {
+                console.log("City selected");
+              }}
+            />
+          </View>
+          <View className="bg-green-600 w-[50] h-full justify-center item-center">
+            <TouchableOpacity
+              onPress={() => setOpen((prev) => !prev)}
+              style={{
+                backgroundColor: "#f2f2f2",
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Ionicons name="menu" size={36} color="black" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <CategoriesList data={dummyData} />
+        {/* Shop List */}
+        <View className="flex-1 px-2">
+          <FlatList
+            data={shopData}
+            keyExtractor={(item: Shop) => item.id}
+            renderItem={({ item }: { item: Shop }) => (
+              <ShopCard item={item} onShopClick={handleShopClick} />
+            )}
+          />
+        </View>
       </View>
-    </View>
+    </Drawer>
   );
 };
 
