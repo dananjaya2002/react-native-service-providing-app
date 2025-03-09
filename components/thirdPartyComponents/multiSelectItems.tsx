@@ -1,18 +1,22 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { StyleSheet, View, TouchableOpacity, Text, Animated } from "react-native";
 import { MultiSelect } from "react-native-element-dropdown";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
 // Define type for dropdown items
-export interface DropdownItem {
+export interface ItemProps {
   label: string;
   value: string;
 }
+export interface Location {
+  id: string;
+  locationName: string;
+}
 
 interface MultiSelectComponentProps {
-  data: DropdownItem[];
-  selected: string[];
-  onSelectedChange: (selected: string[]) => void;
+  data: ItemProps[];
+  selected: Location[];
+  onSelectedChange: (selected: Location[]) => void;
 }
 
 const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
@@ -21,41 +25,50 @@ const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
   onSelectedChange,
 }) => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const animatedOpacity = useRef(new Animated.Value(1)).current;
+
+  // Convert selected full objects to an array of IDs for the MultiSelect component
+  const convertedSelected = selected.map((item) => item.id);
 
   // Toggle item selection and propagate change to parent
-  const toggleSelection = (value: string) => {
-    const newSelected = selected.includes(value)
-      ? selected.filter((v) => v !== value)
-      : [...selected, value];
+  const toggleSelection = (item: ItemProps) => {
+    Animated.sequence([
+      Animated.timing(animatedOpacity, { toValue: 0.5, duration: 100, useNativeDriver: true }),
+      Animated.timing(animatedOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+
+    const exists = selected.find((location) => location.id === item.value);
+    let newSelected: Location[];
+    if (exists) {
+      // Remove the item if it's already selected
+      newSelected = selected.filter((location) => location.id !== item.value);
+    } else {
+      // Add the new item as a full object
+      newSelected = [...selected, { id: item.value, locationName: item.label }];
+    }
     onSelectedChange(newSelected);
   };
 
   // Custom render function for each item in the dropdown
-  const renderItem = (item: DropdownItem) => {
-    const isSelected = selected.includes(item.value);
-    const animatedOpacity = new Animated.Value(1);
-
-    const handlePress = () => {
-      Animated.sequence([
-        Animated.timing(animatedOpacity, { toValue: 0.5, duration: 100, useNativeDriver: true }),
-        Animated.timing(animatedOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
-      ]).start();
-      toggleSelection(item.value);
-    };
+  const renderItem = (item: ItemProps) => {
+    // Check if the item is selected by comparing ids
+    const isSelected = selected.some((location) => location.id === item.value);
 
     return (
-      <View style={styles.item}>
+      <TouchableOpacity
+        onPress={() => toggleSelection(item)}
+        activeOpacity={0.7}
+        style={styles.item}
+      >
         <Text style={styles.selectedTextStyle}>{item.label}</Text>
-        <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
-          <Animated.View style={{ opacity: animatedOpacity }}>
-            <AntDesign
-              name={isSelected ? "checkcircle" : "checkcircleo"}
-              size={20}
-              color={isSelected ? "green" : "black"}
-            />
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
+        <Animated.View style={{ opacity: animatedOpacity }}>
+          <AntDesign
+            name={isSelected ? "checkcircle" : "checkcircleo"}
+            size={20}
+            color={isSelected ? "green" : "black"}
+          />
+        </Animated.View>
+      </TouchableOpacity>
     );
   };
 
@@ -71,10 +84,17 @@ const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
         labelField="label"
         valueField="value"
         placeholder="Select Locations"
-        value={selected}
+        value={convertedSelected}
         search
         searchPlaceholder="Search..."
-        onChange={onSelectedChange} // Pass change events directly to parent handler
+        // onChange is optional here as we handle selection via our custom renderItem & toggleSelection
+        onChange={(selectedIds: string[]) => {
+          // Optional: Map selectedIds to full objects using data
+          const newSelected = data
+            .filter((item) => selectedIds.includes(item.value))
+            .map((item) => ({ id: item.value, locationName: item.label }));
+          onSelectedChange(newSelected);
+        }}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         renderLeftIcon={() => (
@@ -82,7 +102,16 @@ const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
         )}
         renderItem={renderItem}
         renderSelectedItem={(item, unSelect) => (
-          <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
+          <TouchableOpacity
+            onPress={() => {
+              if (unSelect) {
+                unSelect(item);
+                // Remove the full object from selected state
+                const newSelected = selected.filter((location) => location.id !== item.value);
+                onSelectedChange(newSelected);
+              }
+            }}
+          >
             <View style={styles.selectedStyle}>
               <Text style={styles.textSelectedStyle}>{item.label}</Text>
               <AntDesign color="red" name="closecircle" size={17} />

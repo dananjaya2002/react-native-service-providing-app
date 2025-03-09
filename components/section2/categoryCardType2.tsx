@@ -11,7 +11,7 @@ export type CategoryCardType2Props = {
 
 type CategoryCardType2ComponentProps = {
   category: CategoryCardType2Props;
-  onCategoryPress: (categoryID: string) => void;
+  onCategoryPress: (categoryID: CategoryCardType2Props) => void;
 };
 
 const CategoryCardType2: React.FC<CategoryCardType2ComponentProps> = ({
@@ -20,7 +20,7 @@ const CategoryCardType2: React.FC<CategoryCardType2ComponentProps> = ({
 }) => {
   const { categoryID, categoryName, iconName } = category; // Destructure the category object
   return (
-    <RectButton onPress={() => onCategoryPress(categoryID)} style={styles.rectButton}>
+    <RectButton onPress={() => onCategoryPress(category)} style={styles.rectButton}>
       <View style={styles.container}>
         <Ionicons name={iconName} size={22} color="#333" style={styles.icon} />
 
