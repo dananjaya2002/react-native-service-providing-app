@@ -15,7 +15,7 @@ interface MultiSelectComponentProps {
   onSelectedChange: (selected: string[]) => void;
 }
 
-const MultiSelectComponent: React.FC<MultiSelectComponentProps> = ({
+const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
   data,
   selected,
   onSelectedChange,
@@ -70,7 +70,7 @@ const MultiSelectComponent: React.FC<MultiSelectComponentProps> = ({
         data={data}
         labelField="label"
         valueField="value"
-        placeholder="Select items"
+        placeholder="Select Locations"
         value={selected}
         search
         searchPlaceholder="Search..."
@@ -94,10 +94,10 @@ const MultiSelectComponent: React.FC<MultiSelectComponentProps> = ({
   );
 };
 
-export default MultiSelectComponent;
+export default MultiSelectItems;
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
+  container: { padding: 2, backgroundColor: "green" },
   dropdown: {
     height: 50,
     backgroundColor: "white",
