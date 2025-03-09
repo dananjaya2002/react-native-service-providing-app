@@ -54,7 +54,7 @@ const ShopCard: React.FC<ShopCardProps> = ({ item, onShopClick }) => {
       <Animated.View style={[styles.card, animatedStyle]}>
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
         <View style={styles.contentContainer}>
-          <View>
+          <View style={styles.subContainer}>
             <Text style={styles.titleText}>{item.title}</Text>
             <Text style={styles.descriptionText} numberOfLines={2}>
               {item.description}
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     backgroundColor: "white",
-    height: 120,
+    height: 130,
     width: "100%",
     alignItems: "center",
     marginBottom: 4,
@@ -108,26 +108,27 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   image: {
-    width: 100,
-    height: 100,
+    width: 110,
+    height: 110,
     borderRadius: 0,
-    marginRight: 16,
+    marginRight: 8,
   },
   contentContainer: {
     flex: 1,
     height: "100%",
-    paddingBottom: 4,
-    paddingRight: 8,
+
     justifyContent: "space-between",
   },
+  subContainer: {
+    flex: 1,
+  },
   titleText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     marginBottom: 4,
   },
   descriptionText: {
     fontSize: 12,
-    marginBottom: 4,
   },
   row: {
     flexDirection: "row",

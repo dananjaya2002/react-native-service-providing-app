@@ -43,7 +43,7 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       //router.push("/(tabs)");
-      router.push("/DevSection/DevUI");
+      router.push("/(tabs)");
 
       const shopId = "123";
       //router.push(`../customer/${shopId}`);

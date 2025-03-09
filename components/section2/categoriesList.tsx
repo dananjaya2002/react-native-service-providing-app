@@ -1,26 +1,24 @@
 import React from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { RectButton } from "react-native-gesture-handler";
 
 // Define the Category type with a typed iconName.
-// This ensures the iconName matches one of the keys in Ionicons.glyphMap.
-export interface Category {
+export type Category = {
   categoryID: string;
   categoryName: string;
   iconName: keyof typeof Ionicons.glyphMap;
-}
+};
 
-interface CategoriesListProps {
-  // Data coming from Firebase as a map (object) keyed by categoryID
-  data: Record<string, Category>;
-}
+type CategoryCardProps = {
+  category: Category;
+  onCategoryPress: (categoryID: string) => void;
+};
 
-// CategoryCard component using arrow function
-const CategoryCard: React.FC<{ category: Category }> = ({ category }) => {
-  const { categoryName, iconName } = category;
+const CategoryCard: React.FC<CategoryCardProps> = ({ category, onCategoryPress }) => {
+  const { categoryID, categoryName, iconName } = category;
   return (
-    <RectButton style={styles.card} onPress={() => console.log("Pressed", categoryName)}>
+    <RectButton style={styles.card} onPress={() => onCategoryPress(categoryName)}>
       <View style={styles.iconContainer}>
         <Ionicons name={iconName} size={22} color="#333" />
       </View>
@@ -29,20 +27,27 @@ const CategoryCard: React.FC<{ category: Category }> = ({ category }) => {
   );
 };
 
-// CategoriesList component using arrow function
-const CategoriesList: React.FC<CategoriesListProps> = ({ data }) => {
-  // Convert the map to an array for FlatList
-  const categoriesArray = Object.values(data);
+type CategoriesListProps = {
+  // Expecting a map of categories from Firebase or another source.
+  categories: Record<string, Category>;
+  onCategoryPress: (categoryName: string) => void;
+};
+
+const CategoriesList: React.FC<CategoriesListProps> = ({ categories, onCategoryPress }) => {
+  // Convert the map to an array for FlatList.
+  const categoriesArray = Object.values(categories);
 
   return (
-    <View className="h-auto py-1">
+    <View style={{ paddingVertical: 8 }}>
       <FlatList
         data={categoriesArray}
         keyExtractor={(item) => item.categoryID}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => <CategoryCard category={item} />}
+        renderItem={({ item }) => (
+          <CategoryCard category={item} onCategoryPress={onCategoryPress} />
+        )}
       />
     </View>
   );
@@ -58,12 +63,10 @@ const styles = StyleSheet.create({
     marginRight: 4,
     padding: 10,
     alignItems: "center",
-    // iOS shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    // Android shadow
     elevation: 2,
   },
   iconContainer: {
