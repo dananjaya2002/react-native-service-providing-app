@@ -12,7 +12,7 @@ import {
 
 import ShopCard from "../../components/section2/shopCard";
 import Header from "../../components/section2/header_Main";
-import { Category } from "../../components/section2/categoriesList";
+//import { Category } from "../../components/section2/categoriesList";
 import CategoriesList from "../../components/section2/categoriesList";
 
 import shopData from "../../assets/Data/data2";
@@ -22,8 +22,9 @@ import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler"
 import { Drawer } from "react-native-drawer-layout";
 import { Ionicons } from "@expo/vector-icons";
 import MultiSelectComponent, {
-  DropdownItem,
+  ItemProps as MultiSelectDropdownItemProps,
 } from "../../components/thirdPartyComponents/multiSelectItems";
+import DisplaySelectedChip from "../../components/section2/displaySelectedChip";
 
 import CategoryCardType2, {
   CategoryCardType2Props,
@@ -46,6 +47,17 @@ import { app, db } from "../../FirebaseConfig";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
 
+interface Location {
+  id: string;
+  locationName: string;
+}
+
+interface Category {
+  categoryID: string;
+  categoryName: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+}
+
 interface Shop {
   id: string;
   rating: number;
@@ -59,7 +71,7 @@ interface Shop {
   userDocId: string;
   avgRating: number;
 }
-const data: DropdownItem[] = [
+const data: MultiSelectDropdownItemProps[] = [
   { label: "Colombo", value: "1" },
   { label: "Dehiwala", value: "2" },
   { label: "Mount Lavinia", value: "3" },
@@ -90,10 +102,10 @@ const dummyData: Record<string, Category> = {
 const PAGE_SIZE = 5;
 
 const HomeScreen: React.FC = () => {
-  const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]); // Selected Locations
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // Selected Category
+  const [selectedLocations, setSelectedLocations] = useState<Location[]>([]); // Selected Locations
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null); // Selected Category
 
   const [shops, setShops] = useState<Shop[]>([]);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -102,25 +114,55 @@ const HomeScreen: React.FC = () => {
 
   const didFetchRef = useRef(false);
 
+  const combinedChips = [...selectedLocations, selectedCategory];
+
+  const selectedCategoryRef = useRef<Category | null>(null);
+
+  // Helper function to get matching labels from selected values
+  // const getMatchingLabels = (
+  //   selectedValues: string[],
+  //   data: MultiSelectDropdownItemProps[]
+  // ): string[] => {
+  //   return data
+  //     .filter((item) => selectedValues.includes(item.value)) // Keep only matching items
+  //     .map((item) => item.label); // Extract only labels
+  // };
   const buildQueryConstraints = (): QueryConstraint[] => {
-    console.log("Selected Locations:", selectedLocations);
+    const selectedLocationLabels = selectedLocations.map((location) => location.locationName);
+    console.log("Selected Locations:", selectedLocationLabels);
+    console.log("Selected Category:", selectedCategory?.categoryName);
+
+    const tempCategory = selectedCategoryRef.current;
+    console.log("Temp Category:", tempCategory);
     const constraints: QueryConstraint[] = [];
-    if (selectedLocations.length > 0) {
+    if (selectedLocationLabels.length > 0) {
       constraints.push(
-        selectedLocations.length === 1
-          ? where("shopLocation", "==", selectedLocations[0])
-          : where("shopLocation", "in", selectedLocations)
+        selectedLocationLabels.length === 1
+          ? where("shopLocation", "==", selectedLocationLabels[0])
+          : where("shopLocation", "in", selectedLocationLabels)
       );
     }
-    if (selectedCategory) {
-      constraints.push(where("shopCategory", "==", selectedCategory));
+    if (tempCategory) {
+      constraints.push(where("shopCategory", "==", tempCategory.categoryName));
     }
     constraints.push(orderBy("totalRatingsCount", "asc"), limit(PAGE_SIZE));
     return constraints;
   };
 
-  // Combined function to fetch shops
+  /**
+   *
+   * Main function to fetch shops from Firestore
+   * @param cursor
+   *
+   *
+   */
   const fetchShopsPage = async (cursor?: QueryDocumentSnapshot<DocumentData>) => {
+    // if (didFetchRef.current) {
+    //   console.log("🟥 Force Stopped Fetching");
+    //   return;
+    // }
+    // console.log("⏬⏬ Fetching ⏬⏬");
+    // didFetchRef.current = true;
     setLoading(true);
     try {
       const shopCollection = collection(db, "ShopList");
@@ -192,7 +234,9 @@ const HomeScreen: React.FC = () => {
     // setLastDoc(null);
     // setHasMore(true);
     // fetchShopsPage();
-    console.log("🟦 Filters changed:", selectedLocations, selectedCategory);
+    console.log("\n");
+    console.log("Selected Location: ", selectedLocations);
+    console.log("Selected Categories: ", selectedCategory);
   }, [selectedLocations, selectedCategory]);
 
   // Load more shops when end is reached
@@ -202,13 +246,15 @@ const HomeScreen: React.FC = () => {
   };
 
   // Category card  Press Handler
-  const handleCategoryCardPress = (categoryName?: string) => {
-    setSelectedCategory(categoryName || null);
-    doFiltering();
+  const handleCategoryCardPress = (category?: Category) => {
+    const newCategory = category || null;
+    setSelectedCategory(newCategory);
+    selectedCategoryRef.current = newCategory;
   };
 
   const handleFilterButtonPress = () => {
     console.log("Filter button pressed!");
+    setDrawerOpen(false);
     doFiltering();
   };
 
@@ -220,11 +266,11 @@ const HomeScreen: React.FC = () => {
   // To Close Drawer on Back Button Press
   useEffect(() => {
     const backAction = () => {
-      if (open) {
-        setOpen(false); // Close the drawer if it is open
+      if (drawerOpen) {
+        setDrawerOpen(false); // Close the drawer if it is drawerOpen
         return true; // Prevent default back action
       }
-      return false; // Allow default back action if drawer is not open
+      return false; // Allow default back action if drawer is not drawerOpen
     };
     const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
     // Add a custom back handler for iOS
@@ -239,7 +285,7 @@ const HomeScreen: React.FC = () => {
     }
 
     return () => backHandler.remove();
-  }, [open]);
+  }, [drawerOpen]);
 
   const handleShopClick = (gestureEvent: TapGestureHandlerStateChangeEvent) => {
     console.log("Shop tapped!", gestureEvent.nativeEvent);
@@ -247,11 +293,21 @@ const HomeScreen: React.FC = () => {
     router.push(`../customer/${shopId}`);
   };
 
+  // Remove a location chip by filtering it out
+  const handleRemoveLocation = (location: Location) => {
+    setSelectedLocations((prev) => prev.filter((l) => l.id !== location.id));
+  };
+
+  // Remove the category chip by setting it to null
+  const handleRemoveCategory = () => {
+    setSelectedCategory(null);
+  };
+
   return (
     <Drawer
-      open={open}
-      onOpen={() => setOpen(true)}
-      onClose={() => setOpen(false)}
+      open={drawerOpen}
+      onOpen={() => setDrawerOpen(true)}
+      onClose={() => setDrawerOpen(false)}
       drawerPosition="right" // Slide from right to left
       drawerStyle={{
         backgroundColor: "#ecf0f1",
@@ -302,7 +358,7 @@ const HomeScreen: React.FC = () => {
           <View className="bg-green-600 w-[50] h-full justify-center item-center">
             {/* Slider Sheet Button  */}
             <TouchableOpacity
-              onPress={() => setOpen((prev) => !prev)}
+              onPress={() => setDrawerOpen((prev) => !prev)}
               style={{
                 backgroundColor: "#f2f2f2",
                 flex: 1,
@@ -310,12 +366,18 @@ const HomeScreen: React.FC = () => {
                 alignItems: "center",
               }}
             >
-              <Ionicons name="menu" size={36} color="black" />
+              <Ionicons name="filter" size={36} color="black" />
             </TouchableOpacity>
           </View>
         </View>
-        {/* Category List */}
-        <CategoriesList categories={dummyData} onCategoryPress={handleCategoryCardPress} />
+        {/* Horizontal Category Card List */}
+        {/* <CategoriesList categories={dummyData} onCategoryPress={handleCategoryCardPress} /> */}
+        <DisplaySelectedChip
+          selectedLocations={selectedLocations}
+          selectedCategory={selectedCategory}
+          onRemoveLocation={handleRemoveLocation}
+          onRemoveCategory={handleRemoveCategory}
+        />
         {/* Shop List */}
         <View className="flex-1 px-2">
           <FlatList
