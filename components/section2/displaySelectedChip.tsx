@@ -27,7 +27,7 @@ const DisplaySelectedChip: React.FC<DisplaySelectedChipProps> = ({
   onRemoveCategory,
 }) => {
   return (
-    <View className="bg-purple-300 p-2 flex-row flex-wrap gap-1">
+    <View className="px-3 py-2 flex-row flex-wrap gap-1">
       {/* Render a chip for each selected location */}
       {selectedLocations.map((location) => (
         <TouchableOpacity
@@ -46,8 +46,8 @@ const DisplaySelectedChip: React.FC<DisplaySelectedChipProps> = ({
           className="bg-blue-300 rounded-2xl flex-row gap-2 px-3 py-2"
           onPress={onRemoveCategory}
         >
-          <Text className="text-sm">{selectedCategory.categoryName}</Text>
-          <Ionicons name="close-circle-outline" size={22} color="#c31111" />
+          <Text className="text-sm font-medium ml-1">{selectedCategory.categoryName}</Text>
+          <Ionicons name="close-circle-outline" size={22} color="#c31111" style={{}} />
         </TouchableOpacity>
       )}
     </View>

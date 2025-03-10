@@ -76,6 +76,7 @@ const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
     <View style={styles.container}>
       <MultiSelect
         style={[styles.dropdown, isFocused && styles.dropdownFocused]}
+        containerStyle={styles.itemContainer}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
         inputSearchStyle={styles.inputSearchStyle}
@@ -85,7 +86,7 @@ const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
         valueField="value"
         placeholder="Select Locations"
         value={convertedSelected}
-        search
+        search={true}
         searchPlaceholder="Search..."
         // onChange is optional here as we handle selection via our custom renderItem & toggleSelection
         onChange={(selectedIds: string[]) => {
@@ -126,11 +127,12 @@ const MultiSelectItems: React.FC<MultiSelectComponentProps> = ({
 export default MultiSelectItems;
 
 const styles = StyleSheet.create({
-  container: { padding: 2, backgroundColor: "green" },
+  container: { padding: 2 },
+  itemContainer: { borderColor: "#999999", borderRadius: 5, borderWidth: 1 },
   dropdown: {
     height: 50,
     backgroundColor: "white",
-    borderRadius: 12,
+    borderRadius: 5,
     paddingHorizontal: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
   },
   dropdownFocused: {
-    borderColor: "#3498db",
+    borderColor: "#999999",
   },
   placeholderStyle: {
     fontSize: 16,
@@ -156,12 +158,7 @@ const styles = StyleSheet.create({
     height: 20,
   },
   inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
   },
   icon: {
     marginRight: 5,

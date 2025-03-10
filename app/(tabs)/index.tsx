@@ -306,10 +306,8 @@ const HomeScreen: React.FC = () => {
     return () => backHandler.remove();
   }, [drawerOpen]);
 
-  const handleShopClick = (gestureEvent: TapGestureHandlerStateChangeEvent) => {
-    console.log("Shop tapped!", gestureEvent.nativeEvent);
-    const shopId = "123";
-    router.push(`../customer/${shopId}`);
+  const handleShopClick = (item: Shop, gestureEvent: TapGestureHandlerStateChangeEvent) => {
+    router.push(`../customer/${item.userDocId}`);
   };
 
   // Remove a location chip by filtering it out
@@ -344,7 +342,7 @@ const HomeScreen: React.FC = () => {
         padding: 20,
       }}
       renderDrawerContent={() => (
-        <View className="flex-1 bg-fuchsia-300">
+        <View className="flex-1">
           {/* Slide Left Menu */}
           <Text style={{ fontSize: 18, fontWeight: "bold" }}>Filter Options</Text>
           <MultiSelectComponent
@@ -353,7 +351,7 @@ const HomeScreen: React.FC = () => {
             onSelectedChange={setSelectedLocations}
           />
 
-          <View className="flex-1 bg-yellow-100">
+          <View className="flex-1">
             {/* Vertical Category Cards */}
             <FlatList
               data={Object.values(dummyData)} // Convert object to array
@@ -361,7 +359,7 @@ const HomeScreen: React.FC = () => {
               renderItem={({ item }) => (
                 <CategoryCardType2 category={item} onCategoryPress={handleCategoryCardPress} />
               )}
-              contentContainerStyle={{ backgroundColor: "#cb96f0", padding: 10 }}
+              contentContainerStyle={{ padding: 10 }}
             />
           </View>
 

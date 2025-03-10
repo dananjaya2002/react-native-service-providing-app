@@ -10,15 +10,21 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 
 export interface Shop {
   id: string;
+  rating: number;
   title: string;
   description: string;
-  rating: number;
   imageUrl: string;
+  totalRatings: number;
+  category: string;
+  location: string;
+  shopPageRef: string;
+  userDocId: string;
+  avgRating: number;
 }
 
 interface ShopCardProps {
   item: Shop;
-  onShopClick?: (event: TapGestureHandlerStateChangeEvent) => void;
+  onShopClick?: (item: Shop, event: TapGestureHandlerStateChangeEvent) => void;
 }
 
 const ShopCard: React.FC<ShopCardProps> = ({ item, onShopClick }) => {
@@ -43,7 +49,7 @@ const ShopCard: React.FC<ShopCardProps> = ({ item, onShopClick }) => {
           scale.value = withTiming(0.95, { duration: 100 });
         } else if (state === State.ACTIVE) {
           scale.value = withTiming(1, { duration: 100 });
-          onShopClick && onShopClick(gestureEvent);
+          onShopClick && onShopClick(item, gestureEvent);
         } else {
           scale.value = withTiming(1, { duration: 100 });
         }

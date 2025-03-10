@@ -16,37 +16,67 @@ import UserComments from "@/components/section2/userComment";
 import ShopContactInfo, { Props } from "../../components/section2/shopContactInfo";
 import UserReviewStars from "../../components/section2/userReviewStars";
 
-import { fetchRatings } from "../../Utility/U_getUserComments";
-
-type SubServiceData = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-};
+import { fetchUserComments } from "../../Utility/U_getUserComments";
+import { DocumentSnapshot, Timestamp } from "firebase/firestore";
 
 interface UserComment {
   profileImageUrl: string;
   Name: string;
-  Date: Date;
+  Timestamp: Timestamp;
   Ratings: number;
   Comment: string;
+  customerId: string;
 }
 interface ShopRatingsView {
   totalRatings: number;
   averageRating: number;
 }
+interface ShopServices {
+  id: string;
+  title: string;
+  imageUrl: string;
+  description: string;
+}
+interface ShopDashboardInfo {
+  agreement: string;
+  avgRatings: number;
+  completed: number;
+  items: number;
+  messages: number;
+  totalComments: number;
+  totalRatings: number;
+  waiting: number;
+}
+
+interface gpsCoordinates {
+  latitude: number;
+  longitude: number;
+}
+interface ShopPageData {
+  avgRating: number;
+  dashboardInfo: ShopDashboardInfo;
+  gpsCoordinates: gpsCoordinates;
+  items: ShopServices[];
+  phoneNumber: string;
+  serviceInfo: string;
+  shopCategory: string;
+  shopDescription: string;
+  shopLocation: string;
+  shopName: string;
+  shopPageImageUrl: string;
+  totalRingsCount: number;
+}
 
 const CustomerShopView = () => {
-  // Retrieve the dynamic parameter "sp_ShopID" from the URL
-  const { sp_ShopID } = useLocalSearchParams<{ sp_ShopID: string }>();
-  const shopID = sp_ShopID ?? "1"; // !!! -- for Development only -- !!!
-  //console.log("sp_ShopID", sp_ShopID);
+  // Retrieve the dynamic parameter "serviceProviderID" from the URL
+  const { serviceProviderID } = useLocalSearchParams<{ serviceProviderID: string }>();
+  //const shopID = serviceProviderID ?? "1"; // !!! -- for Development only -- !!!
+  //console.log("serviceProviderID", serviceProviderID);
 
-  const [data, setData] = useState<any>(null);
+  const [shopData, setShopData] = useState<ShopPageData | null>(null);
 
-  const [ratingsList, setRatingsList] = useState<any[]>([]);
-  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [userCommentList, setUserCommentList] = useState<any[]>([]);
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
 
   /**
@@ -55,35 +85,34 @@ const CustomerShopView = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Attempt to fetch shopData data
-        const fetchedData = await getShopPageData();
-
-        // Attempt to fetch user comment data
-        const { ratings, lastDoc: newLastDoc } = await fetchRatings({ initialLoad: true });
-        setRatingsList(ratings);
+        // Attempt to fetch user comment shopData
+        const { comments, lastDoc: newLastDoc } = await fetchUserComments({
+          initialLoad: true,
+          userId: serviceProviderID,
+        });
+        setUserCommentList(comments);
         setLastDoc(newLastDoc);
-        //console.log("fetchedData", fetchedData);
+
+        // Attempt to fetch shopData shopData
+        const fetchedData = await getShopPageData(serviceProviderID);
         if (fetchedData) {
-          setData(fetchedData);
+          setShopData(fetchedData);
         } else {
-          // Use fallback JSON if live data isn't available
+          // Use fallback JSON if live shopData isn't available
           const jsonData = require("../DevSection/utilities/shopDoc.json");
-          setData(jsonData);
+          setShopData(jsonData);
+          console.warn(" ⚠️ ⚠️ Shop shopData not found. Using fallback JSON shopData.⚠️ ⚠️");
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching shopData:", error);
         const jsonData = require("../DevSection/utilities/shopDoc.json"); // Fallback JSON
-        setData(jsonData);
+        setShopData(jsonData);
       }
     };
     fetchData();
-    console.log("\n\nFetching data for Shop ID:", shopID);
   }, []);
 
-  if (!data) {
-    // // Note: setting state during render is not ideal, but keeping original logic
-    // const jsonData = require("../DevSection/utilities/shopDoc.json");
-    // setData(jsonData);
+  if (!shopData) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#007bff" />
@@ -92,8 +121,8 @@ const CustomerShopView = () => {
     );
   }
 
-  const itemList = data.ItemList ? Object.values(data.ItemList) : [];
-  const userCommentList = data.ratings ? Object.values(data.ratings) : [];
+  const itemList = shopData.items ? Object.values(shopData.items) : [];
+  //const userCommentList = shopData.comments ? Object.values(shopData.comments) : [];
 
   const contactOptions: Props[] = [
     { text: "Call", iconName: "call" },
@@ -123,11 +152,14 @@ const CustomerShopView = () => {
     if (!loadingMoreComments && lastDoc) {
       setLoadingMoreComments(true);
       try {
-        const { ratings, lastDoc: newLastDoc } = await fetchRatings({ lastDoc });
-        setRatingsList((prev) => [...prev, ...ratings]);
+        const { comments, lastDoc: newLastDoc } = await fetchUserComments({
+          userId: serviceProviderID,
+        });
+        setUserCommentList((prev) => [...prev, ...comments]);
         setLastDoc(newLastDoc);
       } catch (error) {
-        // Handle error as needed
+        console.error("Error loading more comments:", error);
+        alert("Failed to load more comments. Please try again later.");
       } finally {
         setLoadingMoreComments(false);
       }
@@ -161,25 +193,25 @@ const CustomerShopView = () => {
 
         <View className="relative w-full h-[200px] items-center justify-center">
           <ImageBackground
-            source={{ uri: data.shopPageImageUrl }}
+            source={{ uri: shopData.shopPageImageUrl }}
             blurRadius={15}
             className="absolute w-full h-full"
           >
             <View className="flex-1" />
           </ImageBackground>
           <Image
-            source={{ uri: data.shopPageImageUrl }}
+            source={{ uri: shopData.shopPageImageUrl }}
             resizeMode="center"
             className="h-full w-full"
           />
         </View>
 
         <View className="h-auto px-4 py-2 bg-white shadow-xl">
-          <Text className="text-2xl text-start font-semibold flex-1">{data.shopTitle}</Text>
-          <Text className="text-md text-start font-normal">{data.shopDescription}</Text>
+          <Text className="text-2xl text-start font-semibold flex-1">{shopData.shopName}</Text>
+          <Text className="text-md text-start font-normal">{shopData.shopDescription}</Text>
           <UserReviewStars
-            averageRating={data.DashboardInfo.avgRatings}
-            totalRatings={data.DashboardInfo.totalRatings}
+            averageRating={shopData.dashboardInfo.avgRatings}
+            totalRatings={shopData.dashboardInfo.totalRatings}
           />
         </View>
 
@@ -190,11 +222,13 @@ const CustomerShopView = () => {
         </View>
 
         <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">
-          <Text className="text-sm text-left px-3">{data.serviceInfo.replace(/\\n/g, "\n")}</Text>
+          <Text className="text-sm text-left px-3">
+            {shopData.serviceInfo.replace(/\\n/g, "\n")}
+          </Text>
         </View>
 
         <View className="h-auto bg-primary py-3">
-          <HorizontalScrollView items={itemList as SubServiceData[]} />
+          <HorizontalScrollView items={itemList as ShopServices[]} />
         </View>
         <View className="bg-primary">
           <Text className="text-lg font-semibold mx-4">Comments</Text>
@@ -206,7 +240,7 @@ const CustomerShopView = () => {
   return (
     <View className="flex-1 bg-primary">
       <FlatList
-        data={ratingsList}
+        data={userCommentList}
         keyExtractor={(_, index) => index.toString()}
         renderItem={({ item }) => {
           const comment = item as UserComment;
@@ -214,7 +248,7 @@ const CustomerShopView = () => {
             <UserComments
               profileImage={comment.profileImageUrl}
               customerName={comment.Name}
-              date={comment.Date}
+              date={comment.Timestamp.toDate()}
               rating={comment.Ratings}
               comment={comment.Comment}
             />
