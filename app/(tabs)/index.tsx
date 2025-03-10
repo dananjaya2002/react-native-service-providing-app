@@ -51,13 +51,11 @@ interface Location {
   id: string;
   locationName: string;
 }
-
 interface Category {
   categoryID: string;
   categoryName: string;
   iconName: keyof typeof Ionicons.glyphMap;
 }
-
 interface Shop {
   id: string;
   rating: number;
@@ -73,46 +71,63 @@ interface Shop {
 }
 const data: MultiSelectDropdownItemProps[] = [
   { label: "Colombo", value: "1" },
-  { label: "Dehiwala", value: "2" },
-  { label: "Mount Lavinia", value: "3" },
-  { label: "Sri JP", value: "4" },
-  { label: "Kottawa", value: "5" },
-  { label: "Maharagama", value: "6" },
-  { label: "Homagama", value: "7" },
-  { label: "Nugegoda", value: "8" },
+  { label: "Kandy", value: "2" },
+  { label: "Galle", value: "3" },
+  { label: "Jaffna", value: "4" },
+  { label: "Negombo", value: "5" },
 ];
-
 const dummyData: Record<string, Category> = {
   cat1: {
     categoryID: "cat1",
-    categoryName: "PC Repair",
-    iconName: "home", // Make sure "water-outline" exists in Ionicons.glyphMap
+    categoryName: "Automotive",
+    iconName: "car",
   },
   cat2: {
     categoryID: "cat2",
-    categoryName: "Grocery",
-    iconName: "car",
+    categoryName: "Electronics",
+    iconName: "hardware-chip",
   },
   cat3: {
     categoryID: "cat3",
-    categoryName: "Cooking",
-    iconName: "cellular",
+    categoryName: "Beauty",
+    iconName: "flower",
+  },
+  cat4: {
+    categoryID: "cat4",
+    categoryName: "Cleaning",
+    iconName: "water",
+  },
+  cat5: {
+    categoryID: "cat5",
+    categoryName: "Transport",
+    iconName: "bus",
+  },
+  cat6: {
+    categoryID: "cat6",
+    categoryName: "Home Fix",
+    iconName: "hammer",
   },
 };
 const PAGE_SIZE = 5;
 
 const HomeScreen: React.FC = () => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [drawerOpen, setDrawerOpen] = useState(false); // Drawer State
+
   const [selectedLocations, setSelectedLocations] = useState<Location[]>([]); // Selected Locations
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null); // Selected Category
 
-  const [shops, setShops] = useState<Shop[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]); // Shop List
+
+  // Pagination State
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const didFetchRef = useRef(false);
+  const [filtersUpdated, setFiltersUpdated] = useState(false); // Flag to trigger re-fetch
+
+  const didFetchRef = useRef(false); // Dev only flag to prevent re-fetching
 
   const combinedChips = [...selectedLocations, selectedCategory];
 
@@ -130,11 +145,12 @@ const HomeScreen: React.FC = () => {
   const buildQueryConstraints = (): QueryConstraint[] => {
     const selectedLocationLabels = selectedLocations.map((location) => location.locationName);
     console.log("Selected Locations:", selectedLocationLabels);
-    console.log("Selected Category:", selectedCategory?.categoryName);
 
-    const tempCategory = selectedCategoryRef.current;
-    console.log("Temp Category:", tempCategory);
+    //const tempCategory = selectedCategoryRef.current;
+    const tempCategory = selectedCategory;
+    console.log("Selected Category:", tempCategory);
     const constraints: QueryConstraint[] = [];
+
     if (selectedLocationLabels.length > 0) {
       constraints.push(
         selectedLocationLabels.length === 1
@@ -161,8 +177,9 @@ const HomeScreen: React.FC = () => {
     //   console.log("🟥 Force Stopped Fetching");
     //   return;
     // }
-    // console.log("⏬⏬ Fetching ⏬⏬");
     // didFetchRef.current = true;
+
+    console.log("⏬⏬ Fetching ⏬⏬");
     setLoading(true);
     try {
       const shopCollection = collection(db, "ShopList");
@@ -172,7 +189,8 @@ const HomeScreen: React.FC = () => {
 
       const constraints = buildQueryConstraints();
 
-      const q = query(shopCollection, ...constraints);
+      const q = query(shopCollection, ...constraints, ...(cursor ? [startAfter(cursor)] : []));
+
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
@@ -212,13 +230,6 @@ const HomeScreen: React.FC = () => {
     setLoading(false);
   };
 
-  const doFiltering = () => {
-    setShops([]);
-    setLastDoc(null);
-    setHasMore(true);
-    fetchShopsPage();
-  };
-
   // Initial fetch on mount
   useEffect(() => {
     //fetchShopsPage(); // This line is enough to fetch the first page
@@ -227,17 +238,24 @@ const HomeScreen: React.FC = () => {
     didFetchRef.current = true;
   }, []);
 
-  // Re-fetch when filters change (reset state)
+  /**
+   *
+   * Fetch shops when required filter filters are updated
+   *
+   */
   useEffect(() => {
-    // // Reset shops and pagination state when filters update
-    // setShops([]);
-    // setLastDoc(null);
-    // setHasMore(true);
-    // fetchShopsPage();
-    console.log("\n");
-    console.log("Selected Location: ", selectedLocations);
-    console.log("Selected Categories: ", selectedCategory);
-  }, [selectedLocations, selectedCategory]);
+    if (filtersUpdated) {
+      fetchShopsPage();
+      setFiltersUpdated(false); // Reset flag
+    }
+  }, [filtersUpdated]);
+
+  const doFiltering = () => {
+    setShops([]);
+    setLastDoc(null);
+    setHasMore(true);
+    setFiltersUpdated(true); // Trigger re-fetch via useEffect
+  };
 
   // Load more shops when end is reached
   const fetchMoreShops = async () => {
@@ -247,20 +265,21 @@ const HomeScreen: React.FC = () => {
 
   // Category card  Press Handler
   const handleCategoryCardPress = (category?: Category) => {
+    setDrawerOpen(false);
     const newCategory = category || null;
     setSelectedCategory(newCategory);
     selectedCategoryRef.current = newCategory;
+    doFiltering();
   };
 
   const handleFilterButtonPress = () => {
-    console.log("Filter button pressed!");
     setDrawerOpen(false);
     doFiltering();
   };
 
+  // Temporary Not in use
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // Temporary Not in use
   };
 
   // To Close Drawer on Back Button Press
@@ -296,11 +315,21 @@ const HomeScreen: React.FC = () => {
   // Remove a location chip by filtering it out
   const handleRemoveLocation = (location: Location) => {
     setSelectedLocations((prev) => prev.filter((l) => l.id !== location.id));
+    doFiltering();
+    console.log("Removed Location:", location);
   };
 
   // Remove the category chip by setting it to null
   const handleRemoveCategory = () => {
+    //setShops([]);
+    //setLastDoc(null);
     setSelectedCategory(null);
+    //selectedCategoryRef.current = null;
+    //setHasMore(true);
+    //setFiltersUpdated(true); // Trigger re-fetch via useEffect
+    doFiltering();
+
+    console.log("Removed Category");
   };
 
   return (
@@ -340,7 +369,7 @@ const HomeScreen: React.FC = () => {
           <TouchableOpacity
             onPress={() => handleFilterButtonPress()}
             className="p-4 bg-blue-700"
-            style={{ position: "absolute", bottom: 0, width: "100%", borderRadius: 15 }}
+            style={{ bottom: 0, width: "100%", borderRadius: 15 }}
           >
             <Text className="font-bold text-white text-lg self-center">Filter</Text>
           </TouchableOpacity>
@@ -371,7 +400,10 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
         {/* Horizontal Category Card List */}
+
         {/* <CategoriesList categories={dummyData} onCategoryPress={handleCategoryCardPress} /> */}
+
+        {/* Chips */}
         <DisplaySelectedChip
           selectedLocations={selectedLocations}
           selectedCategory={selectedCategory}
