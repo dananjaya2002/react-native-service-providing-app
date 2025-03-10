@@ -1,28 +1,56 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import fs from "fs"; // Import the 'fs' module
+interface ShopServices {
+  id: string;
+  title: string;
+  imageUrl: string;
+  description: string;
+}
+interface ShopDashboardInfo {
+  agreement: string;
+  avgRatings: number;
+  completed: number;
+  items: number;
+  messages: number;
+  totalComments: number;
+  totalRatings: number;
+  waiting: number;
+}
 
-// interface RatingData {
-//   id: string;
-//   comments: string;
-//   date: Date;
-//   name: string;
-//   ratings: number;
-//   profileImageUrl: string;
-//   // For example:
-//   // name: string;
-//   // rating: number;
-// }
-let cachedShopPageData: any = null;
+interface gpsCoordinates {
+  latitude: number;
+  longitude: number;
+}
+interface ShopPageData {
+  avgRating: number;
+  dashboardInfo: ShopDashboardInfo;
+  gpsCoordinates: gpsCoordinates;
+  items: ShopServices[];
+  phoneNumber: string;
+  serviceInfo: string;
+  shopCategory: string;
+  shopDescription: string;
+  shopLocation: string;
+  shopName: string;
+  shopPageImageUrl: string;
+  totalRingsCount: number;
+}
+/**
+ * Retrieves the Shop Page Data for a given user.
+ *
+ * @param userId - The ID of the user.
+ * @returns A promise resolving to ShopPageData or null if not found/invalid.
+ */
 
-export const getShopPageData = async () => {
-  if (cachedShopPageData) {
-    console.warn(" ⚠️  Using cached shop page data. ⚠️ ");
-    return cachedShopPageData;
+export const getShopPageData = async (userId: string): Promise<ShopPageData | null> => {
+  if (!userId) {
+    console.error("❌ Error: Invalid user ID. userId is required.");
+    return null;
   }
 
   if (!db) {
-    console.warn("❌ Firestore is invalid.");
+    console.warn("❌ Firestore is invalid. ❌");
     return null;
   }
 
@@ -30,27 +58,14 @@ export const getShopPageData = async () => {
     console.warn("Getting Shop Page Data from Firebase 🔄");
 
     // Fetch the main document data
-    const docRef = doc(db, "Users/user1/Shop", "shopPageInfo");
+    const docRef = doc(db, "Users", userId, "Shop", "ShopPageInfo");
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) {
       console.warn("Shop page info not found.");
       return null;
     }
-    const shopData = docSnap.data();
+    const shopData = docSnap.data() as ShopPageData;
 
-    // // Fetch the Ratings subcollection using the document reference
-    // const ratingsRef = collection(docRef, "Ratings");
-    // const querySnapshot = await getDocs(ratingsRef);
-    // const ratingsData: any[] = [];
-    // querySnapshot.forEach((doc) => {
-    //   ratingsData.push({ id: doc.id, ...doc.data() });
-    // });
-
-    // // Combine the shop page info with the ratings
-    // const data = { ...shopData, ratings: ratingsData };
-
-    // Cache the data so subsequent calls use this value during development
-    cachedShopPageData = shopData;
     return shopData;
   } catch (error) {
     console.error("Error fetching data: ", error);
