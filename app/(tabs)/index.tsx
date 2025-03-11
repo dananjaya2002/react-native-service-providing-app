@@ -45,30 +45,24 @@ import {
 } from "firebase/firestore";
 import { app, db } from "../../FirebaseConfig";
 
+// Typescript Interfaces
+import { ShopList, ShopCategory, ShopLocationCategory } from "../../interfaces/iShop";
+
 const reactLogo = require("../../assets/images/reactLogo.png");
 
-interface Location {
-  id: string;
-  locationName: string;
-}
-interface Category {
-  categoryID: string;
-  categoryName: string;
-  iconName: keyof typeof Ionicons.glyphMap;
-}
-interface Shop {
-  id: string;
-  rating: number;
-  title: string;
-  description: string;
-  imageUrl: string;
-  totalRatings: number;
-  category: string;
-  location: string;
-  shopPageRef: string;
-  userDocId: string;
-  avgRating: number;
-}
+// interface Shop {
+//   id: string;
+//   rating: number;
+//   title: string;
+//   description: string;
+//   imageUrl: string;
+//   totalRatings: number;
+//   category: string;
+//   location: string;
+//   shopPageRef: string;
+//   userDocId: string;
+//   avgRating: number;
+// }
 const data: MultiSelectDropdownItemProps[] = [
   { label: "Colombo", value: "1" },
   { label: "Kandy", value: "2" },
@@ -76,7 +70,7 @@ const data: MultiSelectDropdownItemProps[] = [
   { label: "Jaffna", value: "4" },
   { label: "Negombo", value: "5" },
 ];
-const dummyData: Record<string, Category> = {
+const dummyData: Record<string, ShopCategory> = {
   cat1: {
     categoryID: "cat1",
     categoryName: "Automotive",
@@ -115,10 +109,10 @@ const HomeScreen: React.FC = () => {
 
   const [drawerOpen, setDrawerOpen] = useState(false); // Drawer State
 
-  const [selectedLocations, setSelectedLocations] = useState<Location[]>([]); // Selected Locations
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null); // Selected Category
+  const [selectedLocations, setSelectedLocations] = useState<ShopLocationCategory[]>([]); // Selected Locations
+  const [selectedCategory, setSelectedCategory] = useState<ShopCategory | null>(null); // Selected ShopCategory
 
-  const [shops, setShops] = useState<Shop[]>([]); // Shop List
+  const [shops, setShops] = useState<ShopList[]>([]); // ShopList List
 
   // Pagination State
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -131,7 +125,7 @@ const HomeScreen: React.FC = () => {
 
   const combinedChips = [...selectedLocations, selectedCategory];
 
-  const selectedCategoryRef = useRef<Category | null>(null);
+  const selectedCategoryRef = useRef<ShopCategory | null>(null);
 
   // Helper function to get matching labels from selected values
   // const getMatchingLabels = (
@@ -148,7 +142,7 @@ const HomeScreen: React.FC = () => {
 
     //const tempCategory = selectedCategoryRef.current;
     const tempCategory = selectedCategory;
-    console.log("Selected Category:", tempCategory);
+    console.log("Selected ShopCategory:", tempCategory);
     const constraints: QueryConstraint[] = [];
 
     if (selectedLocationLabels.length > 0) {
@@ -195,21 +189,8 @@ const HomeScreen: React.FC = () => {
 
       if (!querySnapshot.empty) {
         const newShops = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            // assign to available variable for compatibility
-            id: doc.id,
-            rating: data.avgRating,
-            avgRating: data.avgRating,
-            title: data.shopName,
-            description: data.shopDescription,
-            imageUrl: data.shopPageImageUrl,
-            totalRatings: data.totalRatingsCount,
-            category: data.shopCategory,
-            location: data.shopLocation,
-            shopPageRef: data.shopPageRef,
-            userDocId: data.userDocId,
-          } as Shop;
+          const data = doc.data() as ShopList;
+          return { ...data, id: doc.id };
         });
 
         //console.log("\n 🟨 Fetched New Data:", newShops);
@@ -264,8 +245,8 @@ const HomeScreen: React.FC = () => {
     await fetchShopsPage(lastDoc);
   };
 
-  // Category card  Press Handler
-  const handleCategoryCardPress = (category?: Category) => {
+  // ShopCategory card  Press Handler
+  const handleCategoryCardPress = (category?: ShopCategory) => {
     setDrawerOpen(false);
     const newCategory = category || null;
     setSelectedCategory(newCategory);
@@ -307,16 +288,16 @@ const HomeScreen: React.FC = () => {
     return () => backHandler.remove();
   }, [drawerOpen]);
 
-  const handleShopClick = (item: Shop, gestureEvent: TapGestureHandlerStateChangeEvent) => {
+  const handleShopClick = (item: ShopList, gestureEvent: TapGestureHandlerStateChangeEvent) => {
     console.log("UserDocId = ", item.userDocId);
     router.push(`../customer/${item.userDocId}`);
   };
 
   // Remove a location chip by filtering it out
-  const handleRemoveLocation = (location: Location) => {
+  const handleRemoveLocation = (location: ShopLocationCategory) => {
     setSelectedLocations((prev) => prev.filter((l) => l.id !== location.id));
     doFiltering();
-    console.log("Removed Location:", location);
+    console.log("Removed ShopLocationCategory:", location);
   };
 
   // Remove the category chip by setting it to null
@@ -329,7 +310,7 @@ const HomeScreen: React.FC = () => {
     //setFiltersUpdated(true); // Trigger re-fetch via useEffect
     doFiltering();
 
-    console.log("Removed Category");
+    console.log("Removed ShopCategory");
   };
 
   return (
@@ -354,7 +335,7 @@ const HomeScreen: React.FC = () => {
           />
 
           <View className="flex-1">
-            {/* Vertical Category Cards */}
+            {/* Vertical ShopCategory Cards */}
             <FlatList
               data={Object.values(dummyData)} // Convert object to array
               keyExtractor={(item) => item.categoryID}
@@ -399,7 +380,7 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-        {/* Horizontal Category Card List */}
+        {/* Horizontal ShopCategory Card List */}
 
         {/* <CategoriesList categories={dummyData} onCategoryPress={handleCategoryCardPress} /> */}
 
@@ -410,7 +391,7 @@ const HomeScreen: React.FC = () => {
           onRemoveLocation={handleRemoveLocation}
           onRemoveCategory={handleRemoveCategory}
         />
-        {/* Shop List */}
+        {/* ShopList List */}
         <View className="flex-1 px-2">
           <FlatList
             data={shops}

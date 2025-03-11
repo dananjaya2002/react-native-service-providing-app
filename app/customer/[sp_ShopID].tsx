@@ -28,50 +28,8 @@ import UserReviewStars from "../../components/section2/userReviewStars";
 import { fetchUserComments } from "../../Utility/U_getUserComments";
 import { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 
-interface UserComment {
-  profileImageUrl: string;
-  Name: string;
-  Timestamp: Timestamp;
-  Ratings: number;
-  Comment: string;
-  customerId: string;
-}
-
-interface ShopServices {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-}
-interface ShopDashboardInfo {
-  agreement: string;
-  avgRatings: number;
-  completed: number;
-  items: number;
-  messages: number;
-  totalComments: number;
-  totalRatings: number;
-  waiting: number;
-}
-
-interface gpsCoordinates {
-  latitude: number;
-  longitude: number;
-}
-interface ShopPageData {
-  avgRating: number;
-  dashboardInfo: ShopDashboardInfo;
-  gpsCoordinates: gpsCoordinates;
-  items: ShopServices[];
-  phoneNumber: string;
-  serviceInfo: string;
-  shopCategory: string;
-  shopDescription: string;
-  shopLocation: string;
-  shopName: string;
-  shopPageImageUrl: string;
-  totalRingsCount: number;
-}
+// TypeScript interfaces
+import { ShopPageData, UserComment } from "../../interfaces/iShop";
 
 const CustomerShopView = () => {
   // Retrieve the dynamic parameter "serviceProviderID" from the URL
@@ -154,10 +112,14 @@ const CustomerShopView = () => {
 
   // Handle scrolling to end of list
   const handleEndReached = async () => {
-    console.log("End reached, loading more comments...");
+    console.log("End reached");
+    console.log("!loadingMoreComments: ", !loadingMoreComments);
+    console.log("!loadingMoreComments && lastDoc: ", !loadingMoreComments && lastDoc);
     if (!loadingMoreComments && lastDoc) {
+      console.log("loading more comments...");
       setLoadingMoreComments(true);
       try {
+        console.log("loading more comments...");
         const { comments, lastDoc: newLastDoc } = await fetchUserComments({
           userId: serviceProviderID,
           lastDoc, // ensure you're passing the lastDoc for pagination
@@ -166,7 +128,7 @@ const CustomerShopView = () => {
         setLastDoc(newLastDoc);
       } catch (error) {
         console.error("Error loading more comments:", error);
-        alert("Failed to load more comments. Please try again later.");
+        //alert("Failed to load more comments. Please try again later.");
       } finally {
         setLoadingMoreComments(false);
       }
@@ -250,7 +212,7 @@ const CustomerShopView = () => {
         </View>
 
         <View className="h-auto bg-primary py-3">
-          <HorizontalScrollView items={itemList as ShopServices[]} />
+          <HorizontalScrollView items={itemList} />
         </View>
         <View className="bg-primary">
           <Text className="text-lg font-semibold mx-4">Comments</Text>
@@ -268,11 +230,13 @@ const CustomerShopView = () => {
           const comment = item as UserComment;
           return (
             <UserComments
-              profileImage={comment.profileImageUrl}
-              customerName={comment.Name}
-              date={comment.Timestamp.toDate()}
-              rating={comment.Ratings}
-              comment={comment.Comment}
+              id={comment.id}
+              profileImageUrl={comment.profileImageUrl}
+              name={comment.name}
+              timestamp={comment.timestamp}
+              ratings={comment.ratings}
+              comment={comment.comment}
+              customerId={comment.customerId}
             />
           );
         }}
