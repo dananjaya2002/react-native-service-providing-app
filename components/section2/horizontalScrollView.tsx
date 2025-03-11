@@ -4,6 +4,8 @@ import { Dimensions, ScrollView, View, StyleSheet, Pressable, Image, Text } from
 import { collection, doc, getDoc, getDocs, query, VectorValue, where } from "firebase/firestore";
 import { db } from "../../FirebaseConfig"; // Import Firebase db instance
 
+// TypeScript interfaces
+import { ShopServices } from "../../interfaces/iShop";
 /**
  * Horizontal scrolling component with tiles
  *
@@ -11,15 +13,8 @@ import { db } from "../../FirebaseConfig"; // Import Firebase db instance
  *
  */
 
-type Item = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-};
-
 type HorizontalScrollViewProps = {
-  items: Item[];
+  items: ShopServices[];
 };
 
 const { width } = Dimensions.get("window");
@@ -27,8 +22,8 @@ const itemWidth = (width / 3) * 2;
 const gap = (width - itemWidth) / 4;
 
 const HorizontalScrollView: React.FC<HorizontalScrollViewProps> = ({ items }) => {
-  const handlePress = (item: Item) => {
-    console.log("Item pressed:", item);
+  const handlePress = (item: ShopServices) => {
+    console.log("ShopServices pressed:", item);
   };
 
   return (

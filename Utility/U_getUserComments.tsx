@@ -12,6 +12,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
+import { UserComment } from "../interfaces/iShop";
+
 interface Rating {
   id: string;
   [key: string]: any;
@@ -36,7 +38,7 @@ export const fetchUserComments = async ({
   lastDoc?: QueryDocumentSnapshot | null;
   limitCount?: number;
   initialLoad?: boolean;
-}): Promise<{ comments: Rating[]; lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
+}): Promise<{ comments: UserComment[]; lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
   try {
     console.log("\n\nLastDoc: ", lastDoc?.id);
     // Reference to the comments sub collection
@@ -47,11 +49,11 @@ export const fetchUserComments = async ({
     let ratingsQuery;
 
     if (initialLoad || !lastDoc) {
-      ratingsQuery = query(ratingsRef, orderBy("Timestamp", "desc"), limit(limitCount));
+      ratingsQuery = query(ratingsRef, orderBy("timestamp", "desc"), limit(limitCount));
     } else {
       ratingsQuery = query(
         ratingsRef,
-        orderBy("Timestamp", "desc"),
+        orderBy("timestamp", "desc"),
         startAfter(lastDoc),
         limit(limitCount)
       );
@@ -59,17 +61,18 @@ export const fetchUserComments = async ({
 
     const querySnapshot = await getDocs(ratingsQuery);
 
-    const comments: Rating[] = querySnapshot.docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...docSnap.data(),
-    }));
-
+    const comments: UserComment[] = querySnapshot.docs.map((docSnap) => {
+      // Omit the 'id' from the Firestore data
+      const data = docSnap.data() as Omit<UserComment, "id">;
+      return { id: docSnap.id, ...data };
+    });
     console.log("\nComments: ", comments);
 
     // Store the last document snapshot for pagination
     const newLastDoc =
       querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
 
+    console.log("\n\nNew LastDoc: ", newLastDoc?.id);
     return { comments, lastDoc: newLastDoc };
   } catch (error) {
     console.error("Error fetching comments: ", error);

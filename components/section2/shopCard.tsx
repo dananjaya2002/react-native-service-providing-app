@@ -8,23 +8,25 @@ import {
 } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-export interface Shop {
-  id: string;
-  rating: number;
-  title: string;
-  description: string;
-  imageUrl: string;
-  totalRatings: number;
-  category: string;
-  location: string;
-  shopPageRef: string;
-  userDocId: string;
-  avgRating: number;
-}
+import { ShopList, ShopCategory, ShopLocationCategory } from "../../interfaces/iShop";
+
+// export interface Shop {
+//   id: string;
+//   rating: number;
+//   title: string;
+//   description: string;
+//   imageUrl: string;
+//   totalRatings: number;
+//   category: string;
+//   location: string;
+//   shopPageRef: string;
+//   userDocId: string;
+//   avgRating: number;
+// }
 
 interface ShopCardProps {
-  item: Shop;
-  onShopClick?: (item: Shop, event: TapGestureHandlerStateChangeEvent) => void;
+  item: ShopList;
+  onShopClick?: (item: ShopList, event: TapGestureHandlerStateChangeEvent) => void;
 }
 
 const ShopCard: React.FC<ShopCardProps> = ({ item, onShopClick }) => {
@@ -58,18 +60,18 @@ const ShopCard: React.FC<ShopCardProps> = ({ item, onShopClick }) => {
       maxDeltaY={10}
     >
       <Animated.View style={[styles.card, animatedStyle]}>
-        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        <Image source={{ uri: item.shopPageImageUrl }} style={styles.image} />
         <View style={styles.contentContainer}>
           <View style={styles.subContainer}>
-            <Text style={styles.titleText}>{item.title}</Text>
+            <Text style={styles.titleText}>{item.shopName}</Text>
             <Text style={styles.descriptionText} numberOfLines={2}>
-              {item.description}
+              {item.shopDescription}
             </Text>
           </View>
           <View style={styles.row}>
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color="#FFD700" />
-              <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+              <Text style={styles.ratingText}>{item.avgRating.toFixed(1)}</Text>
             </View>
             <TapGestureHandler
               ref={favoriteRef}
