@@ -7,6 +7,8 @@ import {
   limit,
   startAfter,
   DocumentSnapshot,
+  QueryDocumentSnapshot,
+  DocumentData,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
@@ -31,29 +33,42 @@ export const fetchUserComments = async ({
   initialLoad = false,
 }: {
   userId: string;
-  lastDoc?: DocumentSnapshot | null;
+  lastDoc?: QueryDocumentSnapshot | null;
   limitCount?: number;
   initialLoad?: boolean;
-}): Promise<{ comments: Rating[]; lastDoc: DocumentSnapshot }> => {
+}): Promise<{ comments: Rating[]; lastDoc: QueryDocumentSnapshot<DocumentData> | null }> => {
   try {
+    console.log("\n\nLastDoc: ", lastDoc?.id);
     // Reference to the comments sub collection
-    const shopDocRef = doc(db, "Users", userId, "Shop", "shopPageInfo");
-    const ratingsRef = collection(shopDocRef, "Ratings");
+    const shopDocRef = doc(db, "Users", userId, "Shop", "ShopPageInfo");
+    const ratingsRef = collection(shopDocRef, "UserComments");
 
     // Build query: order by 'date' and limit to 5 documents
-    const ratingsQuery =
-      initialLoad || !lastDoc
-        ? query(ratingsRef, orderBy("Date"), limit(limitCount))
-        : query(ratingsRef, orderBy("Date"), startAfter(lastDoc), limit(limitCount));
+    let ratingsQuery;
+
+    if (initialLoad || !lastDoc) {
+      ratingsQuery = query(ratingsRef, orderBy("Timestamp", "desc"), limit(limitCount));
+    } else {
+      ratingsQuery = query(
+        ratingsRef,
+        orderBy("Timestamp", "desc"),
+        startAfter(lastDoc),
+        limit(limitCount)
+      );
+    }
 
     const querySnapshot = await getDocs(ratingsQuery);
+
     const comments: Rating[] = querySnapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
     }));
 
-    // Save the last visible document snapshot
-    const newLastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+    console.log("\nComments: ", comments);
+
+    // Store the last document snapshot for pagination
+    const newLastDoc =
+      querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
 
     return { comments, lastDoc: newLastDoc };
   } catch (error) {

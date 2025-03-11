@@ -1,27 +1,53 @@
 import React from "react";
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Pressable, Text, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export interface Props {
+// Define the shape of each contact option
+export interface ContactOption {
   text: string;
   iconName: keyof typeof Ionicons.glyphMap;
 }
 
-const ShopContactInfo: React.FC<{ props: Props }> = ({ props }) => {
+interface ShopContactInfoProps {
+  // Callback to "return" the clicked button's string value
+  onOptionSelect?: (option: string) => void;
+}
+
+const ShopContactInfo: React.FC<ShopContactInfoProps> = ({
+  onOptionSelect = (option) => console.log(option),
+}) => {
+  const contactOptions: ContactOption[] = [
+    { text: "Call", iconName: "call" },
+    { text: "Chat", iconName: "chatbubbles" },
+    { text: "Map", iconName: "map" },
+    { text: "Share", iconName: "share" },
+  ];
+
+  const handlePress = (option: ContactOption) => {
+    onOptionSelect(option.text);
+  };
   return (
-    <Pressable style={styles.button} onPress={() => console.log("Pressed")}>
-      <Ionicons name={props.iconName} size={28} color="#333" />
-      <Text style={styles.buttonText}>{props.text}</Text>
-    </Pressable>
+    <View style={styles.container}>
+      {contactOptions.map((option, index) => (
+        <Pressable key={index} style={styles.button} onPress={() => handlePress(option)}>
+          <Ionicons name={option.iconName} size={28} color="#333" />
+          <Text style={styles.buttonText}>{option.text}</Text>
+        </Pressable>
+      ))}
+    </View>
   );
 };
 
 export default ShopContactInfo;
 
 const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
   button: {
     backgroundColor: "#fff",
-    flex: 1, // makes the component flexible in a row container
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
@@ -36,7 +62,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonText: {
-    fontSize: 12, // equivalent to text-sm
+    fontSize: 12,
     marginTop: 4,
     color: "#333",
   },
