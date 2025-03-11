@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Define type for your storage data
+// Define type for storage data
 export interface StorageItem<T> {
   key: string;
   data: T;

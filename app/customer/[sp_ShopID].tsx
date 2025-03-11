@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, ActivityIndicator, ImageBackground, Image, FlatList } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  ImageBackground,
+  Image,
+  FlatList,
+  Linking,
+  Alert,
+} from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,11 +22,11 @@ import { FontAwesome } from "@expo/vector-icons";
 import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
 import HorizontalScrollView from "../../components/section2/horizontalScrollView";
 import UserComments from "@/components/section2/userComment";
-import ShopContactInfo, { Props } from "../../components/section2/shopContactInfo";
+import ShopContactInfo from "../../components/section2/shopContactInfo";
 import UserReviewStars from "../../components/section2/userReviewStars";
 
 import { fetchUserComments } from "../../Utility/U_getUserComments";
-import { DocumentSnapshot, Timestamp } from "firebase/firestore";
+import { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 
 interface UserComment {
   profileImageUrl: string;
@@ -27,10 +36,7 @@ interface UserComment {
   Comment: string;
   customerId: string;
 }
-interface ShopRatingsView {
-  totalRatings: number;
-  averageRating: number;
-}
+
 interface ShopServices {
   id: string;
   title: string;
@@ -69,22 +75,29 @@ interface ShopPageData {
 
 const CustomerShopView = () => {
   // Retrieve the dynamic parameter "serviceProviderID" from the URL
-  const { serviceProviderID } = useLocalSearchParams<{ serviceProviderID: string }>();
-  //const shopID = serviceProviderID ?? "1"; // !!! -- for Development only -- !!!
-  //console.log("serviceProviderID", serviceProviderID);
+  const { sp_ShopID } = useLocalSearchParams<{ sp_ShopID: string }>();
+  const serviceProviderID = sp_ShopID;
 
   const [shopData, setShopData] = useState<ShopPageData | null>(null);
 
   const [userCommentList, setUserCommentList] = useState<any[]>([]);
-  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
+
+  const hasFetchedData_DEV_MOD = useRef(false); // DEVELOPMENT ONLY
 
   /**
    * Getting Data from Firebase
    */
   useEffect(() => {
+    if (hasFetchedData_DEV_MOD.current) {
+      console.log("⛔ Data Fetching Prevented ⛔");
+      return;
+    }
+
     const fetchData = async () => {
       try {
+        hasFetchedData_DEV_MOD.current = true; // DEVELOPMENT ONLY
         // Attempt to fetch user comment shopData
         const { comments, lastDoc: newLastDoc } = await fetchUserComments({
           initialLoad: true,
@@ -124,14 +137,7 @@ const CustomerShopView = () => {
   const itemList = shopData.items ? Object.values(shopData.items) : [];
   //const userCommentList = shopData.comments ? Object.values(shopData.comments) : [];
 
-  const contactOptions: Props[] = [
-    { text: "Call", iconName: "call" },
-    { text: "Chat", iconName: "chatbubbles" },
-    { text: "Map", iconName: "map" },
-    { text: "Share", iconName: "share" },
-  ];
-
-  /**
+  /*
    *
    * New Comment Loading placeholder logic
    *
@@ -154,6 +160,7 @@ const CustomerShopView = () => {
       try {
         const { comments, lastDoc: newLastDoc } = await fetchUserComments({
           userId: serviceProviderID,
+          lastDoc, // ensure you're passing the lastDoc for pagination
         });
         setUserCommentList((prev) => [...prev, ...comments]);
         setLastDoc(newLastDoc);
@@ -163,6 +170,23 @@ const CustomerShopView = () => {
       } finally {
         setLoadingMoreComments(false);
       }
+    }
+  };
+
+  const handleContactOptionSelect = (option: string) => {
+    console.log("Selected option:", option);
+
+    if (option === "Chat") {
+    } else if (option === "Map") {
+    } else if (option === "Share") {
+    } else if (option === "Call") {
+      const phoneUrl = `tel:${shopData.phoneNumber}`;
+      Linking.openURL(phoneUrl).catch((err) => {
+        console.error("Failed to open dialer:", err);
+        Alert.alert("Failed to open dialer. Please try again later.");
+      });
+    } else {
+      console.warn("☢️ Unhandled contact option:", option);
     }
   };
 
@@ -210,15 +234,13 @@ const CustomerShopView = () => {
           <Text className="text-2xl text-start font-semibold flex-1">{shopData.shopName}</Text>
           <Text className="text-md text-start font-normal">{shopData.shopDescription}</Text>
           <UserReviewStars
-            averageRating={shopData.dashboardInfo.avgRatings}
+            averageRating={shopData.avgRating}
             totalRatings={shopData.dashboardInfo.totalRatings}
           />
         </View>
 
         <View className="flex-row justify-center items-center mx-8 my-3">
-          {contactOptions.map((option, index) => (
-            <ShopContactInfo key={index} props={option} />
-          ))}
+          <ShopContactInfo onOptionSelect={handleContactOptionSelect} />
         </View>
 
         <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">

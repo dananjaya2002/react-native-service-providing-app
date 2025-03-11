@@ -197,8 +197,9 @@ const HomeScreen: React.FC = () => {
         const newShops = querySnapshot.docs.map((doc) => {
           const data = doc.data();
           return {
+            // assign to available variable for compatibility
             id: doc.id,
-            rating: data.avgRating, // map avgRating to rating for compatibility
+            rating: data.avgRating,
             avgRating: data.avgRating,
             title: data.shopName,
             description: data.shopDescription,
@@ -307,6 +308,7 @@ const HomeScreen: React.FC = () => {
   }, [drawerOpen]);
 
   const handleShopClick = (item: Shop, gestureEvent: TapGestureHandlerStateChangeEvent) => {
+    console.log("UserDocId = ", item.userDocId);
     router.push(`../customer/${item.userDocId}`);
   };
 
