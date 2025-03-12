@@ -57,7 +57,7 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       //router.push("/(tabs)");
-      router.push("/(tabs)/shop");
+      router.push("/serviceProvider/sp_ShopEdit");
 
       const shopId = "123";
       //router.push(`../customer/${shopId}`);

@@ -6,12 +6,14 @@ import { v4 as uuidv4 } from "uuid";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type Shop = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-};
+import { UserStorageService } from "../../storage/functions/userStorageService";
+import { OwnerShopPageAsyncStorage } from "../../storage/functions/ownerShopDataStorage";
+import HeaderMain from "../../components/section2/header_Main";
+
+// TypeScript interfaces
+import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
+import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
+import { UserData } from "../../interfaces/UserData";
 
 const { width } = Dimensions.get("window");
 const itemWidth = (width / 3) * 2;
@@ -20,20 +22,45 @@ const gap = (width - itemWidth) / 4;
 const shopEditService: React.FC = () => {
   // State for multi-select mode and selected items
   const [multiSelectMode, setMultiSelectMode] = useState<boolean>(false);
-  const [selectedItems, setSelectedItems] = useState<Shop[]>([]);
 
-  const [shopData, setShopData] = useState<any>(null);
+  //const [shopData, setShopData] = useState<ShopPageData | null>(null);
+  const [selectedItems, setSelectedItems] = useState<ShopServices[]>([]);
+  const [shopServiceData, setShopServiceData] = useState<ShopServices[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const jsonValue = await AsyncStorage.getItem("shop_data");
-        if (jsonValue !== null) {
-          setShopData(JSON.parse(jsonValue));
+        // Load the shop data from async storage
+        const shopData = await OwnerShopPageAsyncStorage.getUserData();
+        if (shopData) {
+          //setShopData(shopData);
+          //console.log("Retrieved shop data:", shopData);
+
+          // Extract the shop services from the data
+          const extractedShopServices: ShopServices[] = Object.values(
+            shopData.items
+          ) as ShopServices[];
+
+          setShopServiceData(
+            extractedShopServices
+              .map((item, index) => ({
+                ...item,
+                id: item.id || index.toString(),
+              }))
+              .concat(
+                extractedShopServices.length % 2 !== 0
+                  ? [{ id: "", title: "", description: "", imageUrl: "" }]
+                  : []
+              )
+          );
+          console.log("\n\nShop services data:", extractedShopServices);
+        } else {
+          console.log("No shop data found.");
         }
       } catch (error) {
-        console.error("Error retrieving data:", error);
+        console.error("Error retrieving shop data:", error);
+        return null;
       } finally {
         setLoading(false);
       }
@@ -46,19 +73,8 @@ const shopEditService: React.FC = () => {
     return <Text>Loading...</Text>;
   }
 
-  // Extract the items from the object and create a desired array of items with unique IDs
-  const itemsArray = Object.values(shopData.ItemList) as Shop[];
-  const data: Shop[] = (
-    itemsArray.length % 2 !== 0
-      ? [...itemsArray, { id: "", title: "", description: "", imageUrl: "" }]
-      : itemsArray
-  ).map((item, index) => ({
-    ...item,
-    id: item.id || index.toString(), // Assigns a sequential id if one isn't provided
-  }));
-
   // Toggle the selection state for an item
-  const toggleSelection = (item: Shop) => {
+  const toggleSelection = (item: ShopServices) => {
     const isSelected = selectedItems.includes(item); // Check if the item is already selected
     if (isSelected) {
       const newSelected = selectedItems.filter((i) => i !== item);
@@ -72,7 +88,7 @@ const shopEditService: React.FC = () => {
 
   // When an item is long pressed, enter multi-select mode (if not already)
   // or toggle its selection
-  const handleLongPress = (item: Shop) => {
+  const handleLongPress = (item: ShopServices) => {
     if (!multiSelectMode) {
       setMultiSelectMode(true);
       setSelectedItems([item]);
@@ -90,11 +106,11 @@ const shopEditService: React.FC = () => {
   };
 
   // Regular press action for an item (when not in multi-select mode)
-  const handlePress = (item: Shop): void => {
+  const handlePress = (item: ShopServices): void => {
     console.log("Item pressed:", item);
   };
 
-  const renderItem = ({ item }: { item: Shop }) => {
+  const renderItem = ({ item }: { item: ShopServices }) => {
     //console.log("Item Card-rendered 🔶🔶");
     if (item.title === "") {
       // Render a transparent placeholder
@@ -115,8 +131,8 @@ const shopEditService: React.FC = () => {
         }}
         className="flex-1 m-2 p-2 bg-white rounded-xl shadow-xl relative"
       >
-        <View className="h-12 justify-center bg-white">
-          <Text className="text-black font-bold text-md text-center " numberOfLines={1}>
+        <View className="h-14 justify-center bg-white">
+          <Text className="text-black font-bold text-md text-center " numberOfLines={2}>
             {item.title}
           </Text>
         </View>
@@ -126,7 +142,7 @@ const shopEditService: React.FC = () => {
           resizeMode="contain"
           className="w-full h-40 rounded-lg"
         />
-        <View className="flex-1 h-auto w-full items-center justify-center my-2 ">
+        <View className="flex-1 h-auto w-full items-center justify-center my-1 ">
           <Text className="text-black font-normal text-sm " numberOfLines={5}>
             {item.description}
           </Text>
@@ -146,47 +162,55 @@ const shopEditService: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="bg-red-200 h-32 w-screen py-2 px-4">
-        {/* Wrapper view with the dashed border */}
-        <View
-          className="h-full w-full flex items-center justify-center"
-          style={{ borderWidth: 2, borderColor: "black", borderStyle: "dashed" }}
-        >
-          <Pressable
-            onPress={addNewServiceButtonPress}
-            android_ripple={{ color: "rgba(0, 0, 0, 0.1)" }}
-            style={({ pressed }) => [
-              {
-                transform: pressed ? [{ scale: 0.95 }] : [{ scale: 1 }],
-                opacity: pressed ? 0.8 : 1,
-                width: "100%",
-                height: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-              },
-            ]}
-          >
-            <Ionicons name="add" size={36} color="black" />
-          </Pressable>
-        </View>
-      </View>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => (item.id !== "" ? item.id : index.toString())}
-        numColumns={2}
-        contentContainerStyle={{ padding: 8 }}
+    <View className="flex-1 bg-green-400">
+      <HeaderMain
+        title="Edit Services"
+        onPressBack={() => {
+          console.log("Back Pressed");
+        }}
       />
-      {/* Render the action button only in multi-select mode */}
-      {multiSelectMode && (
-        <Pressable
-          onPress={doActionOnSelected}
-          className="bg-red-600 py-4 px-10 rounded-2xl absolute bottom-8 right-8 shadow-xl"
-        >
-          <Text className="text-white font-bold">Delete All</Text>
-        </Pressable>
-      )}
+      <View className="flex-1 bg-primary">
+        <View className="bg-red-200 h-32 w-screen py-2 px-4">
+          {/* Wrapper view with the dashed border */}
+          <View
+            className="h-full w-full flex items-center justify-center"
+            style={{ borderWidth: 2, borderColor: "black", borderStyle: "dashed" }}
+          >
+            <Pressable
+              onPress={addNewServiceButtonPress}
+              android_ripple={{ color: "rgba(0, 0, 0, 0.1)" }}
+              style={({ pressed }) => [
+                {
+                  transform: pressed ? [{ scale: 0.95 }] : [{ scale: 1 }],
+                  opacity: pressed ? 0.8 : 1,
+                  width: "100%",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                },
+              ]}
+            >
+              <Ionicons name="add" size={36} color="black" />
+            </Pressable>
+          </View>
+        </View>
+        <FlatList
+          data={shopServiceData}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => (item.id !== "" ? item.id : index.toString())}
+          numColumns={2}
+          contentContainerStyle={{ padding: 8 }}
+        />
+        {/* Render the action button only in multi-select mode */}
+        {multiSelectMode && (
+          <Pressable
+            onPress={doActionOnSelected}
+            className="bg-red-600 py-4 px-10 rounded-2xl absolute bottom-8 right-8 shadow-xl"
+          >
+            <Text className="text-white font-bold">Delete</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 };

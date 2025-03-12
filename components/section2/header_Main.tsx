@@ -9,21 +9,21 @@ interface HeaderProps {
   onPressUser?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, onPressBack, onPressUser }) => {
+const HeaderMain: React.FC<HeaderProps> = ({ title, onPressBack, onPressUser }) => {
   return (
     <View
       style={styles.headerContainer}
       className="flex-row items-center h-[56px] bg-primary px-4 border-b border-gray-200"
     >
       {onPressBack ? (
-        <TouchableOpacity onPress={onPressBack} className="mr-2">
-          <Ionicons name="arrow-back" size={24} color="black" />
+        <TouchableOpacity onPress={onPressBack} className="mr-2 p-2">
+          <Ionicons name="arrow-back" size={32} color="black" />
         </TouchableOpacity>
       ) : (
         <View className="w-6" />
       )}
       <Text className="text-xl font-bold flex-1 text-center text-gray-800">{title}</Text>
-      <TouchableOpacity onPress={onPressUser} className="ml-2">
+      <TouchableOpacity onPress={onPressUser} className="ml-2 mr-4">
         <FontAwesome name="user-circle" size={28} color="black" />
       </TouchableOpacity>
     </View>
@@ -40,4 +40,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Header;
+export default HeaderMain;
