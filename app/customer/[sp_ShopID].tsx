@@ -26,10 +26,15 @@ import ShopContactInfo from "../../components/section2/shopContactInfo";
 import UserReviewStars from "../../components/section2/userReviewStars";
 
 import { fetchUserComments } from "../../Utility/U_getUserComments";
+import { createNewChatRoom } from "../../Utility/U_createNewChatRoom";
 import { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
+
+import { UserStorageService } from "../../storage/functions/userStorageService";
 
 // TypeScript interfaces
 import { ShopPageData, UserComment } from "../../interfaces/iShop";
+import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
+import { UserData } from "../../interfaces/UserData";
 
 const CustomerShopView = () => {
   // Retrieve the dynamic parameter "serviceProviderID" from the URL
@@ -41,8 +46,22 @@ const CustomerShopView = () => {
   const [userCommentList, setUserCommentList] = useState<any[]>([]);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
+  const [loadingScreen, setLoadingScreen] = useState(false);
+  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
 
   const hasFetchedData_DEV_MOD = useRef(false); // DEVELOPMENT ONLY
+
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const savedUserData = (await UserStorageService.getUserData()) as UserData;
+        setUserDocRefID(savedUserData.userId);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+    fetchUserData();
+  }, []);
 
   /**
    * Getting Data from Firebase
@@ -135,10 +154,27 @@ const CustomerShopView = () => {
     }
   };
 
-  const handleContactOptionSelect = (option: string) => {
+  const handleContactOptionSelect = async (option: string) => {
     console.log("Selected option:", option);
 
+    const shopDataForChatRoom: ShopDataForCharRoomCreating = {
+      serviceProviderUserID: serviceProviderID,
+      shopName: shopData.shopName,
+      shopProfileImageUrl: shopData.shopPageImageUrl,
+    };
+
     if (option === "Chat") {
+      //const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
+      const chatRoomId = "kcGcWg604yOKnjIUmBa5"; // Fallback chat room ID  -- DEV ONLY !!!
+      console.log("DEV MOD CHAT ROOM ID ⚠️ ⚠️ ⚠️ ⚠️ : ", chatRoomId);
+      console.log("Chat room created with ID:", chatRoomId);
+      router.push({
+        pathname: "/chatSubSection/chatUi",
+        params: {
+          userID: userDocRefID,
+          chatRoomDocRefId: chatRoomId,
+        },
+      });
     } else if (option === "Map") {
     } else if (option === "Share") {
     } else if (option === "Call") {

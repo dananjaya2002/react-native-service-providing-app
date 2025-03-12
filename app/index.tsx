@@ -12,6 +12,8 @@ import { doc, DocumentData, getDoc } from "firebase/firestore";
 
 import { UserStorageService } from "../storage/functions/userStorageService";
 
+import { UserData } from "../interfaces/UserData";
+
 // export default function Index() {
 //   const [loading, setLoading] = useState(true); // To show loading screen while checking authentication
 //   const [user, setUser] = useState<any>(null); // To store the user info
@@ -42,14 +44,6 @@ import { UserStorageService } from "../storage/functions/userStorageService";
 //   return null;
 // }
 
-interface UserData {
-  userId: string;
-  isServiceProvider: boolean;
-  password: string;
-  userName: string;
-  favorites: string[];
-}
-
 const docIds: string[] = ["9682ySNqk0txuAGq75JI", "Idgkdk2tkKPEplx46z3h"];
 const collectionName = "Users";
 
@@ -61,6 +55,15 @@ const Index = () => {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      //router.push("/(tabs)");
+      router.push("/(tabs)/shop");
+
+      const shopId = "123";
+      //router.push(`../customer/${shopId}`);
+    }, 50);
+    return () => clearTimeout(timer);
+
     const fetchDocuments = async () => {
       try {
         // Fetch all documents concurrently
@@ -108,7 +111,8 @@ const Index = () => {
 
   const onItemPress = async (doc: UserData) => {
     await UserStorageService.saveUserData(doc);
-    router.push("/(tabs)");
+    router.push("/(tabs)/shop");
+    //router.push("/(tabs)/chat/personalChat");
 
     //displayData();
   };

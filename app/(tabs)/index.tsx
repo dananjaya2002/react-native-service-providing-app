@@ -155,7 +155,7 @@ const HomeScreen: React.FC = () => {
     if (tempCategory) {
       constraints.push(where("shopCategory", "==", tempCategory.categoryName));
     }
-    constraints.push(orderBy("totalRatingsCount", "asc"), limit(PAGE_SIZE));
+    constraints.push(orderBy("totalRatingsCount", "desc"), limit(PAGE_SIZE));
     return constraints;
   };
 
