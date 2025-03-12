@@ -1,3 +1,4 @@
+// (tab)/chat/personalChat.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   FlatList,
@@ -12,10 +13,11 @@ import {
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { db } from "../../FirebaseConfig";
+import { db } from "../../../FirebaseConfig";
 import { Timestamp, DocumentReference } from "firebase/firestore";
+import { UserStorageService } from "../../../storage/functions/userStorageService";
 // Define types
-
+import { UserData } from "../../../interfaces/UserData";
 type UserInfo = {
   docRef: DocumentReference; // Reference to the user document in Firestore
   name: string;
@@ -34,7 +36,7 @@ type ChatRoom = {
 
 /**
  * Currently we trying to simulate both roles in the same page section. So we have to use dynamic userRoleType
- * Goal is to find the all document where the user role field is match with the userRef
+ * Goal is to find the all document where the user role field is match with the userDocRefID
  */
 
 /**
@@ -48,30 +50,37 @@ type ChatRoom = {
  */
 
 export default function ChatList() {
+  const router = useRouter();
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const chatRoomsRef = useRef<ChatRoom[]>([]); // dev only
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
 
-  const { userID, role } = useLocalSearchParams();
+  //const { userID = "waSF6FwvSDcG0Nm23JvI" } = useLocalSearchParams(); // Fallback Customer Ravidu Gunavardana !!! FALLBACK VALUE IS FOR DEV ONLY
 
   // Identify user type
-  const userRef = userID;
-  const userRoleType = role === "provider" ? "serviceProviderRef" : "customerRef";
-  const userRoleDocFieldPath = role === "provider" ? "serviceProvider.docRef" : "customer.docRef";
+  const userRoleType = "customerRef";
 
-  // Handle back button navigation -- Development purpose only
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        router.replace("/DevSection/D_SimulateChat/roleSelection");
-        return true; // Prevent default back action
-      };
+  const userRoleDocFieldPath = "customer.docRef";
 
-      BackHandler.addEventListener("hardwareBackPress", onBackPress);
-      return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-    }, [])
-  );
+  const customerId = async () => {
+    const savedUserData = (await UserStorageService.getUserData()) as UserData;
+    console.log("Saved User Data: ", savedUserData.userId);
+    return savedUserData.userId;
+  };
+
+  // Fetch saved user data asynchronously
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const savedUserData = (await UserStorageService.getUserData()) as UserData;
+        setUserDocRefID(savedUserData.userId);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+    fetchUserData();
+  }, []);
 
   /**
    *
@@ -79,6 +88,16 @@ export default function ChatList() {
    *
    */
   useEffect(() => {
+    if (!userDocRefID) {
+      // Don't run query until we have a valid userDocRefID
+      return;
+    }
+
+    console.log("userRoleDocFieldPath: ", userRoleDocFieldPath);
+    console.log("userDocRefID: ", userDocRefID);
+    // Indicate loading has started
+    setIsLoading(true);
+
     // Use cached chat rooms if available
     if (chatRoomsRef.current.length > 0) {
       console.log("✅ Using cached chat rooms");
@@ -87,12 +106,9 @@ export default function ChatList() {
       return;
     }
 
-    // Indicate loading has started
-    setIsLoading(true);
-
     const chatCollectionRef = collection(db, "Chat");
-    const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userRef));
-
+    const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userDocRefID));
+    console.log("Collection Ref: ", chatCollectionRef);
     // Attach the real-time listener
     const unsubscribe = onSnapshot(
       chatQuery,
@@ -119,16 +135,17 @@ export default function ChatList() {
 
     // Cleanup listener on unmount
     return () => unsubscribe();
-  }, []);
+  }, [userDocRefID]);
 
+  console.log("Chat rooms:", chatRooms);
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string) => {
     //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
 
     router.push({
-      pathname: "/chat/chatUi",
+      pathname: "/chatSubSection/chatUi",
       params: {
-        userID: userRef,
+        userID: userDocRefID,
         chatRoomDocRefId: chatRoom,
       },
     });
@@ -137,21 +154,9 @@ export default function ChatList() {
 
   // Render each chat item
   const renderChatItem = ({ item }: { item: ChatRoom }) => {
-    let otherUserName;
-    let otherUserProfilePicURL;
+    let otherUserName = item.serviceProvider.name;
+    let otherUserProfilePicURL = item.serviceProvider.profileImageUrl;
     let timestampText;
-
-    // Finding out who is the other party
-    if (role === "provider") {
-      otherUserName = item.serviceProvider.name;
-      otherUserProfilePicURL = item.serviceProvider.profileImageUrl;
-    } else if (role === "customer") {
-      otherUserName = item.customer.name;
-      otherUserProfilePicURL = item.serviceProvider.profileImageUrl;
-    } else {
-      otherUserName = "Not Found";
-      otherUserProfilePicURL = "Not Found";
-    }
 
     // Converting Time
     if (!item.timestamp) {

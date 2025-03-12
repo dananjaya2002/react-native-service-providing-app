@@ -22,24 +22,17 @@ import { useShop } from "../../context/ShopContext";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import UpdateSheet, { UpdateSheetRef } from "../../components/section2/slideUpFormPage";
 import UserReviewStars from "@/components/section2/userReviewStars";
-import ShopContactInfo, { Props } from "@/components/section2/shopContactInfo";
-import { fetchRatings } from "@/Utility/U_getUserComments";
+import ShopContactInfo from "@/components/section2/shopContactInfo";
+import { fetchUserComments } from "../../Utility/U_getUserComments";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type SubServiceData = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-};
+import { UserStorageService } from "../../storage/functions/userStorageService";
 
-interface UserComment {
-  profileImageUrl: string;
-  Name: string;
-  Date: Date;
-  Ratings: number;
-  Comment: string;
-}
+// TypeScript interfaces
+import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
+import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
+import { UserData } from "../../interfaces/UserData";
+
 interface ShopRatingsView {
   totalRatings: number;
   averageRating: number;
@@ -61,41 +54,68 @@ const Shop = () => {
   const shopID = sp_ShopID ?? "1"; // !!! -- for Development only -- !!!
   //console.log("sp_ShopID", sp_ShopID);
 
-  const [data, setData] = useState<any>(null);
-
   const [ratingsList, setRatingsList] = useState<any[]>([]);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
+  const [userCommentList, setUserCommentList] = useState<any[]>([]);
+  const [shopData, setShopData] = useState<ShopPageData | null>(null);
+
+  /**
+   *
+   * Get User Data from AsyncStorage
+   *
+   */
+  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const savedUserData = (await UserStorageService.getUserData()) as UserData;
+        setUserDocRefID(savedUserData.userId);
+        console.log("User data fetched:", savedUserData);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (!userDocRefID) {
+          //console.error("Invalid userDocRefID. Please check the user data.");
+          return;
+        }
         // Attempt to fetch shopData data
-        const fetchedData = await getShopPageData();
-
-        // Attempt to fetch user comment data
-        const { ratings, lastDoc: newLastDoc } = await fetchRatings({ initialLoad: true });
-        setRatingsList(ratings);
+        const { comments, lastDoc: newLastDoc } = await fetchUserComments({
+          initialLoad: true,
+          userId: userDocRefID,
+        });
+        setUserCommentList(comments);
         setLastDoc(newLastDoc);
-        //console.log("fetchedData", fetchedData);
+
+        // Attempt to fetch shopData shopData
+        const fetchedData = await getShopPageData(userDocRefID);
         if (fetchedData) {
-          setData(fetchedData);
+          setShopData(fetchedData);
         } else {
-          // Use fallback JSON if live data isn't available
+          // Use fallback JSON if live shopData isn't available
           const jsonData = require("../DevSection/utilities/shopDoc.json");
-          setData(jsonData);
+          setShopData(jsonData);
+          console.warn(" ⚠️ ⚠️ Shop shopData not found. Using fallback JSON shopData.⚠️ ⚠️");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
         const jsonData = require("../DevSection/utilities/shopDoc.json"); // Fallback JSON
-        setData(jsonData);
+        setShopData(jsonData);
       }
     };
     fetchData();
-    console.log("\n\nFetching data for Shop ID:", shopID);
-  }, []);
+    console.log("\n\nFetching data for Shop ID:", userDocRefID);
+  }, [userDocRefID]);
 
-  if (!data) {
+  if (!shopData) {
     // // Note: setting state during render is not ideal, but keeping original logic
     // const jsonData = require("../DevSection/utilities/shopDoc.json");
     // setData(jsonData);
@@ -106,16 +126,7 @@ const Shop = () => {
       </View>
     );
   }
-
-  const itemList = data.ItemList ? Object.values(data.ItemList) : [];
-  const userCommentList = data.ratings ? Object.values(data.ratings) : [];
-
-  const contactOptions: Props[] = [
-    { text: "Call", iconName: "call" },
-    { text: "Chat", iconName: "chatbubbles" },
-    { text: "Map", iconName: "map" },
-    { text: "Share", iconName: "share" },
-  ];
+  const itemList = shopData.items ? Object.values(shopData.items) : [];
 
   /**
    *
@@ -130,7 +141,7 @@ const Shop = () => {
     //setShop(itemList as SubServiceData[]);
     try {
       // Store the data in AsyncStorage
-      await AsyncStorage.setItem("shop_data", JSON.stringify(data));
+      await AsyncStorage.setItem("shop_data", JSON.stringify(shopData));
       console.log("Right button triggered in MainScreen");
       // Navigate to the next screen
       router.push("/serviceProvider/sp_ShopEdit");
@@ -158,11 +169,14 @@ const Shop = () => {
   // Handle scrolling to end of list
   const handleEndReached = async () => {
     console.log("End reached, loading more comments...");
-    if (!loadingMoreComments && lastDoc) {
+    if (!loadingMoreComments && lastDoc && userDocRefID) {
       setLoadingMoreComments(true);
       try {
-        const { ratings, lastDoc: newLastDoc } = await fetchRatings({ lastDoc });
-        setRatingsList((prev) => [...prev, ...ratings]);
+        const { comments, lastDoc: newLastDoc } = await fetchUserComments({
+          userId: userDocRefID,
+          lastDoc,
+        });
+        setRatingsList((prev) => [...prev, ...comments]);
         setLastDoc(newLastDoc);
       } catch (error) {
         // Handle error as needed
@@ -199,26 +213,26 @@ const Shop = () => {
 
         <View className="relative w-full h-[200px] items-center justify-center">
           <ImageBackground
-            source={{ uri: data.shopPageImageUrl }}
+            source={{ uri: shopData.shopPageImageUrl }}
             blurRadius={15}
             className="absolute w-full h-full"
           >
             <View className="flex-1" />
           </ImageBackground>
           <Image
-            source={{ uri: data.shopPageImageUrl }}
+            source={{ uri: shopData.shopPageImageUrl }}
             resizeMode="center"
             className="h-full w-full"
           />
         </View>
 
         <View className="h-auto px-4 py-2 bg-white shadow-xl">
-          <Text className="text-2xl text-start font-semibold flex-1">{data.shopTitle}</Text>
-          <Text className="text-md text-start font-normal">{data.shopDescription}</Text>
+          <Text className="text-2xl text-start font-semibold flex-1">{shopData.shopName}</Text>
+          <Text className="text-md text-start font-normal">{shopData.shopDescription}</Text>
           <View className="flex-row">
             <UserReviewStars
-              averageRating={data.DashboardInfo.avgRatings}
-              totalRatings={data.DashboardInfo.totalRatings}
+              averageRating={shopData.dashboardInfo.avgRatings}
+              totalRatings={shopData.dashboardInfo.totalRatings}
             />
             <Text className="bg-primary rounded-2xl ml-6 px-4 border border-gray-300">Colombo</Text>
           </View>
@@ -228,20 +242,22 @@ const Shop = () => {
           <View className="w-full h-auto">
             <Text className="text-lg text-center font-semibold">Store Overview</Text>
           </View>
-          <StatusCard status="Waiting" count={data.DashboardInfo.waitings} />
-          <StatusCard status="Completed" count={data.DashboardInfo.completed} />
-          <StatusCard status="Items" count={data.DashboardInfo.items} />
-          <StatusCard status="Agreements" count={data.DashboardInfo.agreements} />
-          <StatusCard status="Avg Ratings" count={data.DashboardInfo.avgRatings} />
-          <StatusCard status="Messages" count={data.DashboardInfo.messages} />
+          <StatusCard status="Waiting" count={shopData.dashboardInfo.waiting} />
+          <StatusCard status="Completed" count={shopData.dashboardInfo.completed} />
+          <StatusCard status="Items" count={shopData.dashboardInfo.items} />
+          <StatusCard status="Agreements" count={shopData.dashboardInfo.agreement} />
+          <StatusCard status="Avg Ratings" count={shopData.dashboardInfo.avgRatings} />
+          <StatusCard status="Messages" count={shopData.dashboardInfo.messages} />
         </View>
 
         <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">
-          <Text className="text-sm text-left px-3">{data.serviceInfo.replace(/\\n/g, "\n")}</Text>
+          <Text className="text-sm text-left px-3">
+            {shopData.serviceInfo.replace(/\\n/g, "\n")}
+          </Text>
         </View>
 
         <View className="h-auto bg-primary py-3">
-          <HorizontalScrollView items={itemList as SubServiceData[]} />
+          <HorizontalScrollView items={itemList as ShopServices[]} />
         </View>
         <View className="bg-primary">
           <Text className="text-lg font-semibold mx-4">Comments</Text>
@@ -260,11 +276,13 @@ const Shop = () => {
             const comment = item as UserComment;
             return (
               <UserComments
-                profileImage={comment.profileImageUrl}
-                customerName={comment.Name}
-                date={comment.Date}
-                rating={comment.Ratings}
-                comment={comment.Comment}
+                id={comment.id}
+                profileImageUrl={comment.profileImageUrl}
+                name={comment.name}
+                timestamp={comment.timestamp}
+                ratings={comment.ratings}
+                comment={comment.comment}
+                customerId={comment.customerId}
               />
             );
           }}
@@ -278,10 +296,10 @@ const Shop = () => {
       {/* Pass the onOpen and onClose callbacks to UpdateSheet */}
       <UpdateSheet
         ref={sheetRef}
-        title={data.ShopName}
-        description={data.ShopDescription}
-        phoneNumber={data.PhoneNumber}
-        category={data.Category}
+        title={shopData.shopName}
+        description={shopData.shopDescription}
+        phoneNumber={shopData.phoneNumber}
+        category={shopData.shopCategory}
         onUpdate={handleUpdate}
         onOpen={() => {
           // Slide the FloatingButtonBar down (off-screen).

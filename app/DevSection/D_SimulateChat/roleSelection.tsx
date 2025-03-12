@@ -45,7 +45,7 @@ export default function RoleSelection() {
     }
 
     router.push({
-      pathname: "/(tabs)/chat",
+      pathname: "../(tabs)/chat",
       params: {
         role: role,
         userID: selfID,

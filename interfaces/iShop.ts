@@ -35,6 +35,10 @@ export interface UserComment {
   comment: string;
   customerId: string;
 }
+interface gpsCoordinates {
+  latitude: number;
+  longitude: number;
+}
 
 export interface ShopPageData {
   avgRating: number;

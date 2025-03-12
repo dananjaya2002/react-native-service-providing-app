@@ -3,7 +3,7 @@ import { View, Text } from "react-native";
 
 interface StatusCardProps {
   status?: string;
-  count?: number;
+  count?: string | number;
   style?: string;
 }
 

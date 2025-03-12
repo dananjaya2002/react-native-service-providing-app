@@ -1,41 +1,11 @@
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import fs from "fs"; // Import the 'fs' module
-interface ShopServices {
-  id: string;
-  title: string;
-  imageUrl: string;
-  description: string;
-}
-interface ShopDashboardInfo {
-  agreement: string;
-  avgRatings: number;
-  completed: number;
-  items: number;
-  messages: number;
-  totalComments: number;
-  totalRatings: number;
-  waiting: number;
-}
 
-interface gpsCoordinates {
-  latitude: number;
-  longitude: number;
-}
-interface ShopPageData {
-  avgRating: number;
-  dashboardInfo: ShopDashboardInfo;
-  gpsCoordinates: gpsCoordinates;
-  items: ShopServices[];
-  phoneNumber: string;
-  serviceInfo: string;
-  shopCategory: string;
-  shopDescription: string;
-  shopLocation: string;
-  shopName: string;
-  shopPageImageUrl: string;
-  totalRingsCount: number;
-}
+import { ShopPageData, UserComment } from "../interfaces/iShop";
+import { ShopDataForCharRoomCreating } from "../interfaces/iChat";
+import { UserData } from "../interfaces/UserData";
+
 /**
  * Retrieves the Shop Page Data for a given user.
  *
