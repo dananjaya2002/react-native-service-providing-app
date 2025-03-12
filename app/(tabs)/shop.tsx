@@ -27,6 +27,7 @@ import { fetchUserComments } from "../../Utility/U_getUserComments";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { UserStorageService } from "../../storage/functions/userStorageService";
+import { OwnerShopPageAsyncStorage } from "../../storage/functions/ownerShopDataStorage";
 
 // TypeScript interfaces
 import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
@@ -80,6 +81,11 @@ const Shop = () => {
     fetchUserData();
   }, []);
 
+  /**
+   *
+   * Get Data from the Database
+   *
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -99,6 +105,7 @@ const Shop = () => {
         const fetchedData = await getShopPageData(userDocRefID);
         if (fetchedData) {
           setShopData(fetchedData);
+          saveShopData(fetchedData); // Save the data in AsyncStorage
         } else {
           // Use fallback JSON if live shopData isn't available
           const jsonData = require("../DevSection/utilities/shopDoc.json");
@@ -114,6 +121,15 @@ const Shop = () => {
     fetchData();
     console.log("\n\nFetching data for Shop ID:", userDocRefID);
   }, [userDocRefID]);
+
+  const saveShopData = async (shopData: ShopPageData) => {
+    try {
+      await OwnerShopPageAsyncStorage.saveUserData(shopData);
+      console.log("Shop data saved successfully!");
+    } catch (error) {
+      console.error("Error saving shop data:", error);
+    }
+  };
 
   if (!shopData) {
     // // Note: setting state during render is not ideal, but keeping original logic
