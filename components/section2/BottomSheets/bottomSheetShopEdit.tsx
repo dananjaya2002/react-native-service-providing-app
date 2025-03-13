@@ -17,7 +17,7 @@ export interface SlideUpMenuProps {
 }
 
 const SlideUpMenu = forwardRef<SlideUpMenuHandle, SlideUpMenuProps>(
-  ({ snapPoints = ["50%", "80%"], children, onChange }, ref) => {
+  ({ snapPoints = ["80%"], children, onChange }, ref) => {
     const bottomSheetRef = useRef<BottomSheet>(null);
 
     useImperativeHandle(ref, () => ({
@@ -36,9 +36,16 @@ const SlideUpMenu = forwardRef<SlideUpMenuHandle, SlideUpMenuProps>(
         enableContentPanningGesture={true}
         onChange={onChange}
       >
-        <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
-          {children}
-        </BottomSheetScrollView>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 10}
+          style={styles.keyboardAvoidingContainer}
+          enabled={true}
+        >
+          <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
+            {children}
+          </BottomSheetScrollView>
+        </KeyboardAvoidingView>
       </BottomSheet>
     );
   }
