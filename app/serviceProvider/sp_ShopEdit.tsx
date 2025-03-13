@@ -1,5 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, FlatList, Pressable, Dimensions } from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  Pressable,
+  Dimensions,
+  ScrollView,
+  TextInput,
+  StyleSheet,
+  BackHandler,
+  Button,
+} from "react-native";
 import tempItems from "../../assets/Data/data2"; // Ensure this file exports an array of Shop objects
 import { Ionicons } from "@expo/vector-icons";
 import { v4 as uuidv4 } from "uuid";
@@ -9,7 +21,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserStorageService } from "../../storage/functions/userStorageService";
 import { OwnerShopPageAsyncStorage } from "../../storage/functions/ownerShopDataStorage";
 import HeaderMain from "../../components/section2/header_Main";
-
+import BottomSheet from "@gorhom/bottom-sheet";
+import SlideUpMenu, {
+  SlideUpMenuHandle,
+} from "../../components/section2/BottomSheets/bottomSheetShopEdit";
 // TypeScript interfaces
 import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
 import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
@@ -27,6 +42,30 @@ const shopEditService: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<ShopServices[]>([]);
   const [shopServiceData, setShopServiceData] = useState<ShopServices[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Values for the bottom sheet
+  const slideUpMenuRef = useRef<SlideUpMenuHandle>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  // Callback from SlideUpMenu: when index is -1, the sheet is closed.
+  const handleSheetChange = useCallback((index: number) => {
+    setSheetOpen(index !== -1);
+    console.log("Sheet index changed:", index);
+  }, []);
+  // Back button handling: if sheet is open, close it and prevent default back action.
+  useEffect(() => {
+    const onBackPress = () => {
+      if (sheetOpen) {
+        slideUpMenuRef.current?.close();
+        return true; // Prevent default behavior
+      }
+      return false; // Allow default back action
+    };
+
+    BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+  }, [sheetOpen]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -104,9 +143,11 @@ const shopEditService: React.FC = () => {
     setSelectedItems([]);
     setMultiSelectMode(false);
   };
+  // Handler for when the save button is pressed inside the bottom sheet
 
   // Regular press action for an item (when not in multi-select mode)
   const handlePress = (item: ShopServices): void => {
+    slideUpMenuRef.current?.open();
     console.log("Item pressed:", item);
   };
 
@@ -211,8 +252,71 @@ const shopEditService: React.FC = () => {
           </Pressable>
         )}
       </View>
+
+      {/* Bottom Sheet for Editing Service Details */}
+      <SlideUpMenu ref={slideUpMenuRef} onChange={handleSheetChange}>
+        <View style={styles.menuContent}>
+          <Text style={styles.menuTitle}>Enter Details</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Title"
+            value={title}
+            onChangeText={setTitle}
+          />
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Description"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+
+          <Button title="Close Menu" onPress={() => slideUpMenuRef.current?.close()} />
+        </View>
+      </SlideUpMenu>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    backgroundColor: "#fff",
+  },
+  saveButton: {
+    backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  menuContent: {
+    padding: 20,
+    backgroundColor: "#e3b9b9",
+  },
+  menuTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+
+  multilineInput: {
+    height: 80,
+  },
+});
 
 export default shopEditService;
