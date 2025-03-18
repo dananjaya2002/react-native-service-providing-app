@@ -6,25 +6,22 @@ import {
   FlatList,
   Pressable,
   Dimensions,
-  ScrollView,
-  TextInput,
   StyleSheet,
   BackHandler,
   Button,
+  ActivityIndicator,
 } from "react-native";
-import tempItems from "../../assets/Data/data2"; // Ensure this file exports an array of Shop objects
 import { Ionicons } from "@expo/vector-icons";
-import { v4 as uuidv4 } from "uuid";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { UserStorageService } from "../../storage/functions/userStorageService";
 import { OwnerShopPageAsyncStorage } from "../../storage/functions/ownerShopDataStorage";
 import HeaderMain from "../../components/section2/header_Main";
-import BottomSheet from "@gorhom/bottom-sheet";
-import SlideUpMenu, {
-  SlideUpMenuHandle,
-} from "../../components/section2/BottomSheets/bottomSheetShopEdit";
+import SlideUpMenu from "../../components/section2/BottomSheets/bottomSheetShopEdit";
+import CustomButton from "../../components/section2/BottomSheets/bsButton";
+import ImagePickerBox from "../../components/section2/BottomSheets/bsImagePicker";
+import { BottomSheetTextInput, BottomSheetView } from "@gorhom/bottom-sheet";
 // TypeScript interfaces
 import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
 import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
@@ -32,50 +29,29 @@ import { UserData } from "../../interfaces/UserData";
 
 const { width } = Dimensions.get("window");
 const itemWidth = (width / 3) * 2;
-const gap = (width - itemWidth) / 4;
 
 const shopEditService: React.FC = () => {
-  // State for multi-select mode and selected items
-  const [multiSelectMode, setMultiSelectMode] = useState<boolean>(false);
-
-  //const [shopData, setShopData] = useState<ShopPageData | null>(null);
-  const [selectedItems, setSelectedItems] = useState<ShopServices[]>([]);
+  // General states
   const [shopServiceData, setShopServiceData] = useState<ShopServices[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Values for the bottom sheet
-  const slideUpMenuRef = useRef<SlideUpMenuHandle>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  // Callback from SlideUpMenu: when index is -1, the sheet is closed.
-  const handleSheetChange = useCallback((index: number) => {
-    setSheetOpen(index !== -1);
-    console.log("Sheet index changed:", index);
-  }, []);
-  // Back button handling: if sheet is open, close it and prevent default back action.
-  useEffect(() => {
-    const onBackPress = () => {
-      if (sheetOpen) {
-        slideUpMenuRef.current?.close();
-        return true; // Prevent default behavior
-      }
-      return false; // Allow default back action
-    };
+  // State for multi-select mode and selected items
+  const [selectedItems, setSelectedItems] = useState<ShopServices[]>([]);
+  const [multiSelectMode, setMultiSelectMode] = useState<boolean>(false);
 
-    BackHandler.addEventListener("hardwareBackPress", onBackPress);
-    return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-  }, [sheetOpen]);
+  // Slide up menu related state and ref
+  const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
+  const [sheetTitle, setSheetTitle] = useState("Title");
+  const [sheetDescription, setSheetDescription] = useState("Description");
+  const [sheetImageUrl, setSheetImageUrl] = useState("");
 
+  // Load shop data from async storage
   useEffect(() => {
     const loadData = async () => {
       try {
         // Load the shop data from async storage
         const shopData = await OwnerShopPageAsyncStorage.getUserData();
         if (shopData) {
-          //setShopData(shopData);
-          //console.log("Retrieved shop data:", shopData);
-
           // Extract the shop services from the data
           const extractedShopServices: ShopServices[] = Object.values(
             shopData.items
@@ -93,7 +69,7 @@ const shopEditService: React.FC = () => {
                   : []
               )
           );
-          console.log("\n\nShop services data:", extractedShopServices);
+          //console.log("\n\nShop services data:", extractedShopServices);
         } else {
           console.log("No shop data found.");
         }
@@ -108,8 +84,33 @@ const shopEditService: React.FC = () => {
     loadData();
   }, []);
 
+  // useEffect(() => {
+  //   setBottomSheetVisible(true);
+  // }, [shopServiceData]);
+
+  // Back button handling: if sheet is open, close it and prevent default back action.
+  useEffect(() => {
+    const onBackPress = () => {
+      if (bottomSheetVisible) {
+        setBottomSheetVisible(false);
+        return true; // Prevent default behavior
+      }
+      return false; // Allow default back action
+    };
+    BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+  }, [bottomSheetVisible]);
+
+  // If the data is still loading, display a loading indicator
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#6200ee" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
   }
 
   // Toggle the selection state for an item
@@ -147,14 +148,16 @@ const shopEditService: React.FC = () => {
 
   // Regular press action for an item (when not in multi-select mode)
   const handlePress = (item: ShopServices): void => {
-    slideUpMenuRef.current?.open();
-    console.log("Item pressed:", item);
+    //console.log("Item pressed:", item);
+    setSheetTitle(item.title);
+    setSheetDescription(item.description);
+    setSheetImageUrl(item.imageUrl);
+    setBottomSheetVisible(true);
   };
 
   const renderItem = ({ item }: { item: ShopServices }) => {
-    //console.log("Item Card-rendered 🔶🔶");
     if (item.title === "") {
-      // Render a transparent placeholder
+      // Render a transparent placeholder for odd-numbered items
       return <View className="flex-1 m-2 p-2 opacity-0" />;
     }
     const isSelected = selectedItems.includes(item);
@@ -200,41 +203,35 @@ const shopEditService: React.FC = () => {
 
   const addNewServiceButtonPress = () => {
     console.log("New service button pressed");
+    // Clear the sheet fields and show the sheet
+    setSheetTitle("");
+    setSheetDescription("");
+    setBottomSheetVisible(true);
   };
 
   return (
-    <View className="flex-1 bg-green-400">
+    <View className="flex-1 bg-primary">
       <HeaderMain
         title="Edit Services"
         onPressBack={() => {
           console.log("Back Pressed");
         }}
       />
-      <View className="flex-1 bg-primary">
-        <View className="bg-red-200 h-32 w-screen py-2 px-4">
-          {/* Wrapper view with the dashed border */}
-          <View
-            className="h-full w-full flex items-center justify-center"
-            style={{ borderWidth: 2, borderColor: "black", borderStyle: "dashed" }}
+      <View className="flex-1">
+        <View className=" h-32 w-screen py-2 px-4">
+          {/* Add new Service Section */}
+          <Pressable
+            onPress={addNewServiceButtonPress}
+            android_ripple={{ color: "rgba(255, 255, 255, 0.2)" }}
+            style={styles.addServiceButton}
           >
-            <Pressable
-              onPress={addNewServiceButtonPress}
-              android_ripple={{ color: "rgba(0, 0, 0, 0.1)" }}
-              style={({ pressed }) => [
-                {
-                  transform: pressed ? [{ scale: 0.95 }] : [{ scale: 1 }],
-                  opacity: pressed ? 0.8 : 1,
-                  width: "100%",
-                  height: "100%",
-                  alignItems: "center",
-                  justifyContent: "center",
-                },
-              ]}
-            >
+            <View style={styles.addServiceButtonTextContainer}>
+              <Text style={styles.addServiceButtonText}>Add New Service</Text>
               <Ionicons name="add" size={36} color="black" />
-            </Pressable>
-          </View>
+            </View>
+          </Pressable>
         </View>
+        {/* Show All Services */}
         <FlatList
           data={shopServiceData}
           renderItem={renderItem}
@@ -254,24 +251,45 @@ const shopEditService: React.FC = () => {
       </View>
 
       {/* Bottom Sheet for Editing Service Details */}
-      <SlideUpMenu ref={slideUpMenuRef} onChange={handleSheetChange}>
-        <View style={styles.menuContent}>
-          <Text style={styles.menuTitle}>Enter Details</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Title"
-            value={title}
-            onChangeText={setTitle}
+      <SlideUpMenu
+        isVisible={bottomSheetVisible}
+        onChange={(index) => {
+          console.log("Sheet index changed:", index);
+          if (index === -1) setBottomSheetVisible(false);
+        }}
+        footer={
+          <View style={styles.bottomSheetButtonContainer}>
+            <CustomButton
+              title="Save"
+              onPress={() => {
+                console.log("SS");
+              }}
+            />
+          </View>
+        }
+      >
+        <View style={styles.bottomSheetTextInputContainer}>
+          <Text style={styles.bottomSheetTextInputText}>Title</Text>
+          <BottomSheetTextInput
+            style={styles.bottomSheetTextInput}
+            placeholder="Add the Title"
+            value={sheetTitle}
+            onChangeText={setSheetTitle}
           />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
+        </View>
+        <View style={styles.bottomSheetTextInputContainer}>
+          <Text style={styles.bottomSheetTextInputText}>Description</Text>
+          <BottomSheetTextInput
+            style={[styles.bottomSheetTextInput, styles.bottomSheetMultilineTextInput]}
+            placeholder="Add the Description"
+            value={sheetDescription}
+            onChangeText={setSheetDescription}
+            multiline={true}
           />
+        </View>
 
-          <Button title="Close Menu" onPress={() => slideUpMenuRef.current?.close()} />
+        <View style={styles.bottomSheetTextInputContainer}>
+          <ImagePickerBox />
         </View>
       </SlideUpMenu>
     </View>
@@ -279,43 +297,118 @@ const shopEditService: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  sheetTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+  bottomSheetTextInputContainer: {
+    marginVertical: 12,
+    paddingHorizontal: 16,
+    width: "100%",
+    height: "auto",
   },
-  input: {
+  bottomSheetTextInputText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  bottomSheetTextInput: {
+    marginTop: 4,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
     backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: "100%",
+    // Adding a subtle shadow for iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    // Elevation for Android shadow
+    elevation: 2,
   },
-  saveButton: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    borderRadius: 5,
+  bottomSheetMultilineTextInput: {
+    height: 100, // increased height for multiline text
+    textAlignVertical: "top", // aligns text at the top on Android
+    // padding for the text inside the input
+  },
+  bottomSheetButtonContainer: {
+    backgroundColor: "white",
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 16,
     alignItems: "center",
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  menuContent: {
-    padding: 20,
-    backgroundColor: "#e3b9b9",
-  },
-  menuTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
+    overflow: "hidden",
   },
 
-  multilineInput: {
-    height: 80,
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  addServiceButtonTextContainer: {
+    flex: 1,
+    flexDirection: "row",
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 2,
+    borderColor: "black",
+    borderStyle: "dashed",
+    margin: 8,
+    borderRadius: 6,
+  },
+  addServiceButton: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 8,
+    elevation: 3, // Android shadow
+    shadowColor: "#000", // iOS shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    backgroundColor: "white",
+  },
+  addServiceButtonText: {
+    color: "black",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  loadingContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.9)", // White with opacity
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  loadingBox: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5, // Android shadow
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
   },
 });
 

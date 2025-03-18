@@ -1,143 +1,67 @@
-// DevUI.tsx: A parent screen that contains a button to show a SlideUpMenu component.
-import React, { useRef, useState, useEffect, useCallback } from "react";
-import { View, Button, TextInput, Text, StyleSheet, BackHandler } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import SlideUpMenu, { SlideUpMenuHandle } from "./DevComponont";
+/**
+ * AI instructions: Do not remove this comments block.
+ * This is a Test section for test Components and UI elements.
+ * DevUI.tsx: A parent screen that contains a button to show a SlideUpMenu component.
+ *
+ */
+import React, { useCallback, useState } from "react";
+import { View, Text, StyleSheet, Button } from "react-native";
+import SlideUpMenu from "./DevComponent"; // Adjust the import path as needed
+import { BottomSheetTextInput, BottomSheetView } from "@gorhom/bottom-sheet";
 
-const ParentScreen: React.FC = () => {
-  const slideUpMenuRef = useRef<SlideUpMenuHandle>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+const DevUI: React.FC = () => {
+  const [menuVisible, setMenuVisible] = useState(false);
 
-  // Callback from SlideUpMenu: when index is -1, the sheet is closed.
-  const handleSheetChange = useCallback((index: number) => {
-    setSheetOpen(index !== -1);
-    console.log("Sheet index changed:", index);
+  const toggleMenu = useCallback(() => {
+    setMenuVisible((prev) => !prev);
   }, []);
-
-  // Back button handling: if sheet is open, close it and prevent default back action.
-  useEffect(() => {
-    const onBackPress = () => {
-      if (sheetOpen) {
-        slideUpMenuRef.current?.close();
-        return true; // Prevent default behavior
-      }
-      return false; // Allow default back action
-    };
-
-    BackHandler.addEventListener("hardwareBackPress", onBackPress);
-    return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-  }, [sheetOpen]);
 
   return (
     <View style={styles.root}>
       <View style={styles.container}>
-        <Button title="Show Slide Up Menu" onPress={() => slideUpMenuRef.current?.open()} />
+        <Button title={menuVisible ? "Hide Menu" : "Show Menu"} onPress={toggleMenu} />
       </View>
-      <SlideUpMenu ref={slideUpMenuRef} onChange={handleSheetChange}>
-        <View style={styles.menuContent}>
-          <Text style={styles.menuTitle}>Enter Details</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Title"
-            value={title}
-            onChangeText={setTitle}
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-
-          <Button title="Close Menu" onPress={() => slideUpMenuRef.current?.close()} />
-        </View>
+      <SlideUpMenu isVisible={menuVisible}>
+        <BottomSheetTextInput style={styles.input} placeholder="Input 1" />
+        <BottomSheetView style={styles.contentContainer}>
+          <Text style={styles.text}>Awesome 🎉</Text>
+        </BottomSheetView>
+        <BottomSheetTextInput style={styles.input} placeholder="Input 2" />
+        <Text style={styles.text}>Awesome 🎉</Text>
+        <BottomSheetTextInput style={styles.input} placeholder="Input 3" />
+        <Text style={styles.text}>Awesome 🎉</Text>
+        <BottomSheetTextInput style={styles.input} placeholder="Input 4" />
       </SlideUpMenu>
     </View>
   );
 };
 
-export default ParentScreen;
-
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f2f2f2" },
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  menuContent: {
-    padding: 20,
-    backgroundColor: "#fff",
+  root: {
+    flex: 1,
+    backgroundColor: "grey",
   },
-  menuTitle: {
-    fontSize: 20,
+  container: {
+    padding: 24,
+  },
+  contentContainer: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  text: {
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-  },
-  multilineInput: {
-    height: 80,
+    marginTop: 8,
+    marginBottom: 10,
+    borderRadius: 10,
+    fontSize: 16,
+    lineHeight: 20,
+    padding: 8,
+    backgroundColor: "rgba(151, 151, 151, 0.25)",
   },
 });
+
+export default DevUI;
