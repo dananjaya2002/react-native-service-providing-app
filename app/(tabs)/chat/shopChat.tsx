@@ -35,18 +35,7 @@ type ChatRoom = {
 };
 
 /**
- * Currently we trying to simulate both roles in the same page section. So we have to use dynamic userRoleType
- * Goal is to find the all document where the user role field is match with the userDocRefID
- */
-
-/**
- * @userRole must be either "provider" or "customer"
- * There are some thing we should need to be aware for now.
- * This file required @userRole and @userDocRefId
- * We use them to filter documents based on field in chatroom documents.
- *
- * Keep in mind that the service provider can switch between two @userRole . so we need focus on that later.
- *
+ * User's Shop Chat Page
  */
 
 export default function ChatList() {
@@ -154,8 +143,8 @@ export default function ChatList() {
 
   // Render each chat item
   const renderChatItem = ({ item }: { item: ChatRoom }) => {
-    let otherUserName = item.serviceProvider.name;
-    let otherUserProfilePicURL = item.serviceProvider.profileImageUrl;
+    let otherUserName = item.customer.name;
+    let otherUserProfilePicURL = item.customer.profileImageUrl;
     let timestampText;
 
     // Converting Time

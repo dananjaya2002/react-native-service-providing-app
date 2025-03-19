@@ -17,7 +17,7 @@ import Animated, {
   withRepeat,
 } from "react-native-reanimated";
 
-import { getShopPageData } from "../../Utility/U_getFirebaseData";
+import { getShopPageData } from "../../Utility/U_getUserShopPageData";
 import { FontAwesome } from "@expo/vector-icons";
 import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
 import HorizontalScrollView from "../../components/section2/horizontalScrollView";

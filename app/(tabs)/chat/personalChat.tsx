@@ -35,18 +35,7 @@ type ChatRoom = {
 };
 
 /**
- * Currently we trying to simulate both roles in the same page section. So we have to use dynamic userRoleType
- * Goal is to find the all document where the user role field is match with the userDocRefID
- */
-
-/**
- * @userRole must be either "provider" or "customer"
- * There are some thing we should need to be aware for now.
- * This file required @userRole and @userDocRefId
- * We use them to filter documents based on field in chatroom documents.
- *
- * Keep in mind that the service provider can switch between two @userRole . so we need focus on that later.
- *
+ * User's Personal Chat Page'
  */
 
 export default function ChatList() {
@@ -58,16 +47,13 @@ export default function ChatList() {
 
   //const { userID = "waSF6FwvSDcG0Nm23JvI" } = useLocalSearchParams(); // Fallback Customer Ravidu Gunavardana !!! FALLBACK VALUE IS FOR DEV ONLY
 
-  // Identify user type
-  const userRoleType = "customerRef";
-
   const userRoleDocFieldPath = "customer.docRef";
 
-  const customerId = async () => {
-    const savedUserData = (await UserStorageService.getUserData()) as UserData;
-    console.log("Saved User Data: ", savedUserData.userId);
-    return savedUserData.userId;
-  };
+  // const customerId = async () => {
+  //   const savedUserData = (await UserStorageService.getUserData()) as UserData;
+  //   console.log("Saved User Data: ", savedUserData.userId);
+  //   return savedUserData.userId;
+  // };
 
   // Fetch saved user data asynchronously
   useEffect(() => {
@@ -83,9 +69,7 @@ export default function ChatList() {
   }, []);
 
   /**
-   *
    * Fetch Data from the firebase
-   *
    */
   useEffect(() => {
     if (!userDocRefID) {

@@ -6,30 +6,6 @@ import Constants from "expo-constants";
 import * as ImagePicker from "expo-image-picker";
 
 /**
- * Helper: Extracts the file extension from a URI.
- */
-const getFileExtension = (uri: string): string | null => {
-  const match = uri.match(/\.(\w+)(\?.*)?$/);
-  return match ? "." + match[1].toLowerCase() : null;
-};
-
-/**
- * Helper: Determines the MIME type from the file extension.
- */
-const getMimeType = (uri: string): string => {
-  const ext = getFileExtension(uri);
-  switch (ext) {
-    case ".jpg":
-    case ".jpeg":
-      return "image/jpeg";
-    case ".png":
-      return "image/png";
-    default:
-      return "image/jpeg";
-  }
-};
-
-/**
  * Uploads a local image to Cloudinary and returns its secure URL.
  *
  * @param imageUri - The local URI of the image.
@@ -79,6 +55,30 @@ export const uploadImageToCloud = async (imageUri: string): Promise<string | nul
     console.error("Error uploading image:", error);
     Alert.alert("Upload Error", error.message);
     return null;
+  }
+};
+
+/**
+ * Helper: Extracts the file extension from a URI.
+ */
+const getFileExtension = (uri: string): string | null => {
+  const match = uri.match(/\.(\w+)(\?.*)?$/);
+  return match ? "." + match[1].toLowerCase() : null;
+};
+
+/**
+ * Helper: Determines the MIME type from the file extension.
+ */
+const getMimeType = (uri: string): string => {
+  const ext = getFileExtension(uri);
+  switch (ext) {
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".png":
+      return "image/png";
+    default:
+      return "image/jpeg";
   }
 };
 

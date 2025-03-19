@@ -11,7 +11,7 @@ const ImagePickerBox: React.FC = () => {
       mediaTypes: ["images"], // Only images, no videos
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.6,
     });
 
     console.log(result);

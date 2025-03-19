@@ -21,7 +21,8 @@ const getAssetImageUri = async (): Promise<string | null> => {
 };
 
 /**
- * Helper: Extracts the file extension from a URI.
+ * Helper Function
+ *  Extracts the file extension from a URL.
  * Returns the extension in lower case (including the dot), or null if not found.
  */
 const getFileExtension = (uri: string): string | null => {
@@ -30,6 +31,7 @@ const getFileExtension = (uri: string): string | null => {
 };
 
 /**
+ * Helper Function
  * Gets the dimensions of an image at the given URI.
  */
 const getImageSize = (uri: string): Promise<{ width: number; height: number }> =>
