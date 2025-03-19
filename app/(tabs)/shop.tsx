@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { getShopPageData } from "../../Utility/U_getFirebaseData";
+import { getShopPageData } from "../../Utility/U_getUserShopPageData";
 import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
 import HorizontalScrollView from "../../components/section2/horizontalScrollView";
 import UserComments from "@/components/section2/userComment";

@@ -137,8 +137,8 @@ const shopEditService: React.FC = () => {
     }
   };
 
-  // Action to perform on selected items
-  const doActionOnSelected = () => {
+  // Delete selected items button press handler
+  const onDeleteSelectedItemPressed = () => {
     console.log("Performing action on selected items:", selectedItems);
     // After performing the action, clear selection and exit multi-select mode
     setSelectedItems([]);
@@ -242,7 +242,7 @@ const shopEditService: React.FC = () => {
         {/* Render the action button only in multi-select mode */}
         {multiSelectMode && (
           <Pressable
-            onPress={doActionOnSelected}
+            onPress={onDeleteSelectedItemPressed}
             className="bg-red-600 py-4 px-10 rounded-2xl absolute bottom-8 right-8 shadow-xl"
           >
             <Text className="text-white font-bold">Delete</Text>

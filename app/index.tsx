@@ -55,15 +55,15 @@ const Index = () => {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      //router.push("/(tabs)");
-      router.push("/serviceProvider/sp_ShopEdit");
-      //router.push("/(tabs)/shop");
+    // const timer = setTimeout(() => {
+    //   //router.push("/(tabs)");
+    //   router.push("/serviceProvider/sp_ShopEdit");
+    //   //router.push("/(tabs)/shop");
 
-      const shopId = "123";
-      //router.push(`../customer/${shopId}`);
-    }, 50);
-    return () => clearTimeout(timer);
+    //   const shopId = "123";
+    //   //router.push(`../customer/${shopId}`);
+    // }, 50);
+    // return () => clearTimeout(timer);
 
     const fetchDocuments = async () => {
       try {
@@ -112,7 +112,7 @@ const Index = () => {
 
   const onItemPress = async (doc: UserData) => {
     await UserStorageService.saveUserData(doc);
-    router.push("/(tabs)/shop");
+    router.push("/(tabs)/chat/shopChat");
     //router.push("/(tabs)/chat/personalChat");
 
     //displayData();
