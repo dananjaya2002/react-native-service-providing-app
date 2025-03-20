@@ -14,14 +14,15 @@ import {
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 
+export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
+
 export interface ChatMessage {
   id: string;
   senderId: string;
-  textChat?: string;
-  imageUrl?: string;
-  // For provisional ordering, optimistic messages now get a local timestamp.
+  messageType: MessageTypes;
+  value: string;
+  // Use a proper timestamp type if available, otherwise keep as any.
   timestamp: any | null;
-  // status: pending means not yet uploaded, sent means confirmed, error means failure.
   status: "pending" | "sent" | "error";
 }
 
@@ -50,7 +51,6 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
         const map = new Map<string, ChatMessage>();
         prev.forEach((msg) => map.set(msg.id, msg));
         fetched.forEach((msg) => {
-          // Only update if no optimistic message is pending.
           const existing = map.get(msg.id);
           if (!existing || existing.status !== "pending") {
             map.set(msg.id, msg);
@@ -122,7 +122,7 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
   };
 
   // Send a message.
-  const sendMessage = async (data: { textChat?: string; imageUrl?: string }) => {
+  const sendMessage = async (data: { messageType: MessageTypes; value: string }) => {
     const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
     const newMessageRef = doc(messagesRef);
     const messageId = newMessageRef.id;
@@ -131,8 +131,8 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
     const optimisticMsg: ChatMessage = {
       id: messageId,
       senderId: userID,
-      textChat: data.textChat,
-      imageUrl: data.imageUrl,
+      messageType: data.messageType,
+      value: data.value,
       timestamp: new Date(), // provisional timestamp
       status: "pending",
     };
@@ -142,20 +142,23 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
     setNotUploadedMessages((prev) => [...prev, optimisticMsg]);
 
     try {
-      const messageData: any = { senderId: userID, timestamp: serverTimestamp() };
-      if (data.textChat !== undefined) messageData.textChat = data.textChat;
-      if (data.imageUrl !== undefined) messageData.imageUrl = data.imageUrl;
+      const messageData: any = {
+        senderId: userID,
+        messageType: data.messageType,
+        value: data.value,
+        timestamp: serverTimestamp(),
+      };
 
       const batch = writeBatch(db);
       batch.set(newMessageRef, messageData);
       const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
       batch.update(chatDocRef, {
-        lastMessage: data.textChat || data.imageUrl,
+        lastMessage: data.value,
         timestamp: serverTimestamp(),
       });
       await batch.commit();
 
-      // On success, update status to "sent" (without changing the provisional timestamp).
+      // On success, update status to "sent".
       setChatArray((prev) =>
         prev.map((msg) => (msg.id === messageId ? { ...msg, status: "sent" } : msg))
       );
