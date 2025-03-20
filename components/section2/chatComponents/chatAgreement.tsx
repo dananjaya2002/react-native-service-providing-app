@@ -1,29 +1,44 @@
-// TestComponent.tsx
-
-/**
- * AI instructions: Do not remove this comments block.
- * This is a Test section for create components.
- * Current mimicking component file name: TestComponent.tsx
- * Actual component file name: DevComponent.tsx'
- *
- */
+// /components/section2/chatComponents/chatAgreement.tsx
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, View, Text } from "react-native";
+import { Pressable, StyleSheet, View, Text, ActivityIndicator } from "react-native";
+import { db } from "../../../FirebaseConfig";
 
-const TestComponent = () => {
+interface ChatAgreementCardProps {
+  chatDocId: string;
+  onAccept?: () => void;
+}
+
+const ChatAgreementCard: React.FC<ChatAgreementCardProps> = ({ chatDocId, onAccept }) => {
   const [isPressed, setIsPressed] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handlePressIn = () => setIsPressed(true);
   const handlePressOut = () => setIsPressed(false);
-  const handlePress = () => {
-    if (!accepted) {
+
+  const handlePress = async () => {
+    // Prevent duplicate writes
+    if (accepted || loading) return;
+
+    setLoading(true);
+    try {
+      // Update the Firestore document with new fields.
+      const docRef = doc(db, "Chat", chatDocId);
+      await updateDoc(docRef, {
+        agreement: "accepted",
+        acceptedTime: serverTimestamp(),
+      });
       setAccepted(true);
-      console.log("Accepted");
+      if (onAccept) onAccept();
+    } catch (error) {
+      console.error("Error accepting agreement:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Determine dynamic background color. Accepted state has priority.
+  // Determine dynamic background color; accepted state has priority.
   const backgroundColor = accepted
     ? styles.buttonAccepted.backgroundColor
     : isPressed
@@ -37,15 +52,22 @@ const TestComponent = () => {
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        disabled={accepted || loading}
         style={[styles.button, { backgroundColor }]}
       >
-        <Text style={styles.buttonText}>{accepted ? "Accepted" : "Accept"}</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>{accepted ? "Accepted" : "Accept"}</Text>
+        )}
       </Pressable>
     </View>
   );
 };
+
+export default ChatAgreementCard;
+
 const styles = StyleSheet.create({
-  // Elevated, card-like container for a premium look.
   container: {
     width: "90%",
     paddingVertical: 24,
@@ -71,7 +93,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
-    // Adding a slight transition effect using shadow as a visual cue.
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
@@ -93,5 +114,3 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 });
-
-export default TestComponent;
