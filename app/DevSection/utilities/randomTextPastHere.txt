@@ -1,0 +1,59 @@
+{
+  "DashboardInfo": {
+    "agreements": 5,
+    "avgRatings": 4.6,
+    "completed": 45,
+    "items": 85,
+    "messages": 3,
+    "totalComments": 13,
+    "totalRatings": 275,
+    "waitings": 12
+  },
+  "ItemList": {
+    "item1": {
+      "title": "Engine Oil Change",
+      "description": "High-quality synthetic and mineral engine oil change.",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022204/pexels-photo-13065690_b6uhwg.jpg"
+    },
+    "item2": {
+      "title": "Wheel Alignment & Balancing",
+      "description": "Computerized wheel alignment for better stability and tire life on Colombo roads.",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022274/pexels-photo-3806280_h0563i.jpg"
+    },
+    "item3": {
+      "title": "Battery Replacement",
+      "description": "Wide range of vehicle batteries with free installation from trusted suppliers.",
+      "imageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022331/pexels-photo-4374843_h6ehxm.jpg"
+    },
+    "item4": {
+      "title": "AC Repair & Gas Refill",
+      "description": "Comprehensive car AC servicing, repairs, and gas refilling to beat the tropical heat.",
+      "imageUrl": "https://images.pexels.com/photos/3807329/pexels-photo-3807329.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+    }
+  },
+  "avgRatings": 4.6,
+  "phoneNumber": "0773456789",
+  "ratings": [
+    {
+      "Comment": "Great service and reasonable prices! Highly recommend.",
+      "Date": "[Timestamp]",
+      "Name": "Kamal Fernando",
+      "Ratings": 4.8,
+      "id": "ratings1",
+      "profileImageUrl": "https://images.pexels.com/photos/30120603/pexels-photo-30120603/free-photo-of-black-and-white-portrait-of-a-young-adult.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+    },
+    {
+      "Comment": "Very professional and quick service. My car runs smoothly now.",
+      "Date": "[Timestamp]",
+      "Name": "Samantha Wijesinghe",
+      "Ratings": 4.5,
+      "id": "ratings2",
+      "profileImageUrl": "https://images.pexels.com/photos/752525/pexels-photo-752525.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+    }
+  ],
+  "serviceInfo": "Expert vehicle repairs, servicing, and maintenance with genuine spare parts.",
+  "shopDescription": "Reliable and affordable auto repair services in Colombo.",
+  "shopPageImageUrl": "https://res.cloudinary.com/dpjdmbozt/image/upload/v1739022522/pexels-photo-4480505_zylzvi.jpg",
+  "shopTitle": "Sunimal Auto Care",
+  "totalRatingsCount": 275
+}
