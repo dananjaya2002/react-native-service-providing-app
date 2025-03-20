@@ -1,5 +1,5 @@
 // components/ChatMessageItem.tsx
-import React, { useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import { Animated, Text, View, Image, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ChatMessage } from "../../hooks/useChat";
@@ -8,21 +8,12 @@ interface ChatMessageItemProps {
   item: ChatMessage;
   userID: string;
 }
-/**
- *
- * @param ChatMessage - The message object to display.
- * @param userID - The ID of the current user.
- * @returns
- */
+
 const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ item, userID }) => {
-  // Create an Animated.Value that starts at 0 if pending, 1 if not.
   const animation = useRef(new Animated.Value(item.status === "pending" ? 0 : 1)).current;
-
-  // Determine final background color based on sender.
   const finalBackgroundColor = item.senderId === userID ? "#0d6efd" : "#e9ecef";
-  const pendingColor = "#FFFACD"; // yellow
+  const pendingColor = "#FFFACD";
 
-  // Interpolate background color.
   const backgroundColor = animation.interpolate({
     inputRange: [0, 1],
     outputRange: [pendingColor, finalBackgroundColor],
@@ -33,10 +24,36 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ item, userID }) => {
       Animated.timing(animation, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: false, // backgroundColor interpolation doesn't support native driver
+        useNativeDriver: false,
       }).start();
     }
   }, [item.status]);
+
+  // Render based on messageType.
+  const renderMessageContent = () => {
+    switch (item.messageType) {
+      case "imageURL":
+        return <Image source={{ uri: item.value }} style={styles.messageImage} />;
+      case "AgreementRequest":
+        return (
+          <View style={styles.agreementContainer}>
+            <Text style={styles.agreementText}>{item.value}</Text>
+          </View>
+        );
+      case "textMessage":
+      default:
+        return (
+          <Text
+            style={[
+              styles.messageText,
+              item.senderId === userID ? styles.sentMessageText : styles.receivedMessageText,
+            ]}
+          >
+            {item.value}
+          </Text>
+        );
+    }
+  };
 
   return (
     <Animated.View
@@ -46,18 +63,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ item, userID }) => {
         item.senderId === userID ? styles.sentMessage : styles.receivedMessage,
       ]}
     >
-      {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
-      ) : (
-        <Text
-          style={[
-            styles.messageText,
-            item.senderId === userID ? styles.sentMessageText : styles.receivedMessageText,
-          ]}
-        >
-          {item.textChat}
-        </Text>
-      )}
+      {renderMessageContent()}
       <View style={styles.timestampContainer}>
         {item.timestamp === null && item.status === "pending" ? (
           <Ionicons name="time-outline" size={12} color="#888" />
@@ -74,6 +80,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ item, userID }) => {
     </Animated.View>
   );
 };
+
+export default memo(ChatMessageItem);
 
 const styles = StyleSheet.create({
   messageContainer: {
@@ -119,6 +127,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 5,
   },
+  agreementContainer: {
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 8,
+  },
+  agreementText: {
+    color: "#fff",
+    fontSize: 16,
+  },
 });
-
-export default ChatMessageItem;

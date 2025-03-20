@@ -1,65 +1,24 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   FlatList,
-  Text,
   TextInput,
   View,
   TouchableOpacity,
   ActivityIndicator,
-  Image,
   StyleSheet,
   Platform,
+  Keyboard,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  startAfter,
-  writeBatch,
-} from "firebase/firestore";
-import { db } from "../../FirebaseConfig"; // Ensure Firebase is configured
+import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { QueryDocumentSnapshot, DocumentData, Timestamp } from "firebase/firestore";
 import { uploadImageToCloud } from "../../Utility/u_uploadImageNew";
 
-import { useChatMessages } from "../../hooks/useChatMessages";
-import { useSendMessage } from "../../hooks/useSendMessage";
 import { useChat } from "../../hooks/useChat";
 import ChatMessageItem from "@/components/section2/ChatMessageItem";
 
-// Receive Message Format
-interface ChatMessage {
-  id: string; // Firestore doc.id
-  senderId: string;
-  textChat?: string;
-  imageUrl?: string;
-  timestamp?: any;
-  status: "pending" | "sent" | "error";
-}
-type RouterParams = {
-  userID: string;
-  chatRoomDocRefId: string;
-};
-
-type SendingChat = {
-  id: string;
-  senderId: string;
-  textChat?: string;
-  imageUrl?: string;
-  timestamp: any;
-  status: "pending" | "sent" | "error";
-};
-
-const PAGE_SIZE = 10; // Number of messages to load per page
+export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 
 export default function ChatScreen() {
   const chatListRef = useRef<FlatList>(null);
@@ -74,13 +33,31 @@ export default function ChatScreen() {
     userID
   );
 
-  const handleSendTextMessage = async () => {
+  const handleSendTextMessage = useCallback(async () => {
     if (!currentMessage.trim()) return;
+    const textMessage = currentMessage.trim();
     setCurrentMessage("");
-    await sendMessage({ textChat: currentMessage.trim() });
-  };
+    await sendMessage({ messageType: "textMessage", value: textMessage });
+  }, [currentMessage, sendMessage]);
 
-  const handleImageSelection = async () => {
+  const handleSendImageMessage = useCallback(
+    async (imageUri: string) => {
+      try {
+        const imageUrl = await uploadImageToCloud(imageUri);
+        if (!imageUrl) {
+          console.error("Image upload failed");
+          return;
+        }
+        await sendMessage({ messageType: "imageURL", value: imageUrl });
+      } catch (error) {
+        console.error("Error sending image message:", error);
+      }
+    },
+    [sendMessage]
+  );
+
+  const handleImageSelection = useCallback(async () => {
+    Keyboard.dismiss();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Camera roll permissions required!");
@@ -91,29 +68,18 @@ export default function ChatScreen() {
       aspect: [4, 3],
       quality: 0.5,
     });
-    if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      handleSendImageMessage(imageUri);
+    if (result.canceled) {
+      return;
     }
-  };
+    const imageUri = result.assets[0].uri;
+    await handleSendImageMessage(imageUri);
+  }, [handleSendImageMessage]);
 
-  const handleSendImageMessage = async (imageUri: string) => {
-    try {
-      const imageUrl = await uploadImageToCloud(imageUri);
-      if (!imageUrl) {
-        console.error("Image upload failed");
-        return;
-      }
-      // Use sendMessage for image messages as well.
-      await sendMessage({ imageUrl });
-    } catch (error) {
-      console.error("Error sending image message:", error);
-    }
-  };
-
-  const renderChatMessage = ({ item }: { item: any }) => (
-    <ChatMessageItem item={item} userID={userID} />
+  const renderChatMessage = useCallback(
+    ({ item }: { item: any }) => <ChatMessageItem item={item} userID={userID} />,
+    [userID]
   );
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#F2F3F4" }}
@@ -130,6 +96,10 @@ export default function ChatScreen() {
         onEndReachedThreshold={0.1}
       />
       <View style={styles.messageInputContainer}>
+        {/* Image button on the left */}
+        <TouchableOpacity onPress={handleImageSelection} style={styles.imageButton}>
+          <Ionicons name="image-outline" size={24} color="#333" />
+        </TouchableOpacity>
         <TextInput
           style={styles.messageInputField}
           value={currentMessage}
@@ -150,11 +120,6 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  screenContainer: {
-    flex: 1,
-    backgroundColor: "#F2F3F4",
-  },
-
   messageInputContainer: {
     height: 60,
     backgroundColor: "#fff",
@@ -169,7 +134,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-
+  imageButton: {
+    marginRight: 8,
+    padding: 4,
+  },
   messageInputField: {
     flex: 1,
     paddingHorizontal: 12,

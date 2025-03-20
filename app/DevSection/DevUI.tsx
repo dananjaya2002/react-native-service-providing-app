@@ -5,33 +5,28 @@
  *
  */
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
-import SlideUpMenu from "./DevComponent"; // Adjust the import path as needed
-import { BottomSheetTextInput, BottomSheetView } from "@gorhom/bottom-sheet";
+import { View, Text, StyleSheet, Button, Pressable } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 
 const DevUI: React.FC = () => {
-  const [menuVisible, setMenuVisible] = useState(false);
-
-  const toggleMenu = useCallback(() => {
-    setMenuVisible((prev) => !prev);
-  }, []);
-
   return (
     <View style={styles.root}>
       <View style={styles.container}>
-        <Button title={menuVisible ? "Hide Menu" : "Show Menu"} onPress={toggleMenu} />
+        <Text style={styles.reqArgCompText}>Component</Text>
+        <Pressable
+          onPress={() => console.log("Pressed")}
+          style={({ pressed }) => [
+            {
+              backgroundColor: pressed ? "#798ed5" : "#2a4dc3",
+            },
+            styles.buttonWrapperCustom,
+          ]}
+        >
+          {({ pressed }) => (
+            <Text style={styles.buttonText}>{pressed ? "Pressed!" : "Press Me"}</Text>
+          )}
+        </Pressable>
       </View>
-      <SlideUpMenu isVisible={menuVisible}>
-        <BottomSheetTextInput style={styles.input} placeholder="Input 1" />
-        <BottomSheetView style={styles.contentContainer}>
-          <Text style={styles.text}>Awesome 🎉</Text>
-        </BottomSheetView>
-        <BottomSheetTextInput style={styles.input} placeholder="Input 2" />
-        <Text style={styles.text}>Awesome 🎉</Text>
-        <BottomSheetTextInput style={styles.input} placeholder="Input 3" />
-        <Text style={styles.text}>Awesome 🎉</Text>
-        <BottomSheetTextInput style={styles.input} placeholder="Input 4" />
-      </SlideUpMenu>
     </View>
   );
 };
@@ -42,25 +37,24 @@ const styles = StyleSheet.create({
     backgroundColor: "grey",
   },
   container: {
-    padding: 24,
-  },
-  contentContainer: {
-    flex: 1,
+    height: 100,
+    justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 16,
+    backgroundColor: "#d58c79",
+    margin: 10,
   },
-  text: {
-    fontSize: 18,
-    fontWeight: "bold",
+  reqArgCompText: {
+    fontSize: 20,
+    color: "black",
   },
-  input: {
-    marginTop: 8,
-    marginBottom: 10,
-    borderRadius: 10,
+  buttonWrapperCustom: {
+    width: 200,
+    height: 50,
+    borderRadius: 8,
+    padding: 6,
+  },
+  buttonText: {
     fontSize: 16,
-    lineHeight: 20,
-    padding: 8,
-    backgroundColor: "rgba(151, 151, 151, 0.25)",
   },
 });
 
