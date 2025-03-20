@@ -1,0 +1,225 @@
+import React from "react";
+import { Button, View, Image, Alert } from "react-native";
+import * as FileSystem from "expo-file-system";
+import { Asset } from "expo-asset";
+import Constants from "expo-constants";
+import * as ImageManipulator from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
+import { MediaType } from "expo-image-picker";
+
+// Function to load the asset and return its URI (( For Development Purposes))
+const getAssetImageUri = async (): Promise<string | null> => {
+  try {
+    // Use require to reference the image in your assets folder
+    const asset = Asset.fromModule(require("../../assets/ImageStorage/image2.jpg"));
+    await asset.downloadAsync(); // Ensure the asset is loaded
+    return asset.localUri || null;
+  } catch (error) {
+    console.error("Error loading asset:", error);
+    return null;
+  }
+};
+
+/**
+ * Helper Function
+ *  Extracts the file extension from a URL.
+ * Returns the extension in lower case (including the dot), or null if not found.
+ */
+const getFileExtension = (uri: string): string | null => {
+  const match = uri.match(/\.(\w+)(\?.*)?$/);
+  return match ? "." + match[1].toLowerCase() : null;
+};
+
+/**
+ * Helper Function
+ * Gets the dimensions of an image at the given URI.
+ */
+const getImageSize = (uri: string): Promise<{ width: number; height: number }> =>
+  new Promise((resolve, reject) => {
+    Image.getSize(
+      uri,
+      (width, height) => resolve({ width, height }),
+      (error) => reject(error)
+    );
+  });
+
+/**
+ * Converts an image to JPEG or PNG if it isn’t already in one of those formats.
+ *
+ * @param imageUri - The URI of the source image.
+ * @param targetFormat - Desired format ('jpeg' or 'png'). Defaults to 'jpeg'.
+ * @returns A promise that resolves with the new image URI.
+ */
+export const convertImageFormat = async (
+  imageUri: string,
+  targetFormat: "jpeg" | "png" = "jpeg"
+): Promise<string> => {
+  const ext = getFileExtension(imageUri);
+  if (ext && (ext === ".jpg" || ext === ".jpeg" || ext === ".png")) {
+    // Image is already in a supported format.
+    return imageUri;
+  }
+  const manipResult = await ImageManipulator.manipulateAsync(
+    imageUri,
+    [], // No transformations, just re-save
+    {
+      compress: 0.8, // 80% compression
+      format:
+        targetFormat === "jpeg"
+          ? ImageManipulator.SaveFormat.JPEG
+          : ImageManipulator.SaveFormat.PNG,
+    }
+  );
+  return manipResult.uri;
+};
+
+/**
+ * Resizes an image so that its width does not exceed maxWidth and its height does not exceed maxHeight,
+ * preserving the aspect ratio.
+ *
+ * @param imageUri - The URI of the image.
+ * @param maxWidth - Maximum allowed width (default: 1280).
+ * @param maxHeight - Maximum allowed height (default: 800).
+ * @returns A promise that resolves with the URI of the resized image.
+ */
+export const resizeImageIfNeeded = async (
+  imageUri: string,
+  maxWidth: number = 1280,
+  maxHeight: number = 800
+): Promise<string> => {
+  const { width, height } = await getImageSize(imageUri);
+  // Calculate the scale factor to ensure neither dimension exceeds its maximum.
+  const scaleFactor = Math.min(maxWidth / width, maxHeight / height);
+  // If the image is already within limits, return the original URI.
+  if (scaleFactor >= 1) return imageUri;
+
+  const newWidth = Math.floor(width * scaleFactor);
+  const newHeight = Math.floor(height * scaleFactor);
+  const manipResult = await ImageManipulator.manipulateAsync(
+    imageUri,
+    [{ resize: { width: newWidth, height: newHeight } }],
+    {
+      compress: 1,
+      format: ImageManipulator.SaveFormat.JPEG,
+    }
+  );
+  return manipResult.uri;
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------
+// Allow the user to pick an image from storage.
+export const uploadImage = async (): Promise<void> => {
+  try {
+    // Request permission to access the media library.
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.status !== "granted") {
+      Alert.alert("Permission Required", "Permission to access media library is required!");
+      return;
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images", // Use lowercase 'images'
+      allowsEditing: false,
+      quality: 1,
+    });
+
+    // If the user cancels the picker, exit early.
+    if (pickerResult.canceled) {
+      return;
+    }
+
+    // The new API returns an array of assets.
+    const selectedAsset = pickerResult.assets && pickerResult.assets[0];
+    if (!selectedAsset) {
+      console.error("No image asset found.");
+      return;
+    }
+
+    // Use the selected image URI.
+    const imagePath = selectedAsset.uri;
+    console.log("Selected image URI:", imagePath);
+
+    // Ensure the image exists.
+    const fileInfo = await FileSystem.getInfoAsync(imagePath);
+    if (!fileInfo.exists) {
+      console.error("Image does not exist at:", imagePath);
+      return;
+    }
+
+    // Convert the image format to JPEG if necessary.
+    const convertedUri = await convertImageFormat(imagePath, "jpeg");
+    console.log("Converted image URI:", convertedUri);
+
+    // Resize the image if its dimensions exceed 1280x800.
+    const resizedUri = await resizeImageIfNeeded(convertedUri, 1280, 800);
+    console.log("Resized image URI:", resizedUri);
+
+    // Extract the filename from the final image URI.
+    const imageFileName = resizedUri.split("/").pop();
+
+    // Create form data for Cloudinary.
+    const formData = new FormData();
+    formData.append("file", {
+      uri: resizedUri,
+      type: "image/jpeg", // Adjust the MIME type based on your target format.
+      name: imageFileName,
+    } as any);
+    formData.append("upload_preset", Constants.expoConfig?.extra?.CLOUDINARY_UPLOAD_PRESET);
+
+    // Cloudinary upload URL.
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${Constants.expoConfig?.extra?.CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+    // Upload the image.
+    const response = await fetch(cloudinaryUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    // Parse the response.
+    const result = await response.json();
+    console.log("Upload successful:", result);
+
+    // Update the local upload log with the new result.
+    await updateUploadLog(result);
+  } catch (error) {
+    console.error("Error uploading image:", error);
+  }
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------
+// Helper Function to Update the Upload Log
+
+const UPLOAD_LOG_PATH = FileSystem.documentDirectory + "uploadLog.json";
+
+const updateUploadLog = async (uploadData: any): Promise<void> => {
+  try {
+    // Check if the upload log file exists.
+    const fileInfo = await FileSystem.getInfoAsync(UPLOAD_LOG_PATH);
+    let uploads: any[] = [];
+    if (fileInfo.exists) {
+      const content = await FileSystem.readAsStringAsync(UPLOAD_LOG_PATH);
+      try {
+        uploads = JSON.parse(content);
+      } catch (error) {
+        console.error("Error parsing existing upload log JSON:", error);
+        uploads = [];
+      }
+    }
+    // Append the new upload data.
+    uploads.push(uploadData);
+    // Write the updated log back to the file (with pretty-printing for readability).
+    await FileSystem.writeAsStringAsync(UPLOAD_LOG_PATH, JSON.stringify(uploads, null, 2));
+    console.log("Upload log updated successfully.");
+  } catch (error) {
+    console.error("Error updating upload log:", error);
+  }
+};
+
+export const readUploadLog = async () => {
+  try {
+    const content = await FileSystem.readAsStringAsync(UPLOAD_LOG_PATH);
+    console.log("Upload Log Contents:", content);
+  } catch (error) {
+    console.error("Error reading upload log:", error);
+  }
+};

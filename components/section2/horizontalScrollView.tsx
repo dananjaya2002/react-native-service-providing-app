@@ -1,23 +1,29 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, ScrollView, View, StyleSheet, Pressable, Image, Text } from "react-native";
 
-import { items } from "../../assets/Data/data";
+import { collection, doc, getDoc, getDocs, query, VectorValue, where } from "firebase/firestore";
+import { db } from "../../FirebaseConfig"; // Import Firebase db instance
 
-type Item = {
-  id: number;
-  name: string;
-  price: string;
-  image: string;
+// TypeScript interfaces
+import { ShopServices } from "../../interfaces/iShop";
+/**
+ * Horizontal scrolling component with tiles
+ *
+ * @param items - Array of items --> imageUrl, title, name
+ *
+ */
+
+type HorizontalScrollViewProps = {
+  items: ShopServices[];
 };
 
 const { width } = Dimensions.get("window");
 const itemWidth = (width / 3) * 2;
 const gap = (width - itemWidth) / 4;
 
-const TileScrolling = () => {
-  // Event handler for press events
-  const handlePress = (item: Item) => {
-    console.log("Item pressed:", item);
+const HorizontalScrollView: React.FC<HorizontalScrollViewProps> = ({ items }) => {
+  const handlePress = (item: ShopServices) => {
+    console.log("ShopServices pressed:", item);
   };
 
   return (
@@ -27,27 +33,30 @@ const TileScrolling = () => {
       decelerationRate="fast"
       showsHorizontalScrollIndicator={false}
       snapToInterval={itemWidth + gap}
-      className="  ml-4"
+      contentContainerStyle={{ paddingHorizontal: 10 }}
     >
-      {items.map((item) => (
+      {items.map((item, index) => (
         <Pressable
-          key={item.id}
+          key={index}
           onPress={() => handlePress(item)}
-          className="w-80 mr-2 rounded-2xl overflow-hidden bg-white border border-neutral-300 shadow-xl"
+          className="w-80 mx-1 rounded-2xl overflow-hidden bg-white  border border-neutral-300 shadow-xl"
         >
-          <View className="h-64">
-            <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="center" />
-          </View>
-
-          <View className="h-auto w-full bg-slate-50 items-center justify-center flex-1">
-            <Text className="text-black font-bold text-sm " numberOfLines={2}>
-              {item.name}
+          <View className="h-12 justify-center bg-white">
+            <Text className="text-black font-bold text-md text-center " numberOfLines={1}>
+              {item.title}
             </Text>
-            <Text className="text-black text-base font-bold">{item.price}</Text>
+          </View>
+          <View className="h-64">
+            <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
+          </View>
+          <View className="flex-1 h-auto w-full items-center justify-center my-2 px-4">
+            <Text className="text-black font-normal text-sm " numberOfLines={5}>
+              {item.description}
+            </Text>
           </View>
         </Pressable>
       ))}
     </ScrollView>
   );
 };
-export default TileScrolling;
+export default HorizontalScrollView;
