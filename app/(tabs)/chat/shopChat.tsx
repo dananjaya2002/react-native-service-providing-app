@@ -17,22 +17,23 @@ import { db } from "../../../FirebaseConfig";
 import { Timestamp, DocumentReference } from "firebase/firestore";
 import { UserStorageService } from "../../../storage/functions/userStorageService";
 // Define types
-import { UserData } from "../../../interfaces/UserData";
-type UserInfo = {
-  docRef: DocumentReference; // Reference to the user document in Firestore
-  name: string;
-  profileImageUrl: string;
-};
+import { UserData, UserInfo } from "../../../interfaces/UserData";
+import { ChatRoom } from "../../../interfaces/iChat";
+// type UserInfo = {
+//   docRef: DocumentReference; // Reference to the user document in Firestore
+//   name: string;
+//   profileImageUrl: string;
+// };
 
-type ChatRoom = {
-  id: string;
-  customerRef: string;
-  serviceProvider: UserInfo;
-  customer: UserInfo;
-  name?: string;
-  lastMessage?: string;
-  timestamp?: Timestamp;
-};
+// type ChatRoom = {
+//   id: string;
+//   customerRef: string;
+//   serviceProvider: UserInfo;
+//   customer: UserInfo;
+//   name?: string;
+//   lastMessage?: string;
+//   timestamp?: Timestamp;
+// };
 
 /**
  * User's Shop Chat Page
@@ -136,6 +137,7 @@ export default function ChatList() {
       params: {
         userID: userDocRefID,
         chatRoomDocRefId: chatRoom,
+        userRole: "serviceProvider",
       },
     });
     //console.log("Navigating to chat room:", chatRoom);

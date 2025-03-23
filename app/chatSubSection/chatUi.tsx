@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   FlatList,
   TextInput,
@@ -8,30 +8,39 @@ import {
   StyleSheet,
   Platform,
   Keyboard,
+  Text,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { uploadImageToCloud } from "../../Utility/u_uploadImageNew";
 
 import { useChat } from "../../hooks/useChat";
-import ChatMessageItem from "@/components/section2/ChatMessageItem";
+import ChatMessageItem from "@/components/section2/chatComponents/ChatMessageItem";
+import AgreementFAButton from "@/components/section2/chatComponents/AgreementFAButton";
 
-export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
+// interfaces
+import { UserRoles } from "../../interfaces/iChat";
+
+// export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
+// type UserRoles = "customer" | "serviceProvider";
 
 export default function ChatScreen() {
   const chatListRef = useRef<FlatList>(null);
-  const { chatRoomDocRefId, userID } = useLocalSearchParams<{
+
+  const [commentDisplayPermission, setCommentDisplayPermission] = useState<boolean>(false);
+  const [commentWaitingTime, setCommentWaitingTime] = useState<number>(0);
+
+  const { chatRoomDocRefId, userID, userRole } = useLocalSearchParams<{
     chatRoomDocRefId: string;
     userID: string;
+    userRole: UserRoles;
   }>();
   const [currentMessage, setCurrentMessage] = useState("");
 
-  const { chatArray, loadMoreMessages, sendMessage, loadingMore } = useChat(
-    chatRoomDocRefId,
-    userID
-  );
+  const { chatArray, loadMoreMessages, sendMessage, loadingMore, checkCommentAvailability } =
+    useChat(chatRoomDocRefId, userID);
 
   const handleSendTextMessage = useCallback(async () => {
     if (!currentMessage.trim()) return;
@@ -39,6 +48,32 @@ export default function ChatScreen() {
     setCurrentMessage("");
     await sendMessage({ messageType: "textMessage", value: textMessage });
   }, [currentMessage, sendMessage]);
+
+  const handleAgreementRequest = useCallback(() => {
+    if (chatRoomDocRefId && userRole === "serviceProvider") {
+      sendMessage({ messageType: "AgreementRequest", value: "<Agreement Requested>" });
+    }
+  }, []);
+
+  const handleRatingPermission = useCallback(async () => {
+    if (chatRoomDocRefId && userRole === "customer") {
+      const { shouldDisplayCommentUI, waitingTime } = await checkCommentAvailability();
+      setCommentDisplayPermission(shouldDisplayCommentUI);
+      setCommentWaitingTime(waitingTime);
+
+      // if (!shouldDisplayCommentUI) {
+      //   // Handle case when comment is not available.
+      //   console.log(`Please wait ${Math.ceil(waitingTime / 60000)} minute(s) before commenting.`);
+      // } else {
+      //   console.log("Commenting is available.");
+      //   // Proceed with rating functionality.
+      // }
+    }
+  }, [checkCommentAvailability]);
+
+  useEffect(() => {
+    handleRatingPermission();
+  }, []);
 
   const handleSendImageMessage = useCallback(
     async (imageUri: string) => {
@@ -76,7 +111,14 @@ export default function ChatScreen() {
   }, [handleSendImageMessage]);
 
   const renderChatMessage = useCallback(
-    ({ item }: { item: any }) => <ChatMessageItem item={item} userID={userID} />,
+    ({ item }: { item: any }) => (
+      <ChatMessageItem
+        item={item}
+        userID={userID}
+        chatRoomDocRefId={chatRoomDocRefId}
+        userRole={userRole}
+      />
+    ),
     [userID]
   );
 
@@ -86,6 +128,11 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
+      {/* Render AgreementFAButton only if userRole is serviceProvider */}
+      {userRole === "serviceProvider" && (
+        <AgreementFAButton chatRoomDocRefId={chatRoomDocRefId} onPress={handleAgreementRequest} />
+      )}
+
       <FlatList
         ref={chatListRef}
         data={chatArray}
@@ -94,7 +141,45 @@ export default function ChatScreen() {
         inverted
         onEndReached={loadMoreMessages}
         onEndReachedThreshold={0.1}
+        style={{ flex: 1 }}
       />
+      {userRole === "customer" && commentDisplayPermission && (
+        <View
+          style={{
+            backgroundColor: "rgba(195,146,146,1)",
+            height: 60,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              backgroundColor: commentWaitingTime > 0 ? "#3e8bd0" : "#f9f9f9",
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              flexDirection: "row",
+              padding: 8,
+              // Optionally add opacity for a disabled look
+              opacity: commentWaitingTime > 0 ? 0.6 : 1,
+            }}
+            disabled={commentWaitingTime > 0}
+            onPress={() => {
+              // Navigate to the shopRatingPage using Expo Router.
+              router.push("/chatSubSection/shopRatingPage");
+            }}
+          >
+            <Ionicons name="chatbox-ellipses-sharp" size={30} color="#333" />
+            <Text style={{ fontSize: 16, marginLeft: 8 }}>
+              {commentWaitingTime > 0
+                ? `Please wait ${Math.ceil(commentWaitingTime / 60000)} minute(s)`
+                : "Rate the Service"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.messageInputContainer}>
         {/* Image button on the left */}
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageButton}>
