@@ -12,27 +12,27 @@ import {
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { getShopPageData } from "../../Utility/U_getUserShopPageData";
-import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
-import HorizontalScrollView from "../../components/section2/horizontalScrollView";
+import { getShopPageData } from "../../../Utility/U_getUserShopPageData";
+import StatusCard from "../../../components/section2/dashboardTextInfoStyle1";
+import HorizontalScrollView from "../../../components/section2/horizontalScrollView";
 import UserComments from "@/components/section2/userComment";
 import FloatingButtonBar from "@/components/section2/FloatingButtonBar";
 
-import { useShop } from "../../context/ShopContext";
+import { useShop } from "@/context/ShopContext";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import UpdateSheet, { UpdateSheetRef } from "../../components/section2/slideUpFormPage";
+import UpdateSheet, { UpdateSheetRef } from "../../../components/section2/slideUpFormPage";
 import UserReviewStars from "@/components/section2/userReviewStars";
 import ShopContactInfo from "@/components/section2/shopContactInfo";
-import { fetchUserComments } from "../../Utility/U_getUserComments";
+import { fetchUserComments } from "../../../Utility/U_getUserComments";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { UserStorageService } from "../../storage/functions/userStorageService";
-import { OwnerShopPageAsyncStorage } from "../../storage/functions/ownerShopDataStorage";
+import { UserStorageService } from "../../../storage/functions/userStorageService";
+import { OwnerShopPageAsyncStorage } from "../../../storage/functions/ownerShopDataStorage";
 
 // TypeScript interfaces
-import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
-import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
-import { UserData } from "../../interfaces/UserData";
+import { ShopPageData, UserComment, ShopServices } from "../../../interfaces/iShop";
+import { ShopDataForCharRoomCreating } from "../../../interfaces/iChat";
+import { UserData } from "../../../interfaces/UserData";
 
 interface ShopRatingsView {
   totalRatings: number;
@@ -108,13 +108,13 @@ const Shop = () => {
           saveShopData(fetchedData); // Save the data in AsyncStorage
         } else {
           // Use fallback JSON if live shopData isn't available
-          const jsonData = require("../DevSection/utilities/shopDoc.json");
+          const jsonData = require("../../DevSection/utilities/shopDoc.json");
           setShopData(jsonData);
           console.warn(" ⚠️ ⚠️ Shop shopData not found. Using fallback JSON shopData.⚠️ ⚠️");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        const jsonData = require("../DevSection/utilities/shopDoc.json"); // Fallback JSON
+        const jsonData = require("../../DevSection/utilities/shopDoc.json"); // Fallback JSON
         setShopData(jsonData);
       }
     };
@@ -160,7 +160,7 @@ const Shop = () => {
       await AsyncStorage.setItem("shop_data", JSON.stringify(shopData));
       console.log("Right button triggered in MainScreen");
       // Navigate to the next screen
-      router.push("/serviceProvider/sp_ShopEdit");
+      router.push("/(tabs)/shop/sp_ShopEdit");
     } catch (error) {
       console.error("Error storing data:", error);
     }

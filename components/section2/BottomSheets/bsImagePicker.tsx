@@ -1,9 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Image, StyleSheet, Pressable, Text } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
-const ImagePickerBox: React.FC = () => {
+interface ImagePickerBoxProps {
+  initialImage?: string;
+  onImageChange?: (uri: string | null) => void;
+}
+
+const ImagePickerBox: React.FC<ImagePickerBoxProps> = ({ initialImage = null, onImageChange }) => {
   const [image, setImage] = useState<string | null>(null);
+
+  // Update state when initialImage prop changes
+  useEffect(() => {
+    setImage(initialImage);
+  }, [initialImage]);
 
   const pickImage = async () => {
     // Launch the image library with only images allowed

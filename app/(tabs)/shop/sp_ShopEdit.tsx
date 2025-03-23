@@ -15,17 +15,17 @@ import { Ionicons } from "@expo/vector-icons";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { UserStorageService } from "../../storage/functions/userStorageService";
-import { OwnerShopPageAsyncStorage } from "../../storage/functions/ownerShopDataStorage";
-import HeaderMain from "../../components/section2/header_Main";
-import SlideUpMenu from "../../components/section2/BottomSheets/bottomSheetShopEdit";
-import CustomButton from "../../components/section2/BottomSheets/bsButton";
-import ImagePickerBox from "../../components/section2/BottomSheets/bsImagePicker";
+import { UserStorageService } from "../../../storage/functions/userStorageService";
+import { OwnerShopPageAsyncStorage } from "../../../storage/functions/ownerShopDataStorage";
+import HeaderMain from "../../../components/section2/header_Main";
+import SlideUpMenu from "../../../components/section2/BottomSheets/bottomSheetShopEdit";
+import CustomButton from "../../../components/section2/BottomSheets/bsButton";
+import ImagePickerBox from "../../../components/section2/BottomSheets/bsImagePicker";
 import { BottomSheetTextInput, BottomSheetView } from "@gorhom/bottom-sheet";
 // TypeScript interfaces
-import { ShopPageData, UserComment, ShopServices } from "../../interfaces/iShop";
-import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
-import { UserData } from "../../interfaces/UserData";
+import { ShopPageData, UserComment, ShopServices } from "../../../interfaces/iShop";
+import { ShopDataForCharRoomCreating } from "../../../interfaces/iChat";
+import { UserData } from "../../../interfaces/UserData";
 
 const { width } = Dimensions.get("window");
 const itemWidth = (width / 3) * 2;
@@ -207,6 +207,7 @@ const shopEditService: React.FC = () => {
     setSheetTitle("");
     setSheetDescription("");
     setBottomSheetVisible(true);
+    setSheetImageUrl("");
   };
 
   return (
@@ -289,7 +290,7 @@ const shopEditService: React.FC = () => {
         </View>
 
         <View style={styles.bottomSheetTextInputContainer}>
-          <ImagePickerBox />
+          <ImagePickerBox initialImage={sheetImageUrl} />
         </View>
       </SlideUpMenu>
     </View>
