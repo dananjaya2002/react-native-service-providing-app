@@ -26,14 +26,19 @@ import { BottomSheetTextInput, BottomSheetView } from "@gorhom/bottom-sheet";
 import { ShopPageData, UserComment, ShopServices } from "../../../interfaces/iShop";
 import { ShopDataForCharRoomCreating } from "../../../interfaces/iChat";
 import { UserData } from "../../../interfaces/UserData";
-
-const { width } = Dimensions.get("window");
-const itemWidth = (width / 3) * 2;
+import {
+  updateShopService,
+  fetchShopServices,
+  addNewService,
+  deleteSelectedServices,
+} from "@/Utility/updateShopService";
+import { router } from "expo-router";
 
 const shopEditService: React.FC = () => {
   // General states
   const [shopServiceData, setShopServiceData] = useState<ShopServices[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   // State for multi-select mode and selected items
   const [selectedItems, setSelectedItems] = useState<ShopServices[]>([]);
@@ -41,52 +46,55 @@ const shopEditService: React.FC = () => {
 
   // Slide up menu related state and ref
   const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
-  const [sheetTitle, setSheetTitle] = useState("Title");
-  const [sheetDescription, setSheetDescription] = useState("Description");
-  const [sheetImageUrl, setSheetImageUrl] = useState("");
+  const [serviceModifyType, setServiceModifyType] = useState<"update" | "add">("update");
 
+  const [sheetTitle, setSheetTitle] = useState<string | null>(null);
+  const [sheetDescription, setSheetDescription] = useState<string | null>(null);
+  const [sheetImageUrl, setSheetImageUrl] = useState<string | null>(null);
+
+  const [selectedServiceInfo, setSelectedServiceInfo] = useState<ShopServices | null>(null);
   // Load shop data from async storage
   useEffect(() => {
     const loadData = async () => {
-      try {
-        // Load the shop data from async storage
-        const shopData = await OwnerShopPageAsyncStorage.getUserData();
-        if (shopData) {
-          // Extract the shop services from the data
-          const extractedShopServices: ShopServices[] = Object.values(
-            shopData.items
-          ) as ShopServices[];
+      const fetchedUserData = (await UserStorageService.getUserData()) as UserData;
 
-          setShopServiceData(
-            extractedShopServices
-              .map((item, index) => ({
-                ...item,
-                id: item.id || index.toString(),
-              }))
-              .concat(
-                extractedShopServices.length % 2 !== 0
-                  ? [{ id: "", title: "", description: "", imageUrl: "" }]
-                  : []
-              )
-          );
-          //console.log("\n\nShop services data:", extractedShopServices);
-        } else {
-          console.log("No shop data found.");
-        }
-      } catch (error) {
-        console.error("Error retrieving shop data:", error);
-        return null;
-      } finally {
+      if (!fetchedUserData.userId) {
+        console.error("User ID can not found.", fetchedUserData);
         setLoading(false);
+        return;
       }
+      setUserData(fetchedUserData);
+      await getShopServiceData(fetchedUserData.userId);
+      if (!shopServiceData) {
+        console.log("Initial Shop Loading Failed", shopServiceData);
+      }
+      setLoading(false);
     };
-
     loadData();
   }, []);
 
-  // useEffect(() => {
-  //   setBottomSheetVisible(true);
-  // }, [shopServiceData]);
+  const getShopServiceData = async (userID: string) => {
+    if (userID === null || userID === "") {
+      console.error("User ID is Null or Empty", userData);
+      return;
+    }
+    const shopData = await fetchShopServices(userID);
+    if (shopData) {
+      setShopServiceData(
+        shopData
+          .map((item, index) => ({
+            ...item,
+            id: item.id || index.toString(),
+          }))
+          .concat(
+            shopData.length % 2 !== 0 ? [{ id: "", title: "", description: "", imageUrl: "" }] : []
+          )
+      );
+      //console.log("\n\nShop services data:", shopData);
+    } else {
+      console.log("No shop data found.");
+    }
+  };
 
   // Back button handling: if sheet is open, close it and prevent default back action.
   useEffect(() => {
@@ -115,7 +123,7 @@ const shopEditService: React.FC = () => {
 
   // Toggle the selection state for an item
   const toggleSelection = (item: ShopServices) => {
-    const isSelected = selectedItems.includes(item); // Check if the item is already selected
+    const isSelected = selectedItems.some((selected) => selected.id === item.id); // Check if the item is already selected
     if (isSelected) {
       const newSelected = selectedItems.filter((i) => i !== item);
       setSelectedItems(newSelected); // Remove the item from selected items
@@ -138,21 +146,113 @@ const shopEditService: React.FC = () => {
   };
 
   // Delete selected items button press handler
-  const onDeleteSelectedItemPressed = () => {
+  const onDeleteSelectedItemPressed = async () => {
+    setLoading(true);
     console.log("Performing action on selected items:", selectedItems);
     // After performing the action, clear selection and exit multi-select mode
+    if (!userData?.userId || !shopServiceData || selectedItems.length === 0) {
+      console.error("Missing required user or service data for delete.");
+      return;
+    }
+    const isSuccess = await deleteSelectedServices(userData.userId, selectedItems, shopServiceData);
+    if (isSuccess) {
+      console.log("Selected items deleted successfully.");
+      getShopServiceData(userData.userId);
+    } else {
+      console.error("Failed to delete selected items.");
+    }
     setSelectedItems([]);
     setMultiSelectMode(false);
+    setLoading(false);
   };
-  // Handler for when the save button is pressed inside the bottom sheet
 
   // Regular press action for an item (when not in multi-select mode)
-  const handlePress = (item: ShopServices): void => {
-    //console.log("Item pressed:", item);
+  const handleRegularPressAction = (item: ShopServices): void => {
     setSheetTitle(item.title);
     setSheetDescription(item.description);
     setSheetImageUrl(item.imageUrl);
+    setSelectedServiceInfo(item);
     setBottomSheetVisible(true);
+  };
+
+  const handleUpdateServiceButton = async () => {
+    // Check if the sheet data is empty
+    if (sheetTitle === null || sheetDescription === null || sheetImageUrl === null) {
+      console.log("sheetTitle", sheetTitle);
+      console.log("sheetDescription", sheetDescription);
+      console.log("sheetImageUrl", sheetImageUrl);
+      console.error("Sheet data fields are empty.");
+      alert("Please fill all the fields to update the service.");
+      return;
+    }
+
+    console.log("Service Modify Type:", serviceModifyType);
+    if (serviceModifyType === "add") {
+      if (!userData) {
+        console.error("User Data is missing.");
+        return;
+      }
+      setLoading(true);
+      const newServiceObject: ShopServices = {
+        id: (shopServiceData.length - 1).toString(), // -1 for the placeholder item
+        title: sheetTitle,
+        imageUrl: sheetImageUrl,
+        description: sheetDescription,
+      };
+      const newServiceArray: ShopServices[] = await addNewService(
+        userData.userId,
+        newServiceObject
+      );
+      console.log("newServiceArray", newServiceArray);
+      if (newServiceArray.length > 0) {
+        console.log("Shop service updated successfully.");
+        getShopServiceData(userData.userId);
+        setSheetTitle(null);
+        setSheetDescription(null);
+        setSheetImageUrl(null);
+        setServiceModifyType("update");
+      }
+      setBottomSheetVisible(false);
+      setLoading(false);
+      return;
+    }
+
+    if (!userData?.userId || !shopServiceData || !selectedServiceInfo) {
+      console.error("Missing required user or service data.");
+      return;
+    }
+
+    const newServiceObject: ShopServices = {
+      id: selectedServiceInfo.id,
+      title: sheetTitle,
+      imageUrl: sheetImageUrl,
+      description: sheetDescription,
+    };
+
+    setLoading(true);
+    // Call the utility function to update the shop service
+    const updateSuccess = await updateShopService(
+      userData.userId,
+      shopServiceData,
+      newServiceObject
+    );
+
+    if (updateSuccess) {
+      console.log("Shop service updated successfully.");
+      getShopServiceData(userData.userId);
+    } else {
+      console.error("Failed to update shop service.");
+    }
+
+    setSheetTitle(null);
+    setSheetDescription(null);
+    setSheetImageUrl(null);
+    // Clear the sheet fields and dismiss the sheet
+    setSelectedServiceInfo(null);
+    setBottomSheetVisible(false);
+    setSelectedServiceInfo(null);
+
+    setLoading(false);
   };
 
   const renderItem = ({ item }: { item: ShopServices }) => {
@@ -170,7 +270,7 @@ const shopEditService: React.FC = () => {
           if (multiSelectMode) {
             toggleSelection(item);
           } else {
-            handlePress(item);
+            handleRegularPressAction(item);
           }
         }}
         className="flex-1 m-2 p-2 bg-white rounded-xl shadow-xl relative"
@@ -201,13 +301,15 @@ const shopEditService: React.FC = () => {
     );
   };
 
-  const addNewServiceButtonPress = () => {
-    console.log("New service button pressed");
-    // Clear the sheet fields and show the sheet
-    setSheetTitle("");
-    setSheetDescription("");
+  const addNewServiceButtonPress = async () => {
+    setServiceModifyType("add");
+
+    setSheetTitle(null);
+    setSheetDescription(null);
+    setSheetImageUrl(null);
+
+    setSelectedServiceInfo(null);
     setBottomSheetVisible(true);
-    setSheetImageUrl("");
   };
 
   return (
@@ -215,7 +317,7 @@ const shopEditService: React.FC = () => {
       <HeaderMain
         title="Edit Services"
         onPressBack={() => {
-          console.log("Back Pressed");
+          router.back(); // Navigate to the previous screen using Expo Router
         }}
       />
       <View className="flex-1">
@@ -261,9 +363,9 @@ const shopEditService: React.FC = () => {
         footer={
           <View style={styles.bottomSheetButtonContainer}>
             <CustomButton
-              title="Save"
+              title="Update"
               onPress={() => {
-                console.log("SS");
+                handleUpdateServiceButton();
               }}
             />
           </View>
@@ -274,7 +376,7 @@ const shopEditService: React.FC = () => {
           <BottomSheetTextInput
             style={styles.bottomSheetTextInput}
             placeholder="Add the Title"
-            value={sheetTitle}
+            value={sheetTitle ?? ""}
             onChangeText={setSheetTitle}
           />
         </View>
@@ -283,14 +385,19 @@ const shopEditService: React.FC = () => {
           <BottomSheetTextInput
             style={[styles.bottomSheetTextInput, styles.bottomSheetMultilineTextInput]}
             placeholder="Add the Description"
-            value={sheetDescription}
+            value={sheetDescription ?? ""}
             onChangeText={setSheetDescription}
             multiline={true}
           />
         </View>
 
         <View style={styles.bottomSheetTextInputContainer}>
-          <ImagePickerBox initialImage={sheetImageUrl} />
+          <ImagePickerBox
+            initialImage={sheetImageUrl ?? ""}
+            onImageChange={(uri) => {
+              setSheetImageUrl(uri);
+            }}
+          />
         </View>
       </SlideUpMenu>
     </View>

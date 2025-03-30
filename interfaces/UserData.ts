@@ -7,6 +7,7 @@ export interface UserData {
   password: string;
   userName: string;
   favorites: string[];
+  profileImageUrl: string;
 }
 
 export interface UserInfo {

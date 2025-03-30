@@ -34,11 +34,6 @@ import { ShopPageData, UserComment, ShopServices } from "../../../interfaces/iSh
 import { ShopDataForCharRoomCreating } from "../../../interfaces/iChat";
 import { UserData } from "../../../interfaces/UserData";
 
-interface ShopRatingsView {
-  totalRatings: number;
-  averageRating: number;
-}
-
 const Shop = () => {
   const sheetRef = useRef<UpdateSheetRef>(null);
   // Shared value to control the FloatingButtonBar's vertical position.
@@ -47,33 +42,27 @@ const Shop = () => {
     transform: [{ translateY: floatingBarY.value }],
   }));
 
-  const { shop, setShop } = useShop();
   const router = useRouter();
 
-  // Retrieve the dynamic parameter "sp_ShopID" from the URL
-  const { sp_ShopID } = useLocalSearchParams<{ sp_ShopID: string }>();
-  const shopID = sp_ShopID ?? "1"; // !!! -- for Development only -- !!!
-  //console.log("sp_ShopID", sp_ShopID);
-
   const [ratingsList, setRatingsList] = useState<any[]>([]);
-  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [lastDoc, setLastCommentDoc] = useState<any>(null);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [userCommentList, setUserCommentList] = useState<any[]>([]);
   const [shopData, setShopData] = useState<ShopPageData | null>(null);
+  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
 
   /**
    *
    * Get User Data from AsyncStorage
    *
    */
-  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUserData() {
       try {
         const savedUserData = (await UserStorageService.getUserData()) as UserData;
         setUserDocRefID(savedUserData.userId);
-        console.log("User data fetched:", savedUserData);
+        console.log("User data fetched:", savedUserData.userId);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -90,7 +79,6 @@ const Shop = () => {
     const fetchData = async () => {
       try {
         if (!userDocRefID) {
-          //console.error("Invalid userDocRefID. Please check the user data.");
           return;
         }
         // Attempt to fetch shopData data
@@ -98,30 +86,31 @@ const Shop = () => {
           initialLoad: true,
           userId: userDocRefID,
         });
+
+        console.log("Comments fetched:", comments);
         setUserCommentList(comments);
-        setLastDoc(newLastDoc);
+        setLastCommentDoc(newLastDoc);
 
         // Attempt to fetch shopData shopData
         const fetchedData = await getShopPageData(userDocRefID);
         if (fetchedData) {
-          setShopData(fetchedData);
+          setShopData(fetchedData); // set state
           saveShopData(fetchedData); // Save the data in AsyncStorage
         } else {
-          // Use fallback JSON if live shopData isn't available
-          const jsonData = require("../../DevSection/utilities/shopDoc.json");
-          setShopData(jsonData);
-          console.warn(" ⚠️ ⚠️ Shop shopData not found. Using fallback JSON shopData.⚠️ ⚠️");
+          console.error(" 🔴 Shop shopData not found. 🔴 ");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        const jsonData = require("../../DevSection/utilities/shopDoc.json"); // Fallback JSON
-        setShopData(jsonData);
       }
     };
     fetchData();
-    console.log("\n\nFetching data for Shop ID:", userDocRefID);
   }, [userDocRefID]);
 
+  /**
+   *
+   * Save Shop Data in AsyncStorage
+   *
+   */
   const saveShopData = async (shopData: ShopPageData) => {
     try {
       await OwnerShopPageAsyncStorage.saveUserData(shopData);
@@ -131,10 +120,8 @@ const Shop = () => {
     }
   };
 
+  // loading indicator
   if (!shopData) {
-    // // Note: setting state during render is not ideal, but keeping original logic
-    // const jsonData = require("../DevSection/utilities/shopDoc.json");
-    // setData(jsonData);
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#007bff" />
@@ -146,6 +133,7 @@ const Shop = () => {
 
   /**
    *
+   * Left Button Press Handler - (Edit Page)
    *
    */
   const handleLeftPress = () => {
@@ -154,11 +142,10 @@ const Shop = () => {
   };
 
   const handleRightPress = async () => {
-    //setShop(itemList as SubServiceData[]);
     try {
       // Store the data in AsyncStorage
-      await AsyncStorage.setItem("shop_data", JSON.stringify(shopData));
-      console.log("Right button triggered in MainScreen");
+      //await AsyncStorage.setItem("shop_data", JSON.stringify(shopData));
+
       // Navigate to the next screen
       router.push("/(tabs)/shop/sp_ShopEdit");
     } catch (error) {
@@ -179,10 +166,9 @@ const Shop = () => {
 
   /**
    *
+   * Handle scrolling to end of list
    *
    */
-
-  // Handle scrolling to end of list
   const handleEndReached = async () => {
     console.log("End reached, loading more comments...");
     if (!loadingMoreComments && lastDoc && userDocRefID) {
@@ -192,10 +178,10 @@ const Shop = () => {
           userId: userDocRefID,
           lastDoc,
         });
-        setRatingsList((prev) => [...prev, ...comments]);
-        setLastDoc(newLastDoc);
+        setUserCommentList((prev) => [...prev, ...comments]);
+        setLastCommentDoc(newLastDoc);
       } catch (error) {
-        // Handle error as needed
+        console.error("Error fetching more comments:", error);
       } finally {
         setLoadingMoreComments(false);
       }
@@ -286,7 +272,7 @@ const Shop = () => {
     <>
       <View className="flex-1 bg-primary">
         <FlatList
-          data={ratingsList}
+          data={userCommentList}
           keyExtractor={(_, index) => index.toString()}
           renderItem={({ item }) => {
             const comment = item as UserComment;

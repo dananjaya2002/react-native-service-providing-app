@@ -27,7 +27,11 @@ const ImagePickerBox: React.FC<ImagePickerBoxProps> = ({ initialImage = null, on
     console.log(result);
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setImage(uri);
+      if (onImageChange) {
+        onImageChange(uri);
+      }
     }
   };
 

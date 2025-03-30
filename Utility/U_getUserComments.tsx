@@ -31,7 +31,7 @@ interface Rating {
 export const fetchUserComments = async ({
   userId,
   lastDoc = null,
-  limitCount = 1,
+  limitCount = 5,
   initialLoad = false,
 }: {
   userId: string;
