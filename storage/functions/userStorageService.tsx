@@ -1,12 +1,13 @@
 // userStorageService.tsx
 import { StorageService } from "../asyncStorage";
+import { UserData } from "../../interfaces/UserData";
 
-export interface UserData {
-  favorites?: string[];
-  isServiceProvider: boolean;
-  password: string;
-  userName: string;
-}
+// export interface UserData {
+//   favorites?: string[];
+//   isServiceProvider: boolean;
+//   password: string;
+//   userName: string;
+// }
 
 // Storage keys as constants to avoid typos
 // !!! DO NOT CHANGE THESE VALUES IF ALREADY BEING USED !!!
@@ -36,6 +37,25 @@ export class UserStorageService {
   static async clearUserData(): Promise<void> {
     await StorageService.removeItem(STORAGE_KEYS.USER_DATA);
   }
+  /**
+   *
+   * USER_SELECTED_SHOP Section
+   *
+   */
+  // //Save user data to storage
+  // static async saveSelectedShopData(userData: UserData): Promise<void> {
+  //   await StorageService.storeObject<UserData>(STORAGE_KEYS.USER_DATA, userData);
+  // }
+
+  // //Get user data from storage
+  // static async getSelectedShopData(): Promise<UserData | null> {
+  //   return await StorageService.getObject<UserData>(STORAGE_KEYS.USER_DATA);
+  // }
+
+  // //Clear user data from storage
+  // static async clearSelectedShopData(): Promise<void> {
+  //   await StorageService.removeItem(STORAGE_KEYS.USER_DATA);
+  // }
 
   /**
    *

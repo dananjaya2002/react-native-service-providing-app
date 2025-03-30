@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -14,13 +14,71 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import HeaderMain from "@/components/section2/header_Main";
+import { UserStorageService } from "../../storage/functions/userStorageService";
+import { UserData } from "../../interfaces/UserData";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../../FirebaseConfig";
 
 const ShopRatingPage = () => {
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   const handleStarPress = (star: number) => {
     setRating(star);
+  };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setUserData(await UserStorageService.getUserData());
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const submitComments = async () => {
+    setLoading(true);
+    try {
+      if (!userData) {
+        throw new Error("User data not found");
+      }
+
+      // Define the collection reference (auto-generated document ID will be used)
+      const userCommentsRef = collection(
+        db,
+        "Users",
+        userData.userId,
+        "Shop",
+        "ShopPageInfo",
+        "UserComments"
+      );
+
+      // Create the document data
+      const commentData = {
+        comment: comment,
+        customerId: userData.userId,
+        name: userData.userName,
+        profileImageUrl: userData.profileImageUrl,
+        ratings: rating,
+        timestamp: serverTimestamp(),
+      };
+
+      // Upload the comment data to Firestore
+      await addDoc(userCommentsRef, commentData);
+
+      // Optionally, clear the input after successful submission
+      setComment("");
+      setRating(0);
+    } catch (error) {
+      console.error("Error uploading comment:", error);
+      // Optionally, display an error message to the user
+    } finally {
+      setLoading(false);
+    }
   };
 
   const windowHeight = Dimensions.get("window").height;
@@ -74,7 +132,7 @@ const ShopRatingPage = () => {
               ))}
             </View>
             {/* Submit Button */}
-            <TouchableOpacity style={styles.submitButton}>
+            <TouchableOpacity style={styles.submitButton} onPress={() => submitComments()}>
               <Text style={styles.submitButtonText}>Submit Rating</Text>
             </TouchableOpacity>
           </View>

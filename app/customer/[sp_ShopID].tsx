@@ -87,21 +87,15 @@ const CustomerShopView = () => {
         const fetchedData = await getShopPageData(serviceProviderID);
         if (fetchedData) {
           setShopData(fetchedData);
-        } else {
-          // Use fallback JSON if live shopData isn't available
-          const jsonData = require("../DevSection/utilities/shopDoc.json");
-          setShopData(jsonData);
-          console.warn(" ⚠️ ⚠️ Shop shopData not found. Using fallback JSON shopData.⚠️ ⚠️");
         }
       } catch (error) {
         console.error("Error fetching shopData:", error);
-        const jsonData = require("../DevSection/utilities/shopDoc.json"); // Fallback JSON
-        setShopData(jsonData);
       }
     };
     fetchData();
   }, []);
 
+  // Loading placeholder
   if (!shopData) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
@@ -112,15 +106,7 @@ const CustomerShopView = () => {
   }
 
   const itemList = shopData.items ? Object.values(shopData.items) : [];
-  //const userCommentList = shopData.comments ? Object.values(shopData.comments) : [];
 
-  /*
-   *
-   * New Comment Loading placeholder logic
-   *
-   */
-
-  // A simple animated placeholder component using Reanimated
   const AnimatedPlaceholder = () => {
     return (
       <View className="h-[50] w-screen justify-center items-center">
@@ -131,9 +117,6 @@ const CustomerShopView = () => {
 
   // Handle scrolling to end of list
   const handleEndReached = async () => {
-    console.log("End reached");
-    console.log("!loadingMoreComments: ", !loadingMoreComments);
-    console.log("!loadingMoreComments && lastDoc: ", !loadingMoreComments && lastDoc);
     if (!loadingMoreComments && lastDoc) {
       console.log("loading more comments...");
       setLoadingMoreComments(true);
@@ -164,15 +147,13 @@ const CustomerShopView = () => {
     };
 
     if (option === "Chat") {
-      //const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
-      const chatRoomId = "kcGcWg604yOKnjIUmBa5"; // Fallback chat room ID  -- DEV ONLY !!!
-      console.log("DEV MOD CHAT ROOM ID ⚠️ ⚠️ ⚠️ ⚠️ : ", chatRoomId);
-      console.log("Chat room created with ID:", chatRoomId);
+      const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
       router.push({
         pathname: "/chatSubSection/chatUi",
         params: {
           userID: userDocRefID,
           chatRoomDocRefId: chatRoomId,
+          userRole: "customer",
         },
       });
     } else if (option === "Map") {

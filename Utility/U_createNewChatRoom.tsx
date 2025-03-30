@@ -19,6 +19,7 @@ import { ShopDataForCharRoomCreating } from "../interfaces/iChat";
 export const createNewChatRoom = async (shopData: ShopDataForCharRoomCreating): Promise<string> => {
   const savedUserData = (await UserStorageService.getUserData()) as UserData;
   try {
+    console.log("Creating chat room with shop data:", shopData, "and user data:", savedUserData);
     const chatCollectionRef = collection(db, "Chat");
     const docRef = await addDoc(chatCollectionRef, {
       serviceProvider: {
@@ -29,7 +30,7 @@ export const createNewChatRoom = async (shopData: ShopDataForCharRoomCreating): 
       customer: {
         docRef: savedUserData.userId,
         name: savedUserData.userName,
-        profileImageUrl: "https://cdn.pixabay.com/photo/2018/04/04/23/21/glass-3291449_1280.jpg",
+        profileImageUrl: savedUserData.profileImageUrl,
       },
       lastUpdatedTime: Timestamp.now(), // Storing as a Firestore timestamp
     });
