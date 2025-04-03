@@ -129,11 +129,7 @@ export default function ChatList() {
 
   console.log("Chat rooms:", chatRooms);
   // Navigate to chat screen
-  const navigateToChat = (
-    chatRoom: string,
-    otherPartyProfileImage: string,
-    otherPartyName: string
-  ) => {
+  const navigateToChat = (chatRoom: string, otherPartyUserId: string) => {
     //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
 
     router.push({
@@ -142,8 +138,7 @@ export default function ChatList() {
         userID: userDocRefID,
         chatRoomDocRefId: chatRoom,
         userRole: "serviceProvider",
-        otherPartyName,
-        otherPartyProfileImage,
+        otherPartyUserId,
       },
     });
     //console.log("Navigating to chat room:", chatRoom);
@@ -183,7 +178,7 @@ export default function ChatList() {
     return (
       <TouchableOpacity
         style={styles.chatItem}
-        onPress={() => navigateToChat(item.id, item.customer.profileImageUrl, item.customer.name)}
+        onPress={() => navigateToChat(item.id, item.customer.profileImageUrl)}
       >
         <View style={styles.avatar}>
           <Image

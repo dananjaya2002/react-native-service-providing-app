@@ -40,14 +40,12 @@ export default function ChatScreen() {
   const [commentDisplayPermission, setCommentDisplayPermission] = useState<boolean>(false);
   const [commentWaitingTime, setCommentWaitingTime] = useState<number>(0);
 
-  const { chatRoomDocRefId, userID, userRole, otherPartyName, otherPartyProfileImage } =
-    useLocalSearchParams<{
-      chatRoomDocRefId: string;
-      userID: string;
-      userRole: UserRoles;
-      otherPartyName: string;
-      otherPartyProfileImage: string;
-    }>();
+  const { chatRoomDocRefId, userID, userRole, otherPartyUserId } = useLocalSearchParams<{
+    chatRoomDocRefId: string;
+    userID: string;
+    userRole: UserRoles;
+    otherPartyUserId: string;
+  }>();
   const [currentMessage, setCurrentMessage] = useState("");
 
   const { chatArray, loadMoreMessages, sendMessage, loadingMore, checkCommentAvailability } =
@@ -154,7 +152,7 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
-      <ChatHeader profileImageUrl={otherPartyProfileImage} profileName={otherPartyName} />
+      <ChatHeader profileImageUrl={"empty"} profileName={"empty"} />
       {/* Render AgreementFAButton only if userRole is serviceProvider */}
       {userRole === "serviceProvider" && (
         <AgreementFAButton chatRoomDocRefId={chatRoomDocRefId} onPress={handleAgreementRequest} />
@@ -209,7 +207,12 @@ export default function ChatScreen() {
             }}
             disabled={commentWaitingTime > 0}
             onPress={() => {
-              router.push("/chatSubSection/shopRatingPage");
+              router.push({
+                pathname: "/chatSubSection/shopRatingPage",
+                params: {
+                  serviceProviderId: otherPartyUserId,
+                },
+              });
             }}
           >
             <Ionicons
