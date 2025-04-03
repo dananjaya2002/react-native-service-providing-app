@@ -11,7 +11,7 @@ export interface UserData {
 }
 
 export interface UserInfo {
-  docRef: DocumentReference; // Reference to the user document in Firestore
+  docRef: string; // Reference to the user document in Firestore
   name: string;
   profileImageUrl: string;
 }

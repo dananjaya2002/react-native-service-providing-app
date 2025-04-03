@@ -18,12 +18,24 @@ import { UserStorageService } from "../../storage/functions/userStorageService";
 import { UserData } from "../../interfaces/UserData";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../../FirebaseConfig";
+import { router, useLocalSearchParams } from "expo-router";
+import { ShopList } from "@/interfaces/iShop";
+import { getShopCardData, uploadUserRatings } from "@/Utility/u_uploadUserRatings";
+import {
+  IUserRatingsFirebaseDocument,
+  IUserRatingUploadParams,
+} from "../../interfaces/iUserRatings";
 
 const ShopRatingPage = () => {
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [shopCard, setShopCard] = useState<ShopList | null>(null);
+
+  const { serviceProviderId } = useLocalSearchParams<{
+    serviceProviderId: string;
+  }>();
 
   const handleStarPress = (star: number) => {
     setRating(star);
@@ -32,56 +44,69 @@ const ShopRatingPage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        setUserData(await UserStorageService.getUserData());
+        if (!serviceProviderId) {
+          console.error("Service Provider ID is missing");
+          return;
+        }
+        const tempShopCardData = await getShopCardData(serviceProviderId);
+        const tempUserData = await UserStorageService.getUserData();
+        console.log("tempShopCardData", tempShopCardData);
+        console.log("tempUserData", tempUserData);
+        if (tempShopCardData === null) {
+          console.error("Error fetching shop card data");
+        } else if (tempUserData === null) {
+          console.error("Error fetching user data");
+        } else {
+          setShopCard(tempShopCardData);
+          setUserData(tempUserData);
+        }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching Shop Data:", error);
       }
     };
     fetchUserData();
-  }, []);
+  }, [serviceProviderId]);
 
   const submitComments = async () => {
+    if (rating === 0) {
+      alert("Please select a rating");
+      return;
+    }
+    if (comment.trim().length === 0) {
+      alert("Comment cannot be empty");
+      return;
+    }
+    if (!shopCard) {
+      console.error("ShopCard data not found");
+      alert("ShopCard data not found");
+      return;
+    }
     setLoading(true);
-    try {
-      if (!userData) {
-        throw new Error("User data not found");
-      }
 
-      // Define the collection reference (auto-generated document ID will be used)
-      const userCommentsRef = collection(
-        db,
-        "Users",
-        userData.userId,
-        "Shop",
-        "ShopPageInfo",
-        "UserComments"
-      );
+    const submitCommentObject: IUserRatingUploadParams = {
+      serviceProviderID: serviceProviderId,
+      avgRatings: shopCard.avgRating,
+      totalRatings: shopCard.totalRatingsCount || 0,
+      comment: comment,
+      newRating: rating,
+    };
 
-      // Create the document data
-      const commentData = {
-        comment: comment,
-        customerId: userData.userId,
-        name: userData.userName,
-        profileImageUrl: userData.profileImageUrl,
-        ratings: rating,
-        timestamp: serverTimestamp(),
-      };
+    const result = await uploadUserRatings(submitCommentObject);
 
-      // Upload the comment data to Firestore
-      await addDoc(userCommentsRef, commentData);
-
-      // Optionally, clear the input after successful submission
-      setComment("");
+    if (result) {
+      alert("Rating submitted successfully");
       setRating(0);
-    } catch (error) {
-      console.error("Error uploading comment:", error);
-      // Optionally, display an error message to the user
-    } finally {
+      setComment("");
       setLoading(false);
+      // Navigate back to the previous screen after 2 seconds
+      setTimeout(() => {
+        router.back();
+      }, 2000);
+    } else {
+      setLoading(false);
+      alert("Error submitting rating");
     }
   };
-
-  const windowHeight = Dimensions.get("window").height;
 
   return (
     <KeyboardAvoidingView
@@ -97,11 +122,11 @@ const ShopRatingPage = () => {
             <Image
               style={styles.headerImage}
               source={{
-                uri: "https://cdn.pixabay.com/photo/2025/01/30/13/03/welding-9370143_960_720.jpg",
+                uri: shopCard?.shopPageImageUrl || "https://placehold.co/400x200?text=No+Image", // Replace 400x200 with your desired dimensions
               }}
             />
             <View style={styles.headerTextContainer}>
-              <Text style={styles.headerText}>Shop Name</Text>
+              <Text style={styles.headerText}>{shopCard?.shopName || "loading.."}</Text>
             </View>
           </View>
           {/* Content Section */}
@@ -132,8 +157,14 @@ const ShopRatingPage = () => {
               ))}
             </View>
             {/* Submit Button */}
-            <TouchableOpacity style={styles.submitButton} onPress={() => submitComments()}>
-              <Text style={styles.submitButtonText}>Submit Rating</Text>
+            <TouchableOpacity
+              style={[styles.submitButton, loading && { opacity: 0.5 }]}
+              onPress={!loading ? submitComments : undefined}
+              disabled={loading}
+            >
+              <Text style={styles.submitButtonText}>
+                {loading ? "Submitting..." : "Submit Rating"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

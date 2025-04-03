@@ -49,11 +49,11 @@ export const fetchUserComments = async ({
     let ratingsQuery;
 
     if (initialLoad || !lastDoc) {
-      ratingsQuery = query(ratingsRef, orderBy("timestamp", "desc"), limit(limitCount));
-    } else {
+      ratingsQuery = query(ratingsRef, orderBy("uploadedDate", "desc"), limit(limitCount));
+    } else { 
       ratingsQuery = query(
         ratingsRef,
-        orderBy("timestamp", "desc"),
+        orderBy("uploadedDate", "desc"),
         startAfter(lastDoc),
         limit(limitCount)
       );
