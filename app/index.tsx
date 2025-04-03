@@ -44,11 +44,12 @@ import { UserData } from "../interfaces/UserData";
 //   return null;
 // }
 
+// Manually set the userId and collectionName for testing purposes
 const docIds: string[] = [
-  "0UNXPloebiEHrMFmCEx8",
-  "JKPykbBlomPAcC5gcU4P",
-  "McpdE0qyS3ySRrm8UyE8",
-  "MjH4rsIGIMecCWk8xJLs",
+  "68jIzshLLLaRJ7QM1QnJ",
+  "6OidFCuMNizeBiGv2Fyn",
+  "6acGPQnW54XVN8AAbW5v",
+  "GjOQqJcCeVkeFmHap3Sn",
 ];
 const collectionName = "Users";
 
