@@ -1,4 +1,3 @@
-// app.config.js
 import "dotenv/config";
 
 export default {
@@ -50,10 +49,10 @@ export default {
     experiments: {
       typedRoutes: true,
     },
-    owner: "m_00001",
     extra: {
+      owner: "sdkdananjaya",
       eas: {
-        projectId: "ea8e968a-2c69-4419-91cb-adeeaa208159",
+        projectId: "fed90c08-6568-4e77-a3fe-67529564e1e8",
       },
       FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
       FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
