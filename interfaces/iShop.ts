@@ -30,7 +30,7 @@ export interface UserComment {
   id: string; // Unique ID for the comment
   profileImageUrl: string;
   name: string;
-  timestamp: Timestamp;
+  uploadedDate: Timestamp;
   ratings: number;
   comment: string;
   customerId: string;

@@ -15,21 +15,24 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { uploadImageToCloud } from "../../Utility/u_uploadImageNew";
+import { uploadImageToCloud } from "../../../../Utility/u_uploadImageNew";
+import { getUserData } from "../../../../Utility/u_getUserData";
 
-import { useChat } from "../../hooks/useChat";
+import { useChat } from "../../../../hooks/useChat";
 import ChatMessageItem from "@/components/section2/chatComponents/ChatMessageItem";
 import AgreementFAButton from "@/components/section2/chatComponents/AgreementFAButton";
 import ChatHeader from "@/components/section2/chatComponents/ChatHeader";
 
 // interfaces
-import { UserRoles } from "../../interfaces/iChat";
+import { UserRoles } from "../../../../interfaces/iChat";
 import Animated, {
   Easing,
   SlideInDown,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
+import { UserData } from "@/interfaces/UserData";
+import { ShopPageData } from "@/interfaces/iShop";
 
 // export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 // type UserRoles = "customer" | "serviceProvider";
@@ -50,6 +53,21 @@ export default function ChatScreen() {
 
   const { chatArray, loadMoreMessages, sendMessage, loadingMore, checkCommentAvailability } =
     useChat(chatRoomDocRefId, userID);
+
+  const [otherPartyData, setOtherPartyData] = useState<UserData | null>(null);
+  useEffect(() => {
+    if (!otherPartyUserId) return;
+    const fetchOtherPartyData = async () => {
+      try {
+        const data = await getUserData(otherPartyUserId);
+        setOtherPartyData(data);
+      } catch (error) {
+        console.error("Error fetching other party data:", error);
+      }
+    };
+
+    fetchOtherPartyData();
+  }, [otherPartyData]);
 
   const handleSendTextMessage = useCallback(async () => {
     if (!currentMessage.trim()) return;
@@ -152,7 +170,10 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
-      <ChatHeader profileImageUrl={"empty"} profileName={"empty"} />
+      <ChatHeader
+        profileImageUrl={otherPartyData?.profileImageUrl || "undefined"}
+        profileName={otherPartyData?.userName || "undefined"}
+      />
       {/* Render AgreementFAButton only if userRole is serviceProvider */}
       {userRole === "serviceProvider" && (
         <AgreementFAButton chatRoomDocRefId={chatRoomDocRefId} onPress={handleAgreementRequest} />
@@ -208,7 +229,7 @@ export default function ChatScreen() {
             disabled={commentWaitingTime > 0}
             onPress={() => {
               router.push({
-                pathname: "/chatSubSection/shopRatingPage",
+                pathname: "/(tabs)/chat/chatWindow/chatUi",
                 params: {
                   serviceProviderId: otherPartyUserId,
                 },

@@ -10,18 +10,18 @@ const UserComments: React.FC<UserComment> = ({
   id = "no data",
   profileImageUrl = "no data",
   name = "no data",
-  timestamp,
+  uploadedDate,
   ratings = 4.5,
   comment = "no data",
   customerId = "no data",
 }) => {
-  console.log("timestamp:", timestamp);
+  console.log("uploadedDate:", uploadedDate);
   // Convert date to ddMMYYYY format
-  const formatDate = (timestamp: Timestamp) => {
-    if (!timestamp || !(timestamp instanceof Timestamp)) {
-      return "Unknown date"; // Fallback if timestamp is missing or incorrect
+  const formatDate = (uploadedDate: Timestamp) => {
+    if (!uploadedDate || !(uploadedDate instanceof Timestamp)) {
+      return "Unknown date"; // Fallback if uploadedDate is missing or incorrect
     }
-    return timestamp.toDate().toLocaleDateString("en-US", {
+    return uploadedDate.toDate().toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -62,7 +62,7 @@ const UserComments: React.FC<UserComment> = ({
           />
           <View className="ml-3 ">
             <Text className="font-bold text-base">{name}</Text>
-            <Text className="text-xs text-gray-500">{formatDate(timestamp)}</Text>
+            <Text className="text-xs text-gray-500">{formatDate(uploadedDate)}</Text>
           </View>
         </View>
         <View className="flex-row items-center ">

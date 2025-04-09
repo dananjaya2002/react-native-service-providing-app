@@ -196,7 +196,7 @@ const Shop = () => {
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
       ) : (
-        <View style={{ height: 70, backgroundColor: "green" }} />
+        <View style={{ height: 70 }} />
       )}
     </View>
   );
@@ -281,7 +281,7 @@ const Shop = () => {
                 id={comment.id}
                 profileImageUrl={comment.profileImageUrl}
                 name={comment.name}
-                timestamp={comment.timestamp}
+                uploadedDate={comment.uploadedDate}
                 ratings={comment.ratings}
                 comment={comment.comment}
                 customerId={comment.customerId}
