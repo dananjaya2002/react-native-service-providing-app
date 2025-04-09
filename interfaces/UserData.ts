@@ -1,5 +1,6 @@
 // root/interfaces/UserData.ts
 import { doc, DocumentReference } from "firebase/firestore";
+import { ShopList } from "./iShop";
 
 export interface UserData {
   userId: string;

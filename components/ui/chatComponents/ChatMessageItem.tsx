@@ -23,7 +23,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const animation = useRef(new Animated.Value(item.status === "pending" ? 0 : 1)).current;
   // For non-agreement messages, use sender color logic.
   const finalBackgroundColor = item.senderId === userID ? "#0d6efd" : "#e9ecef";
-  const pendingColor = "#3991eb"; // yellow
+  const pendingColor = "#3991eb";
 
   const backgroundColor = animation.interpolate({
     inputRange: [0, 1],

@@ -147,9 +147,13 @@ const CustomerShopView = () => {
     };
 
     if (option === "Chat") {
+      if (userDocRefID == serviceProviderID) {
+        Alert.alert("You cannot chat with yourself.");
+        return;
+      }
       const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
       router.push({
-        pathname: "/chatSubSection/chatUi",
+        pathname: "/(tabs)/chat/chatWindow/chatUi",
         params: {
           userID: userDocRefID,
           chatRoomDocRefId: chatRoomId,

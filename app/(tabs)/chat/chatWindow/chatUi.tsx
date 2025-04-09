@@ -38,23 +38,28 @@ import { ShopPageData } from "@/interfaces/iShop";
 // type UserRoles = "customer" | "serviceProvider";
 
 export default function ChatScreen() {
-  const chatListRef = useRef<FlatList>(null);
-
-  const [commentDisplayPermission, setCommentDisplayPermission] = useState<boolean>(false);
-  const [commentWaitingTime, setCommentWaitingTime] = useState<number>(0);
-
+  // Retrieve the dynamic parameters from the URL
   const { chatRoomDocRefId, userID, userRole, otherPartyUserId } = useLocalSearchParams<{
     chatRoomDocRefId: string;
     userID: string;
     userRole: UserRoles;
     otherPartyUserId: string;
   }>();
-  const [currentMessage, setCurrentMessage] = useState("");
+  // Reference to the FlatList for scrolling
+  const chatListRef = useRef<FlatList>(null);
 
+  // Comment display permission and waiting time state
+  const [commentDisplayPermission, setCommentDisplayPermission] = useState<boolean>(false);
+  const [commentWaitingTime, setCommentWaitingTime] = useState<number>(0);
+
+  // Other state variables
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [otherPartyData, setOtherPartyData] = useState<UserData | null>(null);
+  // custom hook to manage chat messages
   const { chatArray, loadMoreMessages, sendMessage, loadingMore, checkCommentAvailability } =
     useChat(chatRoomDocRefId, userID);
 
-  const [otherPartyData, setOtherPartyData] = useState<UserData | null>(null);
+  // Get the other party's data from firebase
   useEffect(() => {
     if (!otherPartyUserId) return;
     const fetchOtherPartyData = async () => {
@@ -67,8 +72,9 @@ export default function ChatScreen() {
     };
 
     fetchOtherPartyData();
-  }, [otherPartyData]);
+  }, [otherPartyUserId]);
 
+  // Handle Send Text Message
   const handleSendTextMessage = useCallback(async () => {
     if (!currentMessage.trim()) return;
     const textMessage = currentMessage.trim();
@@ -76,31 +82,8 @@ export default function ChatScreen() {
     await sendMessage({ messageType: "textMessage", value: textMessage });
   }, [currentMessage, sendMessage]);
 
-  const handleAgreementRequest = useCallback(() => {
-    if (chatRoomDocRefId && userRole === "serviceProvider") {
-      sendMessage({ messageType: "AgreementRequest", value: "<Agreement Requested>" });
-    }
-  }, []);
-
-  const handleRatingPermission = useCallback(async () => {
-    if (chatRoomDocRefId && userRole === "customer") {
-      const { shouldDisplayCommentUI, waitingTime } = await checkCommentAvailability();
-      setCommentDisplayPermission(shouldDisplayCommentUI);
-      setCommentWaitingTime(waitingTime);
-
-      // if (!shouldDisplayCommentUI) {
-      //   // Handle case when comment is not available.
-      //   console.log(`Please wait ${Math.ceil(waitingTime / 60000)} minute(s) before commenting.`);
-      // } else {
-      //   console.log("Commenting is available.");
-      //   // Proceed with rating functionality.
-      // }
-    }
-  }, [checkCommentAvailability]);
-
-  useEffect(() => {
-    handleRatingPermission();
-  }, []);
+  // -----------------------------------------------------------------------------------
+  // Image Selection and Upload Section
 
   const handleSendImageMessage = useCallback(
     async (imageUri: string) => {
@@ -137,20 +120,38 @@ export default function ChatScreen() {
     await handleSendImageMessage(imageUri);
   }, [handleSendImageMessage]);
 
-  const renderChatMessage = useCallback(
-    ({ item }: { item: any }) => (
-      <ChatMessageItem
-        item={item}
-        userID={userID}
-        chatRoomDocRefId={chatRoomDocRefId}
-        userRole={userRole}
-      />
-    ),
-    [userID]
-  );
+  // -----------------------------------------------------------------------------------
+  // Agreement Section
 
+  const handleAgreementRequest = useCallback(() => {
+    if (chatRoomDocRefId && userRole === "serviceProvider") {
+      sendMessage({ messageType: "AgreementRequest", value: "<Agreement Requested>" });
+    }
+  }, [chatRoomDocRefId, userRole]);
+
+  const handleRatingPermission = useCallback(async () => {
+    if (chatRoomDocRefId && userRole === "customer") {
+      const { shouldDisplayCommentUI, waitingTime } = await checkCommentAvailability();
+      setCommentDisplayPermission(shouldDisplayCommentUI);
+      setCommentWaitingTime(waitingTime);
+
+      // if (!shouldDisplayCommentUI) {
+      //   // Handle case when comment is not available.
+      //   console.log(`Please wait ${Math.ceil(waitingTime / 60000)} minute(s) before commenting.`);
+      // } else {
+      //   console.log("Commenting is available.");
+      //   // Proceed with rating functionality.
+      // }
+    }
+  }, [checkCommentAvailability]);
+
+  // Check for the rating permission at the start
+  useEffect(() => {
+    handleRatingPermission();
+  }, [chatRoomDocRefId, userRole]);
+
+  // Rating option display UI animation
   const animatedValue = useSharedValue(0);
-
   useEffect(() => {
     if (userRole === "customer" && commentDisplayPermission) {
       animatedValue.value = 1;
@@ -164,21 +165,38 @@ export default function ChatScreen() {
       transform: [{ translateY: animatedValue.value * 0 }], //initial translateY is 0.
     };
   });
+
+  // -------------------------------------------------------------------------------
+  // Render Chat Messages
+  const renderChatMessage = useCallback(
+    ({ item }: { item: any }) => (
+      <ChatMessageItem
+        item={item}
+        userID={userID}
+        chatRoomDocRefId={chatRoomDocRefId}
+        userRole={userRole}
+      />
+    ),
+    [userID]
+  );
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#F2F3F4" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
+      {/* Chat Header with Profile Image and Name */}
       <ChatHeader
         profileImageUrl={otherPartyData?.profileImageUrl || "undefined"}
         profileName={otherPartyData?.userName || "undefined"}
       />
-      {/* Render AgreementFAButton only if userRole is serviceProvider */}
+      {/* AgreementFAButton - Service Provider */}
       {userRole === "serviceProvider" && (
         <AgreementFAButton chatRoomDocRefId={chatRoomDocRefId} onPress={handleAgreementRequest} />
       )}
 
+      {/* Message List Display */}
       <FlatList
         ref={chatListRef}
         data={chatArray}
@@ -258,11 +276,13 @@ export default function ChatScreen() {
         </Animated.View>
       )}
 
+      {/* Message Input Section */}
       <View style={styles.messageInputContainer}>
         {/* Image button on the left */}
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageButton}>
           <Ionicons name="image-outline" size={24} color="#333" />
         </TouchableOpacity>
+        {/* Message input field in the center */}
         <TextInput
           style={styles.messageInputField}
           value={currentMessage}
@@ -270,6 +290,7 @@ export default function ChatScreen() {
           onChangeText={setCurrentMessage}
           onSubmitEditing={handleSendTextMessage}
         />
+        {/* Send button on the right */}
         <TouchableOpacity
           onPress={handleSendTextMessage}
           disabled={!currentMessage.trim()}
