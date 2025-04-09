@@ -59,10 +59,10 @@ export default function TabLayout() {
 
       {/* Bookmarks Tab */}
       <Tabs.Screen
-        name="bookmark"
+        name="favorites"
         options={{
-          title: "Bookmarks",
-          tabBarIcon: ({ color }) => <Ionicons name="bookmarks" size={28} color={color} />,
+          title: "Favorites",
+          tabBarIcon: ({ color }) => <Ionicons name="heart" size={28} color={color} />,
         }}
       />
     </Tabs>
