@@ -13,14 +13,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import HeaderMain from "@/components/section2/header_Main";
+import HeaderMain from "@/components/ui/header_Main";
 import { UserStorageService } from "../../../../storage/functions/userStorageService";
 import { UserData } from "../../../../interfaces/UserData";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../../FirebaseConfig";
 import { router, useLocalSearchParams } from "expo-router";
 import { ShopList } from "@/interfaces/iShop";
-import { getShopCardData, uploadUserRatings } from "@/Utility/u_uploadUserRatings";
+import { getShopCardData, uploadUserRatings } from "@/utility/u_uploadUserRatings";
 import {
   IUserRatingsFirebaseDocument,
   IUserRatingUploadParams,

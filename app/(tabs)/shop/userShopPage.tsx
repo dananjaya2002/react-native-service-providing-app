@@ -12,18 +12,18 @@ import {
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { getShopPageData } from "../../../Utility/U_getUserShopPageData";
-import StatusCard from "../../../components/section2/dashboardTextInfoStyle1";
-import HorizontalScrollView from "../../../components/section2/horizontalScrollView";
-import UserComments from "@/components/section2/userComment";
-import FloatingButtonBar from "@/components/section2/FloatingButtonBar";
+import { getShopPageData } from "../../../utility/U_getUserShopPageData";
+import StatusCard from "../../../components/ui/dashboardTextInfoStyle1";
+import HorizontalScrollView from "../../../components/ui/horizontalScrollView";
+import UserComments from "@/components/ui/userComment";
+import FloatingButtonBar from "@/components/ui/FloatingButtonBar";
 
 import { useShop } from "@/context/ShopContext";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import UpdateSheet, { UpdateSheetRef } from "../../../components/section2/slideUpFormPage";
-import UserReviewStars from "@/components/section2/userReviewStars";
-import ShopContactInfo from "@/components/section2/shopContactInfo";
-import { fetchUserComments } from "../../../Utility/U_getUserComments";
+import UpdateSheet, { UpdateSheetRef } from "../../../components/ui/slideUpFormPage";
+import UserReviewStars from "@/components/ui/userReviewStars";
+import ShopContactInfo from "@/components/ui/shopContactInfo";
+import { fetchUserComments } from "../../../utility/U_getUserComments";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { UserStorageService } from "../../../storage/functions/userStorageService";

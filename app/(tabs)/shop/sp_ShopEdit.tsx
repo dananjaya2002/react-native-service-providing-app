@@ -17,10 +17,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { UserStorageService } from "../../../storage/functions/userStorageService";
 import { OwnerShopPageAsyncStorage } from "../../../storage/functions/ownerShopDataStorage";
-import HeaderMain from "../../../components/section2/header_Main";
-import SlideUpMenu from "../../../components/section2/BottomSheets/bottomSheetShopEdit";
-import CustomButton from "../../../components/section2/BottomSheets/bsButton";
-import ImagePickerBox from "../../../components/section2/BottomSheets/bsImagePicker";
+import HeaderMain from "../../../components/ui/header_Main";
+import SlideUpMenu from "../../../components/ui/BottomSheets/bottomSheetShopEdit";
+import CustomButton from "../../../components/ui/BottomSheets/bsButton";
+import ImagePickerBox from "../../../components/ui/BottomSheets/bsImagePicker";
 import { BottomSheetTextInput, BottomSheetView } from "@gorhom/bottom-sheet";
 // TypeScript interfaces
 import { ShopPageData, UserComment, ShopServices } from "../../../interfaces/iShop";
@@ -31,7 +31,7 @@ import {
   fetchShopServices,
   addNewService,
   deleteSelectedServices,
-} from "@/Utility/updateShopService";
+} from "@/utility/updateShopService";
 import { router } from "expo-router";
 
 const shopEditService: React.FC = () => {
