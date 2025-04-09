@@ -7,15 +7,15 @@ import { ShopDataForCharRoomCreating } from "../interfaces/iChat";
 import { UserData } from "../interfaces/UserData";
 
 /**
- * Retrieves the Shop Page Data for a given user.
+ * Retrieves the Shop Page Data for a given Service Provider.
  *
- * @param userId - The ID of the user.
+ * @param id - The ID of the Service Provider.
  * @returns A promise resolving to ShopPageData or null if not found/invalid.
  */
 
-export const getShopPageData = async (userId: string): Promise<ShopPageData | null> => {
-  if (!userId) {
-    console.error("❌ Error: Invalid user ID. userId is required.");
+export const getShopPageData = async (id: string): Promise<ShopPageData | null> => {
+  if (!id) {
+    console.error("❌ Error: Invalid user ID. id is required.");
     return null;
   }
 
@@ -28,7 +28,7 @@ export const getShopPageData = async (userId: string): Promise<ShopPageData | nu
     console.warn("Getting Shop Page Data from Firebase 🔄");
 
     // Fetch the main document data
-    const docRef = doc(db, "Users", userId, "Shop", "ShopPageInfo");
+    const docRef = doc(db, "Users", id, "Shop", "ShopPageInfo");
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) {
       console.warn("Shop page info not found.");

@@ -13,12 +13,12 @@ import {
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { db } from "../../../FirebaseConfig";
+import { db } from "../../../../FirebaseConfig";
 import { Timestamp, DocumentReference } from "firebase/firestore";
-import { UserStorageService } from "../../../storage/functions/userStorageService";
+import { UserStorageService } from "../../../../storage/functions/userStorageService";
 // Define types
-import { UserData, UserInfo } from "../../../interfaces/UserData";
-import { ChatRoom } from "../../../interfaces/iChat";
+import { UserData, UserInfo } from "../../../../interfaces/UserData";
+import { ChatRoom } from "../../../../interfaces/iChat";
 // type UserInfo = {
 //   docRef: DocumentReference; // Reference to the user document in Firestore
 //   name: string;
@@ -133,7 +133,7 @@ export default function ChatList() {
     //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
 
     router.push({
-      pathname: "/chatSubSection/chatUi",
+      pathname: "/(tabs)/chat/chatWindow/chatUi",
       params: {
         userID: userDocRefID,
         chatRoomDocRefId: chatRoom,
@@ -206,7 +206,6 @@ export default function ChatList() {
         <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
       ) : (
         <View>
-          <Text style={styles.header}>Shop Chats</Text>
           <FlatList
             data={chatRooms}
             keyExtractor={(item) => item.id}

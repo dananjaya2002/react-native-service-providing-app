@@ -1,17 +1,15 @@
-// chatSubSection/_layout.tsx
 import { Stack } from "expo-router";
 
-export default function ChatSubSectionLayout() {
+export default function ChatWindowLayout() {
   return (
     <Stack>
-      {/* Chat UI: header hidden */}
       <Stack.Screen
         name="chatUi"
         options={{
           headerShown: false,
+          animation: "slide_from_right",
         }}
       />
-      {/* Shop Rating Page: header visible and styled */}
       <Stack.Screen
         name="shopRatingPage"
         options={{
@@ -19,7 +17,7 @@ export default function ChatSubSectionLayout() {
           headerStyle: { backgroundColor: "#f9f9f9" },
           headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
           headerTintColor: "#333",
-          animation: "slide_from_right", // This gives you a smooth transition
+          animation: "slide_from_right", // Retain the animation
           animationDuration: 150,
           headerTitle: "Rate the Service",
         }}

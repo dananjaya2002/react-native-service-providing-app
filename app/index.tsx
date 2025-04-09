@@ -63,7 +63,7 @@ const Index = () => {
   useEffect(() => {
     // const timer = setTimeout(() => {
     //   //router.push("/(tabs)");
-    //   router.push("/(tabs)/chat/personalChat");
+    //   router.push("/chatSubSection/shopRatingPage");
     //   //router.push("/(tabs)/shop");
 
     //   const shopId = "123";
@@ -116,7 +116,7 @@ const Index = () => {
   //   return () => clearTimeout(timer); // Cleanup the timer if the component unmounts before the timeout completes
   // }, []); // Empty array ensures this runs once
 
-  function transformUserData(rawData: any): UserData {
+  function transformUserData(rawData: UserData): UserData {
     return {
       userId: rawData.userId,
       isServiceProvider: rawData.isServiceProvider,
@@ -124,7 +124,7 @@ const Index = () => {
       userName: rawData.userName,
       favorites: rawData.favorites,
       // Map the external 'profilePicture' to your interface's 'profileImageUrl'
-      profileImageUrl: rawData.profilePicture,
+      profileImageUrl: rawData.profileImageUrl,
     };
   }
 
