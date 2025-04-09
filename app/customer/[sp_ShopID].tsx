@@ -17,16 +17,16 @@ import Animated, {
   withRepeat,
 } from "react-native-reanimated";
 
-import { getShopPageData } from "../../Utility/U_getUserShopPageData";
+import { getShopPageData } from "../../utility/U_getUserShopPageData";
 import { FontAwesome } from "@expo/vector-icons";
-import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
-import HorizontalScrollView from "../../components/section2/horizontalScrollView";
-import UserComments from "@/components/section2/userComment";
-import ShopContactInfo from "../../components/section2/shopContactInfo";
-import UserReviewStars from "../../components/section2/userReviewStars";
+import StatusCard from "../../components/ui/dashboardTextInfoStyle1";
+import HorizontalScrollView from "../../components/ui/horizontalScrollView";
+import UserComments from "@/components/ui/userComment";
+import ShopContactInfo from "../../components/ui/shopContactInfo";
+import UserReviewStars from "../../components/ui/userReviewStars";
 
-import { fetchUserComments } from "../../Utility/U_getUserComments";
-import { createNewChatRoom } from "../../Utility/U_createNewChatRoom";
+import { fetchUserComments } from "../../utility/U_getUserComments";
+import { createNewChatRoom } from "../../utility/U_createNewChatRoom";
 import { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 
 import { UserStorageService } from "../../storage/functions/userStorageService";

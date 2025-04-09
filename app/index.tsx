@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } fr
 import { auth } from "../FirebaseConfig"; // Make sure to import your auth instance
 import { onAuthStateChanged } from "firebase/auth"; // Import this to track authentication state
 import { router, useRouter } from "expo-router";
-import CustomLoader from "@/components/loadingIndicator";
+import CustomLoader from "@/components/unUsed/2/loadingIndicator";
 
 import { db } from "../FirebaseConfig";
 

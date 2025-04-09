@@ -15,13 +15,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { uploadImageToCloud } from "../../../../Utility/u_uploadImageNew";
-import { getUserData } from "../../../../Utility/u_getUserData";
+import { uploadImageToCloud } from "../../../../utility/u_uploadImageNew";
+import { getUserData } from "../../../../utility/u_getUserData";
 
 import { useChat } from "../../../../hooks/useChat";
-import ChatMessageItem from "@/components/section2/chatComponents/ChatMessageItem";
-import AgreementFAButton from "@/components/section2/chatComponents/AgreementFAButton";
-import ChatHeader from "@/components/section2/chatComponents/ChatHeader";
+import ChatMessageItem from "@/components/ui/chatComponents/ChatMessageItem";
+import AgreementFAButton from "@/components/ui/chatComponents/AgreementFAButton";
+import ChatHeader from "@/components/ui/chatComponents/ChatHeader";
 
 // interfaces
 import { UserRoles } from "../../../../interfaces/iChat";
