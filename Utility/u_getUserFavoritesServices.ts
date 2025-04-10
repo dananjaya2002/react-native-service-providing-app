@@ -15,7 +15,7 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
       Alert.alert("Error", "User data not found. Please log in again.");
       return [];
     }
-    const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "userFavoritesShops");
+    const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "UserFavoritesShops");
     const userDocSnap = await getDoc(userDocRef);
 
     if (userDocSnap.exists()) {

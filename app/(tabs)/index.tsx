@@ -357,7 +357,7 @@ const HomeScreen: React.FC = () => {
     >
       {/* Main Section  */}
       <View className="flex-1 bg-primary">
-        <Header title="Home" onPressBack={() => console.log("Back pressed")} />
+        <Header title="Home" />
         <View className="flex-row h-[50] mx-2">
           <View className="flex-1 mr-1">
             {/* Search Bar Section  */}
