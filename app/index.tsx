@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } fr
 import { auth } from "../FirebaseConfig"; // Make sure to import your auth instance
 import { onAuthStateChanged } from "firebase/auth"; // Import this to track authentication state
 import { router, useRouter } from "expo-router";
-import CustomLoader from "@/components/loadingIndicator";
+import CustomLoader from "@/components/unUsed/2/loadingIndicator";
 
 import { db } from "../FirebaseConfig";
 
@@ -44,7 +44,13 @@ import { UserData } from "../interfaces/UserData";
 //   return null;
 // }
 
-const docIds: string[] = ["9682ySNqk0txuAGq75JI", "Idgkdk2tkKPEplx46z3h"];
+// Manually set the userId and collectionName for testing purposes
+const docIds: string[] = [
+  "68jIzshLLLaRJ7QM1QnJ",
+  "6OidFCuMNizeBiGv2Fyn",
+  "6acGPQnW54XVN8AAbW5v",
+  "GjOQqJcCeVkeFmHap3Sn",
+];
 const collectionName = "Users";
 
 const Index = () => {
@@ -57,7 +63,7 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       //router.push("/(tabs)");
-      router.push("/DevSection/DevUI");
+      router.push("/(tabs)/favorites");
       //router.push("/(tabs)/shop");
 
       const shopId = "123";
@@ -97,7 +103,7 @@ const Index = () => {
     fetchDocuments();
   }, []);
 
-  console.log("\n\ndocsData: ", docsData);
+  //console.log("\n\ndocsData: ", docsData);
 
   // useEffect(() => {
   //   const timer = setTimeout(() => {
@@ -110,31 +116,59 @@ const Index = () => {
   //   return () => clearTimeout(timer); // Cleanup the timer if the component unmounts before the timeout completes
   // }, []); // Empty array ensures this runs once
 
-  const onItemPress = async (doc: UserData) => {
-    await UserStorageService.saveUserData(doc);
-    router.push("/DevSection/DevUI");
-    //router.push("/(tabs)/chat/personalChat");
+  function transformUserData(rawData: UserData): UserData {
+    return {
+      userId: rawData.userId,
+      isServiceProvider: rawData.isServiceProvider,
+      password: rawData.password,
+      userName: rawData.userName,
+      favorites: rawData.favorites,
+      // Map the external 'profilePicture' to your interface's 'profileImageUrl'
+      profileImageUrl: rawData.profileImageUrl,
+    };
+  }
 
-    //displayData();
+  const onItemPress = async (doc: UserData) => {
+    // Transform the data before saving it.
+    const formattedDoc = transformUserData(doc);
+    await UserStorageService.saveUserData(formattedDoc);
+    console.log("Saved User Data: ", formattedDoc);
+    router.push("/(tabs)");
   };
 
   const displayData = async () => {
     const savedUserData = await UserStorageService.getUserData();
     Alert.alert("Saved User Data", JSON.stringify(savedUserData, null, 2));
   };
+  const getRandomColor = () => {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
+
+  const colors = ["#3498db", "#2ecc71", "#e74c3c", "#f39c12"]; // Array of your 4 colors
+  let colorIndex = 0;
 
   return (
     <View className="flex-1 bg-gray-400 justify-center items-center">
-      {docsData.map((doc) => (
-        <TouchableOpacity
-          key={doc.userName}
-          className="bg-blue-500 px-20 py-3 rounded-lg justify-center items-center m-4"
-          onPress={() => onItemPress(doc)}
-        >
-          <Text className="text-white font-bold text-lg">{doc.userName}</Text>
-          <Text className="text-white font-bold text-sm">ID: {doc.userId}</Text>
-        </TouchableOpacity>
-      ))}
+      {docsData.map((doc) => {
+        const currentColor = colors[colorIndex % colors.length]; // Cycle through colors
+        colorIndex++;
+        return (
+          <TouchableOpacity
+            key={doc.userName}
+            className="px-20 py-3 rounded-lg justify-center items-center m-4"
+            style={{ backgroundColor: currentColor }}
+            onPress={() => onItemPress(doc)}
+          >
+            <Text className="text-white font-bold text-lg">{doc.userName}</Text>
+            <Text className="text-white font-bold text-sm">ID: {doc.userId}</Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };

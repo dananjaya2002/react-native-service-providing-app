@@ -15,7 +15,7 @@ import { ShopProvider } from "../context/ShopContext";
 // Import GestureHandlerRootView
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import "../Utility/U_Dev_CustomLogger";
+import "../utility/U_Dev_CustomLogger";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();

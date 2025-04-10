@@ -10,13 +10,13 @@ import {
   BackHandler,
 } from "react-native";
 
-import ShopCard from "../../components/section2/shopCard";
-import Header from "../../components/section2/header_Main";
+import ShopCard from "../../components/ui/shopCard";
+import Header from "../../components/ui/header_Main";
 //import { Category } from "../../components/section2/categoriesList";
-import CategoriesList from "../../components/section2/categoriesList";
+import CategoriesList from "../../components/ui/categoriesList";
 
 import shopData from "../../assets/Data/data2";
-import SearchBar from "../../components/section2/searchSection";
+import SearchBar from "../../components/ui/searchSection";
 import { Link, router } from "expo-router";
 import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 import { Drawer } from "react-native-drawer-layout";
@@ -24,11 +24,9 @@ import { Ionicons } from "@expo/vector-icons";
 import MultiSelectComponent, {
   ItemProps as MultiSelectDropdownItemProps,
 } from "../../components/thirdPartyComponents/multiSelectItems";
-import DisplaySelectedChip from "../../components/section2/displaySelectedChip";
+import DisplaySelectedChip from "../../components/ui/displaySelectedChip";
 
-import CategoryCardType2, {
-  CategoryCardType2Props,
-} from "../../components/section2/categoryCardType2";
+import CategoryCardType2, { CategoryCardType2Props } from "../../components/ui/categoryCardType2";
 
 import {
   getFirestore,
@@ -155,7 +153,7 @@ const HomeScreen: React.FC = () => {
     if (tempCategory) {
       constraints.push(where("shopCategory", "==", tempCategory.categoryName));
     }
-    constraints.push(orderBy("totalRatingsCount", "desc"), limit(PAGE_SIZE));
+    constraints.push(orderBy("totalRatingsCount", "asc"), limit(PAGE_SIZE));
     return constraints;
   };
 
@@ -359,7 +357,7 @@ const HomeScreen: React.FC = () => {
     >
       {/* Main Section  */}
       <View className="flex-1 bg-primary">
-        <Header title="Home" onPressBack={() => console.log("Back pressed")} />
+        <Header title="Home" />
         <View className="flex-row h-[50] mx-2">
           <View className="flex-1 mr-1">
             {/* Search Bar Section  */}
