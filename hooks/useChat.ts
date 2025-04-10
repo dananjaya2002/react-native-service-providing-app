@@ -11,20 +11,22 @@ import {
   doc,
   writeBatch,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
+import { MessageTypes, ChatMessage } from "../interfaces/iChat";
 
-export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
+//export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 
-export interface ChatMessage {
-  id: string;
-  senderId: string;
-  messageType: MessageTypes;
-  value: string;
-  // Use a proper timestamp type if available, otherwise keep as any.
-  timestamp: any | null;
-  status: "pending" | "sent" | "error";
-}
+// export interface ChatMessage {
+//   id: string;
+//   senderId: string;
+//   messageType: MessageTypes;
+//   value: string;
+//   // Use a proper timestamp type if available, otherwise keep as any.
+//   timestamp: any | null;
+//   status: "pending" | "sent" | "error";
+// }
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +35,7 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
   const [notUploadedMessages, setNotUploadedMessages] = useState<ChatMessage[]>([]);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [agreementStatus, setAgreementStatus] = useState(false);
 
   // Subscribe to confirmed messages from Firestore.
   useEffect(() => {
@@ -175,11 +178,55 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
     }
   };
 
+  /**
+   * Checks the agreement status on the chat room document.
+   * - If the document has an "agreement" field set to "accepted" and an "acceptedTime" timestamp,
+   *   it calculates the difference between the acceptedTime and now.
+   * - If the difference is less than 20 minutes, it returns isCommentAvailable = false along with the waitingTime.
+   * - If more than 20 minutes have passed, it returns isCommentAvailable = true.
+   */
+  const checkCommentAvailability = async (): Promise<{
+    shouldDisplayCommentUI: boolean;
+    waitingTime: number;
+  }> => {
+    const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
+    const chatDocSnap = await getDoc(chatDocRef);
+
+    if (!chatDocSnap.exists()) {
+      // Chat document doesn't exist. Since there's no agreement info, treat comments as not available.
+      return { shouldDisplayCommentUI: false, waitingTime: 0 };
+    }
+
+    const data = chatDocSnap.data();
+
+    // Only proceed if the agreement is "accepted" and acceptedTime exists.
+    if (data.agreement !== "accepted" || !data.acceptedTime) {
+      return { shouldDisplayCommentUI: false, waitingTime: 0 };
+    }
+
+    // Agreement is accepted, so check the acceptedTime difference.
+    const acceptedTimeMillis = data.acceptedTime.toMillis
+      ? data.acceptedTime.toMillis()
+      : new Date(data.acceptedTime).getTime();
+    const now = Date.now();
+    const diff = now - acceptedTimeMillis;
+    const twentyMinutes = 20 * 60 * 1000; // 20 minutes in milliseconds
+
+    if (diff < twentyMinutes) {
+      // Comments are not available; return the remaining waiting time.
+      return { shouldDisplayCommentUI: true, waitingTime: twentyMinutes - diff };
+    }
+
+    // More than 20 minutes have passed.
+    return { shouldDisplayCommentUI: true, waitingTime: 0 };
+  };
+
   return {
     chatArray,
     loadMoreMessages,
     sendMessage,
     notUploadedMessages,
     loadingMore,
+    checkCommentAvailability,
   };
 }

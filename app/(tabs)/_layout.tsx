@@ -3,9 +3,9 @@ import { Tabs } from "expo-router";
 import React from "react";
 import { Platform } from "react-native";
 
-import { HapticTab } from "@/components/HapticTab";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import TabBarBackground from "@/components/ui/TabBarBackground";
+import { HapticTab } from "@/components/unUsed/2/HapticTab";
+import { IconSymbol } from "@/components/unUsed/IconSymbol";
+import TabBarBackground from "@/components/unUsed/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Ionicons } from "@expo/vector-icons";
@@ -59,10 +59,10 @@ export default function TabLayout() {
 
       {/* Bookmarks Tab */}
       <Tabs.Screen
-        name="bookmark"
+        name="favorites"
         options={{
-          title: "Bookmarks",
-          tabBarIcon: ({ color }) => <Ionicons name="bookmarks" size={28} color={color} />,
+          title: "Favorites",
+          tabBarIcon: ({ color }) => <Ionicons name="heart" size={28} color={color} />,
         }}
       />
     </Tabs>

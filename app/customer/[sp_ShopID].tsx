@@ -17,16 +17,16 @@ import Animated, {
   withRepeat,
 } from "react-native-reanimated";
 
-import { getShopPageData } from "../../Utility/U_getUserShopPageData";
+import { getShopPageData } from "../../utility/U_getUserShopPageData";
 import { FontAwesome } from "@expo/vector-icons";
-import StatusCard from "../../components/section2/dashboardTextInfoStyle1";
-import HorizontalScrollView from "../../components/section2/horizontalScrollView";
-import UserComments from "@/components/section2/userComment";
-import ShopContactInfo from "../../components/section2/shopContactInfo";
-import UserReviewStars from "../../components/section2/userReviewStars";
+import StatusCard from "../../components/ui/dashboardTextInfoStyle1";
+import HorizontalScrollView from "../../components/ui/horizontalScrollView";
+import UserComments from "@/components/ui/userComment";
+import ShopContactInfo from "../../components/ui/shopContactInfo";
+import UserReviewStars from "../../components/ui/userReviewStars";
 
-import { fetchUserComments } from "../../Utility/U_getUserComments";
-import { createNewChatRoom } from "../../Utility/U_createNewChatRoom";
+import { fetchUserComments } from "../../utility/U_getUserComments";
+import { createNewChatRoom } from "../../utility/U_createNewChatRoom";
 import { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 
 import { UserStorageService } from "../../storage/functions/userStorageService";
@@ -87,21 +87,15 @@ const CustomerShopView = () => {
         const fetchedData = await getShopPageData(serviceProviderID);
         if (fetchedData) {
           setShopData(fetchedData);
-        } else {
-          // Use fallback JSON if live shopData isn't available
-          const jsonData = require("../DevSection/utilities/shopDoc.json");
-          setShopData(jsonData);
-          console.warn(" ⚠️ ⚠️ Shop shopData not found. Using fallback JSON shopData.⚠️ ⚠️");
         }
       } catch (error) {
         console.error("Error fetching shopData:", error);
-        const jsonData = require("../DevSection/utilities/shopDoc.json"); // Fallback JSON
-        setShopData(jsonData);
       }
     };
     fetchData();
   }, []);
 
+  // Loading placeholder
   if (!shopData) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
@@ -112,15 +106,7 @@ const CustomerShopView = () => {
   }
 
   const itemList = shopData.items ? Object.values(shopData.items) : [];
-  //const userCommentList = shopData.comments ? Object.values(shopData.comments) : [];
 
-  /*
-   *
-   * New Comment Loading placeholder logic
-   *
-   */
-
-  // A simple animated placeholder component using Reanimated
   const AnimatedPlaceholder = () => {
     return (
       <View className="h-[50] w-screen justify-center items-center">
@@ -131,9 +117,6 @@ const CustomerShopView = () => {
 
   // Handle scrolling to end of list
   const handleEndReached = async () => {
-    console.log("End reached");
-    console.log("!loadingMoreComments: ", !loadingMoreComments);
-    console.log("!loadingMoreComments && lastDoc: ", !loadingMoreComments && lastDoc);
     if (!loadingMoreComments && lastDoc) {
       console.log("loading more comments...");
       setLoadingMoreComments(true);
@@ -164,15 +147,17 @@ const CustomerShopView = () => {
     };
 
     if (option === "Chat") {
-      //const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
-      const chatRoomId = "kcGcWg604yOKnjIUmBa5"; // Fallback chat room ID  -- DEV ONLY !!!
-      console.log("DEV MOD CHAT ROOM ID ⚠️ ⚠️ ⚠️ ⚠️ : ", chatRoomId);
-      console.log("Chat room created with ID:", chatRoomId);
+      if (userDocRefID == serviceProviderID) {
+        Alert.alert("You cannot chat with yourself.");
+        return;
+      }
+      const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
       router.push({
-        pathname: "/chatSubSection/chatUi",
+        pathname: "/(tabs)/chat/chatWindow/chatUi",
         params: {
           userID: userDocRefID,
           chatRoomDocRefId: chatRoomId,
+          userRole: "customer",
         },
       });
     } else if (option === "Map") {
@@ -196,7 +181,7 @@ const CustomerShopView = () => {
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
       ) : (
-        <View style={{ height: 20, backgroundColor: "green" }} />
+        <View style={{ height: 20 }} />
       )}
     </View>
   );
@@ -269,7 +254,7 @@ const CustomerShopView = () => {
               id={comment.id}
               profileImageUrl={comment.profileImageUrl}
               name={comment.name}
-              timestamp={comment.timestamp}
+              uploadedDate={comment.uploadedDate}
               ratings={comment.ratings}
               comment={comment.comment}
               customerId={comment.customerId}
