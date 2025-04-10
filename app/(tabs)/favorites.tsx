@@ -4,6 +4,10 @@ import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react
 import { getUserFavoritesServices } from "@/utility/u_getUserFavoritesServices";
 
 import { ShopList } from "@/interfaces/iShop";
+import ShopCard from "@/components/ui/shopCard";
+import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
+import { router } from "expo-router";
+import HeaderMain from "@/components/ui/header_Main";
 
 const favorites = () => {
   const [favorites, setFavorites] = useState<ShopList[]>([]);
@@ -19,37 +23,38 @@ const favorites = () => {
 
     fetchBookmarks();
   }, []);
-  function handleShopPress(id: string): void {
-    console.log(`Shop with ID ${id} pressed`);
-    // Here you can navigate to the shop details page or perform any other action
-    // For example, if you're using React Navigation:
-    // navigation.navigate('ShopDetails', { shopId: id });
-  }
+
+  const handleShopClick = (item: ShopList, event: TapGestureHandlerStateChangeEvent): void => {
+    router.push(`/customer/${item.userDocId}`);
+  };
+
+  const handleFavoriteIconClick = (item: ShopList): void => {
+    console.log(`Favorite icon clicked for shop with ID ${item.id}`);
+    setFavorites((prevFavorites) => prevFavorites.filter((favorite) => favorite.id !== item.id));
+  };
 
   return (
     <View style={styles.container}>
+      <HeaderMain title="Favorites" />
       {favorites.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No favorites found</Text>
         </View>
       ) : (
-        <FlatList
-          data={favorites}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.listItem} onPress={() => handleShopPress(item.id)}>
-              {item.shopPageImageUrl && (
-                <Image source={{ uri: item.shopPageImageUrl }} style={styles.shopImage} />
-              )}
-              <Text style={styles.shopName}>{item.shopName}</Text>
-              {item.shopDescription && (
-                <Text style={styles.shopDescription}>{item.shopDescription}</Text>
-              )}
-              {/* You can add more details here */}
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-        />
+        <View style={styles.listContainer}>
+          <FlatList
+            data={favorites}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <ShopCard
+                item={item}
+                onShopClick={handleShopClick}
+                shouldDisplayFavoriteIcon={true}
+                onFavoriteClick={handleFavoriteIconClick}
+              />
+            )}
+          />
+        </View>
       )}
     </View>
   );
@@ -58,7 +63,6 @@ const favorites = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#f4f4f4",
   },
   emptyContainer: {
@@ -70,8 +74,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#888",
   },
-  listContent: {
+  listContainer: {
     paddingBottom: 16,
+    paddingHorizontal: 8,
+    paddingTop: 16,
   },
   listItem: {
     backgroundColor: "#fff",
