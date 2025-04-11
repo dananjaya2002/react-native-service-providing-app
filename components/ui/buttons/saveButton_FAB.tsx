@@ -1,5 +1,5 @@
-import React from "react";
-import { Pressable, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import React, { useRef, useState } from "react";
+import { Pressable, StyleSheet, StyleProp, ViewStyle, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface FBASaveButtonProps {
@@ -14,23 +14,45 @@ interface FBASaveButtonProps {
 const FBASaveButton: React.FC<FBASaveButtonProps> = ({
   onPress,
   size = 24,
-  color = "black",
+  color = "white",
   style,
   disabled = false,
   accessibilityLabel = "Save",
 }) => {
+  // Track pressed state manually
+  const [isPressed, setIsPressed] = useState(false);
+  const buttonRef = useRef(null);
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+  };
+
+  const handlePressOut = () => {
+    setIsPressed(false);
+  };
+
+  const handlePress = () => {
+    // Ensuring the onPress handler is called only once
+    if (!disabled) {
+      onPress();
+    }
+  };
+
   return (
     <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.container,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
-        style,
-      ]}
+      ref={buttonRef}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.container, isPressed && styles.pressed, disabled && styles.disabled, style]}
       disabled={disabled}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
+      android_ripple={{
+        color: "#1565C0",
+        borderless: true, // This makes the ripple respect the container shape
+        radius: 28, // Same as our border radius
+      }}
     >
       <Ionicons name="save-outline" size={size} color={color} />
     </Pressable>
@@ -39,20 +61,54 @@ const FBASaveButton: React.FC<FBASaveButtonProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 5,
-    borderWidth: 1,
-    padding: 8,
+    width: 64,
+    height: 64,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f0f0f0", // Default background color
+    backgroundColor: "#2196F3", // Material Design blue
+    borderWidth: 0, // Remove border for cleaner look
+    overflow: "hidden", // This helps contain the ripple effect
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.27,
+        shadowRadius: 4.65,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+    position: "absolute",
+    bottom: 16,
+    right: 16,
   },
   pressed: {
-    backgroundColor: "#e0e0e0", // Change background color when pressed
-    opacity: 0.7, // Reduce opacity when pressed
+    backgroundColor: "#1976D2", // Darker blue when pressed
+    transform: [{ scale: 0.98 }], // Slight scale effect when pressed (reduced from 0.95)
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.23,
+        shadowRadius: 2.62,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   disabled: {
-    backgroundColor: "#d3d3d3", // Change background color when disabled
-    opacity: 0.5, // Indicate disabled state
+    backgroundColor: "#BBDEFB", // Light blue when disabled
+    opacity: 0.7,
+    ...Platform.select({
+      ios: {
+        shadowOpacity: 0.1,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
 });
 

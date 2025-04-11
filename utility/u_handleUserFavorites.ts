@@ -36,6 +36,9 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
 
 export const updateUserFavoritesServices = async (updatedData: ShopList[]): Promise<boolean> => {
   try {
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // 1-second timeout
+    console.log("Simulated update of user favorites", updatedData.length);
+    return true; // Simulate success
     const savedUserData = (await UserStorageService.getUserData()) as UserData;
     if (!savedUserData) {
       Alert.alert("Error", "User data not found. Please log in again.");
