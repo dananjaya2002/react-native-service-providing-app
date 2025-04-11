@@ -43,11 +43,10 @@ export default function RootLayout() {
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <ShopProvider>
               <KeyboardProvider>
-                <Stack screenOptions={{ headerShown: false }}>                  
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
                   <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
                   <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
                   <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />

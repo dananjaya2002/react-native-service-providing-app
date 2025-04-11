@@ -1,176 +1,39 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { auth } from "../FirebaseConfig"; // Make sure to import your auth instance
-import { onAuthStateChanged } from "firebase/auth"; // Import this to track authentication state
-import { router, useRouter } from "expo-router";
-import CustomLoader from "@/components/unUsed/2/loadingIndicator";
-
-import { db } from "../FirebaseConfig";
-
-import "../global.css"; // Import global CSS file (NativeWind)
-import { doc, DocumentData, getDoc } from "firebase/firestore";
-
-import { UserStorageService } from "../storage/functions/userStorageService";
-
-import { UserData } from "../interfaces/UserData";
-
-// export default function Index() {
-//   const [loading, setLoading] = useState(true); // To show loading screen while checking authentication
-//   const [user, setUser] = useState<any>(null); // To store the user info
-
-//   useEffect(() => {
-//     // Check authentication state
-//     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-//       if (currentUser) {
-//         setUser(currentUser); // User is signed in
-//         router.push("/(tabs)"); // Redirect to the main app (tabs)
-//       } else {
-//         setUser(null); // No user is signed in
-//         router.push("/(auth)/login"); // Redirect to sign-in page
-//       }
-//       setLoading(false); // Stop the loading screen once checked
-//     });
-
-//     // Clean up the subscription on unmount
-//     return () => unsubscribe();
-//   }, []);
-
-//   if (loading) {
-//     // Show loading screen while checking auth state
-//     return <CustomLoader />;
-//   }
-
-//   // Render null or any other UI if user is signed in
-//   return null;
-// }
-
-// Manually set the userId and collectionName for testing purposes
-const docIds: string[] = [
-  "68jIzshLLLaRJ7QM1QnJ",
-  "6OidFCuMNizeBiGv2Fyn",
-  "6acGPQnW54XVN8AAbW5v",
-  "GjOQqJcCeVkeFmHap3Sn",
-];
-const collectionName = "Users";
+import { View, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../FirebaseConfig";
 
 const Index = () => {
-  const router = useRouter(); // Get router instance
-
-  const [docsData, setDocsData] = useState<UserData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      //router.push("/(tabs)");
-      router.push("/(tabs)/favorites");
-      //router.push("/(tabs)/shop");
-
-      const shopId = "123";
-      //router.push(`../customer/${shopId}`);
-    }, 50);
-    return () => clearTimeout(timer);
-
-    const fetchDocuments = async () => {
-      try {
-        // Fetch all documents concurrently
-        const fetchPromises = docIds.map((userId) => {
-          const docRef = doc(db, "Users", userId, "UserData", "UserLoginData");
-          return getDoc(docRef);
-        });
-
-        const snapshots = await Promise.all(fetchPromises);
-
-        // Process the fetched snapshots and filter out any missing docs
-        const data = snapshots
-          .map((snapshot, index) => {
-            if (snapshot.exists()) {
-              return { userId: docIds[index], ...snapshot.data() } as UserData;
-            }
-            return null;
-          })
-          .filter((doc): doc is UserData => doc !== null);
-
-        setDocsData(data);
-      } catch (err: any) {
-        console.error("Error fetching documents: ", err);
-        setError("Error fetching documents");
-      } finally {
-        setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is authenticated, redirect to the main app
+        router.push("/(tabs)");
+      } else {
+        // User is not authenticated, redirect to the login page
+        router.push("/(auth)/login");
       }
-    };
+      setLoading(false);
+    });
 
-    fetchDocuments();
-  }, []);
+    // Cleanup the subscription on component unmount
+    return () => unsubscribe();
+  }, [router]);
 
-  //console.log("\n\ndocsData: ", docsData);
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     //router.push("/(tabs)");
-  //     router.push("/(tabs)");
-
-  //     const shopId = "123";
-  //     //router.push(`../customer/${shopId}`);
-  //   }, 50);
-  //   return () => clearTimeout(timer); // Cleanup the timer if the component unmounts before the timeout completes
-  // }, []); // Empty array ensures this runs once
-
-  function transformUserData(rawData: UserData): UserData {
-    return {
-      userId: rawData.userId,
-      isServiceProvider: rawData.isServiceProvider,
-      password: rawData.password,
-      userName: rawData.userName,
-      favorites: rawData.favorites,
-      // Map the external 'profilePicture' to your interface's 'profileImageUrl'
-      profileImageUrl: rawData.profileImageUrl,
-    };
+  if (loading) {
+    // Show a loading indicator while checking authentication state
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   }
 
-  const onItemPress = async (doc: UserData) => {
-    // Transform the data before saving it.
-    const formattedDoc = transformUserData(doc);
-    await UserStorageService.saveUserData(formattedDoc);
-    console.log("Saved User Data: ", formattedDoc);
-    router.push("/(tabs)");
-  };
-
-  const displayData = async () => {
-    const savedUserData = await UserStorageService.getUserData();
-    Alert.alert("Saved User Data", JSON.stringify(savedUserData, null, 2));
-  };
-  const getRandomColor = () => {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
-  const colors = ["#3498db", "#2ecc71", "#e74c3c", "#f39c12"]; // Array of your 4 colors
-  let colorIndex = 0;
-
-  return (
-    <View className="flex-1 bg-gray-400 justify-center items-center">
-      {docsData.map((doc) => {
-        const currentColor = colors[colorIndex % colors.length]; // Cycle through colors
-        colorIndex++;
-        return (
-          <TouchableOpacity
-            key={doc.userName}
-            className="px-20 py-3 rounded-lg justify-center items-center m-4"
-            style={{ backgroundColor: currentColor }}
-            onPress={() => onItemPress(doc)}
-          >
-            <Text className="text-white font-bold text-lg">{doc.userName}</Text>
-            <Text className="text-white font-bold text-sm">ID: {doc.userId}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
+  return null; // Render nothing while redirecting
 };
 
 export default Index;
