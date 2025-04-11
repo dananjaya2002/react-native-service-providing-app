@@ -73,9 +73,28 @@ const favorites = () => {
     );
   }
 
-  function handleSave(): void {
-    console.log("Save button clicked");
+  async function handleSave(): Promise<void> {
+    try {
+      setIsUpdating(true);
+      await updateUserFavoritesServices(favorites.current);
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      Alert.alert("Error", "Failed to update favorites. Please try again later.");
+    } finally {
+      setIsUpdating(false);
+    }
   }
+
+  // if (isUpdating) {
+  //   return (
+  //     <View className="flex-1 justify-center items-center bg-white m-14">
+  //       <ActivityIndicator size="large" color="#007bff" />
+  //       <Text className="mt-4 text-lg font-semibold text-gray-600">
+  //         Updating favorites, please wait...
+  //       </Text>
+  //     </View>
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
@@ -98,18 +117,44 @@ const favorites = () => {
               />
             )}
           />
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "#f9f9f9",
-            }}
-          >
-            <FBASaveButton onPress={handleSave} />
-          </View>
         </View>
       )}
+      <FBASaveButton onPress={handleSave} />
+      {isUpdating ? (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              width: 200,
+              padding: 20,
+              backgroundColor: "#fff", // White background for the box
+              borderRadius: 10,
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5, // Shadow for Android
+            }}
+          >
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={{ marginTop: 16, fontSize: 16, fontWeight: "600", color: "#333" }}>
+              Updating...
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 };

@@ -120,9 +120,7 @@ const Index = () => {
     return {
       userId: rawData.userId,
       isServiceProvider: rawData.isServiceProvider,
-      password: rawData.password,
       userName: rawData.userName,
-      favorites: rawData.favorites,
       // Map the external 'profilePicture' to your interface's 'profileImageUrl'
       profileImageUrl: rawData.profileImageUrl,
     };
