@@ -63,7 +63,7 @@ const Index = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       //router.push("/(tabs)");
-      router.push("/(tabs)/favorites");
+      router.push("/(tabs)");
       //router.push("/(tabs)/shop");
 
       const shopId = "123";
