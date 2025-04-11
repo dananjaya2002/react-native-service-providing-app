@@ -1,13 +1,5 @@
-// userStorageService.tsx
 import { StorageService } from "../asyncStorage";
 import { UserData } from "../../interfaces/UserData";
-
-// export interface UserData {
-//   favorites?: string[];
-//   isServiceProvider: boolean;
-//   password: string;
-//   userName: string;
-// }
 
 // Storage keys as constants to avoid typos
 // !!! DO NOT CHANGE THESE VALUES IF ALREADY BEING USED !!!
@@ -19,49 +11,40 @@ export const STORAGE_KEYS = {
 
 export class UserStorageService {
   /**
-   *
-   * USER_DATA Section
-   *
+   * Save user data to storage
+   * @param userData - The user data object to save
    */
-  //Save user data to storage
   static async saveUserData(userData: UserData): Promise<void> {
-    await StorageService.storeObject<UserData>(STORAGE_KEYS.USER_DATA, userData);
+    try {
+      await StorageService.storeObject<UserData>(STORAGE_KEYS.USER_DATA, userData);
+    } catch (error) {
+      console.error("Error saving user data to storage:", error);
+      throw new Error("Failed to save user data.");
+    }
   }
 
-  //Get user data from storage
+  /**
+   * Get user data from storage
+   * @returns The user data object or null if not found
+   */
   static async getUserData(): Promise<UserData | null> {
-    return await StorageService.getObject<UserData>(STORAGE_KEYS.USER_DATA);
+    try {
+      return await StorageService.getObject<UserData>(STORAGE_KEYS.USER_DATA);
+    } catch (error) {
+      console.error("Error retrieving user data from storage:", error);
+      throw new Error("Failed to retrieve user data.");
+    }
   }
 
-  //Clear user data from storage
+  /**
+   * Clear user data from storage
+   */
   static async clearUserData(): Promise<void> {
-    await StorageService.removeItem(STORAGE_KEYS.USER_DATA);
+    try {
+      await StorageService.removeItem(STORAGE_KEYS.USER_DATA);
+    } catch (error) {
+      console.error("Error clearing user data from storage:", error);
+      throw new Error("Failed to clear user data.");
+    }
   }
-  /**
-   *
-   * USER_SELECTED_SHOP Section
-   *
-   */
-  // //Save user data to storage
-  // static async saveSelectedShopData(userData: UserData): Promise<void> {
-  //   await StorageService.storeObject<UserData>(STORAGE_KEYS.USER_DATA, userData);
-  // }
-
-  // //Get user data from storage
-  // static async getSelectedShopData(): Promise<UserData | null> {
-  //   return await StorageService.getObject<UserData>(STORAGE_KEYS.USER_DATA);
-  // }
-
-  // //Clear user data from storage
-  // static async clearSelectedShopData(): Promise<void> {
-  //   await StorageService.removeItem(STORAGE_KEYS.USER_DATA);
-  // }
-
-  /**
-   *
-   * USER_SETTINGS Section
-   *
-   */
-
-  // Add more user-specific storage methods as needed
 }

@@ -1,139 +1,72 @@
-// app/(auth)/SignIn.tsx
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  TouchableOpacity,
-} from "react-native";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { View, TextInput, Button, Text, StyleSheet } from "react-native";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "expo-router"; // Import useRouter for navigation
 import { auth } from "../../FirebaseConfig";
-import { router } from "expo-router";
 
-export default function SignIn() {
+const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter(); // Initialize the router for navigation
 
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push("/(tabs)");
-    } catch (error) {
-      Alert.alert("Error", (error as Error).message);
+      alert("User registered successfully!");
+      router.push("/(tabs)"); // Navigate to index.tsx after successful sign-up
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Title */}
-      <Text style={styles.title}>Lanka Service</Text>
-      {/* Email Input */}
+      <Text style={styles.title}>Sign Up</Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
       <TextInput
+        style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
-        autoCapitalize="none"
-        style={styles.input}
       />
-
-      {/* Password Input */}
       <TextInput
+        style={styles.input}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        autoCapitalize="none"
-        style={styles.input}
       />
-      {/* Sign-In Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>Sign In</Text>
-      </TouchableOpacity>
-      {/* Google Sign-In Button */}
-      <TouchableOpacity style={styles.googleButton}>
-        <Text style={styles.googleButtonText}>Sign In With Google Account</Text>
-      </TouchableOpacity>
+      <Button title="Sign Up" onPress={handleSignUp} />
     </View>
   );
-}
+};
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    padding: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 30,
-    color: "#333",
-  },
-  formContainer: {
-    width: "80%",
+    marginBottom: 20,
+    textAlign: "center",
   },
   input: {
-    height: 50,
-    width: "90%",
-    borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-  },
-  button: {
-    backgroundColor: "#007bff",
+    borderColor: "#ccc",
     padding: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
+    borderRadius: 5,
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  orText: {
+  error: {
+    color: "red",
+    marginBottom: 10,
     textAlign: "center",
-    marginVertical: 10,
-    color: "#666",
-  },
-  secondaryButton: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 15,
-  },
-  secondaryButtonText: {
-    color: "#007bff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  googleButton: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  googleButtonText: {
-    color: "#333",
-    fontWeight: "bold",
-    fontSize: 16,
   },
 });
+
+export default SignUp;

@@ -50,10 +50,11 @@ export default {
     experiments: {
       typedRoutes: true,
     },
-    owner: "m_00001",
+    
     extra: {
-      eas: {
-        projectId: "ea8e968a-2c69-4419-91cb-adeeaa208159",
+      "owner": "sdkdananjaya",
+      "eas": {
+        "projectId": "a78aa0af-6381-4235-ba1e-4606b4fa2907"
       },
       FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
       FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
