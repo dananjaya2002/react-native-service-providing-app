@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { shopSearchList } from "../db/schema";
 import { initializeDatabase } from "../db/initializeDatabase";
+import { d } from "drizzle-kit/index-BAUrj6Ib";
 
 // Define the type for our shop list items (from your Drizzle schema)
 export type ShopListItem = {
@@ -26,11 +27,13 @@ const useLocalShopList = () => {
         // Query all rows from shop_search_lists table using Drizzle
         const rows = await drizzleDb.select().from(shopSearchList);
         setShopList(rows);
+        console.log("Fetched shop list:", rows);
       } catch (err) {
         console.error("Error querying local database:", err);
         setError(err as Error);
       } finally {
         setLoading(false);
+        console.log("Fetched shop list:", shopList);
       }
     }
 

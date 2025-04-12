@@ -1,9 +1,11 @@
 // app/DevSection/DevUI.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import useLocalShopList, { ShopListItem } from "../../hooks/useLocalShopList";
 import * as SQLite from "expo-sqlite";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import useFirestoreShopListSync from "@/hooks/useFirestoreShopListSync";
+import { fullSyncFirestoreToLocalDB } from "@/db/dev_fullSync";
 
 const db = SQLite.openDatabaseSync("app_database.db");
 
@@ -11,6 +13,13 @@ const DevUI = () => {
   const { shopList, loading, error } = useLocalShopList();
 
   useDrizzleStudio(db);
+
+  useFirestoreShopListSync(); // Call the sync function to start syncing with Firestore
+
+  // useEffect(() => {
+  //   fullSyncFirestoreToLocalDB();
+  //   console.log("Full sync triggered.");
+  // }, []);
 
   if (loading) {
     return (
