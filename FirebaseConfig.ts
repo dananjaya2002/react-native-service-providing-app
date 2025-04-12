@@ -1,11 +1,7 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, connectAuthEmulator, getAuth } from "firebase/auth";
-import { connectFirestoreEmulator, Firestore, getFirestore } from "firebase/firestore";
+import { Auth, getAuth } from "firebase/auth";
+import { CACHE_SIZE_UNLIMITED, Firestore, initializeFirestore } from "firebase/firestore";
 import Constants from "expo-constants";
-
-const USE_FIREBASE = true; // Change to true when needed - Development only
-
-const useEmulator = process.env.NODE_ENV === "development"; // Use Firebase Emulator in development
 
 const firebaseConfig = {
   apiKey: Constants.expoConfig?.extra?.FIREBASE_API_KEY,
@@ -17,27 +13,18 @@ const firebaseConfig = {
   measurementId: Constants.expoConfig?.extra?.FIREBASE_MEASUREMENT_ID,
 };
 
-// Define variables before assignment
-let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
+// Initialize Firebase only once
+const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Firebase (only once)
-app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-db = getFirestore(app);
-auth = getAuth(app);
+// Initialize Firestore with offline persistence enabled using unlimited cache size
+// (This effectively configures IndexedDB persistence for web.)
+const db: Firestore = initializeFirestore(app, {
+  cacheSizeBytes: CACHE_SIZE_UNLIMITED, // set unlimited cache size for persistence
+});
+
+// Initialize Auth
+const auth: Auth = getAuth(app);
 
 console.log("🔥 Connected to Firebase Production");
 
-// if (useEmulator) {
-//   const emulatorHost = "localhost";
-
-//   connectFirestoreEmulator(db, emulatorHost, 8080);
-//   //connectAuthEmulator(auth, `http://${emulatorHost}:9099`); // Add this if you are using Firebase Authentication
-//   console.log("🔥 Connected to Firebase Emulators");
-// } else {
-//   console.log("🔥 Connected to Firebase Production");
-// }
-
-// Export variables (they will be undefined if USE_FIREBASE is false)
 export { app, db, auth };
