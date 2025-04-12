@@ -45,6 +45,8 @@ import { app, db } from "../../FirebaseConfig";
 
 // Typescript Interfaces
 import { ShopList, ShopCategory, ShopLocationCategory } from "../../interfaces/iShop";
+import { ShopMinimal, useSyncShopsSQL } from "@/hooks/useShopSyncSQL";
+import { searchLocalShops } from "@/utility/u_searchShops";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
 
@@ -134,6 +136,20 @@ const HomeScreen: React.FC = () => {
   //     .filter((item) => selectedValues.includes(item.value)) // Keep only matching items
   //     .map((item) => item.label); // Extract only labels
   // };
+
+  // State to store search results (minimal shop data)
+  const [results, setResults] = useState<ShopMinimal[]>([]);
+  useSyncShopsSQL(); // Initialize SQLite database on component mount
+
+  // Callback passed to SearchSection
+  const handleSearch = async (searchValue: string) => {
+    console.log("Search Value:", searchValue);
+
+    // Call the local search function
+    const shops = await searchLocalShops(searchValue);
+    console.log("Search Results:", shops);
+  };
+
   const buildQueryConstraints = (): QueryConstraint[] => {
     const selectedLocationLabels = selectedLocations.map((location) => location.locationName);
     console.log("Selected Locations:", selectedLocationLabels);
@@ -255,11 +271,6 @@ const HomeScreen: React.FC = () => {
   const handleFilterButtonPress = () => {
     setDrawerOpen(false);
     doFiltering();
-  };
-
-  // Temporary Not in use
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
   };
 
   // To Close Drawer on Back Button Press

@@ -13,6 +13,7 @@ import { doc, DocumentData, getDoc } from "firebase/firestore";
 import { UserStorageService } from "../storage/functions/userStorageService";
 
 import { UserData } from "../interfaces/UserData";
+import { setupSQLiteDB } from "@/db/dbSetup";
 
 // export default function Index() {
 //   const [loading, setLoading] = useState(true); // To show loading screen while checking authentication
@@ -61,9 +62,21 @@ const Index = () => {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
+    // Initialize SQLite database on component mount
+    (async () => {
+      try {
+        await setupSQLiteDB();
+        console.log("✅ SQLite DB initialized in HomeScreen");
+      } catch (error) {
+        console.error("❌ Error initializing SQLite DB:", error);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       //router.push("/(tabs)");
-      router.push("/(tabs)/favorites");
+      router.push("/(tabs)");
       //router.push("/(tabs)/shop");
 
       const shopId = "123";
