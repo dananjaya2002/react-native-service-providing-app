@@ -1,6 +1,6 @@
 // utility/u_searchShops.ts
-import { getDatabase } from "../db/dbSetup";
-import { ShopMinimal } from "../hooks/useShopSyncSQL";
+import { getDatabase } from "../db/initializeDatabase";
+import { ShopMinimal } from "../hooks/useLocalShopList";
 
 // Define a type for the expected structure of each result set returned by execAsync.
 type SQLiteResult = {

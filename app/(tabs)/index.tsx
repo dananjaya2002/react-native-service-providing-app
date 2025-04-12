@@ -45,7 +45,7 @@ import { app, db } from "../../FirebaseConfig";
 
 // Typescript Interfaces
 import { ShopList, ShopCategory, ShopLocationCategory } from "../../interfaces/iShop";
-import { ShopMinimal, useSyncShopsSQL } from "@/hooks/useShopSyncSQL";
+import { ShopMinimal, useSyncShopsSQL } from "@/hooks/useLocalShopList";
 import { searchLocalShops } from "@/utility/u_searchShops";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
