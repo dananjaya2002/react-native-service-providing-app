@@ -19,6 +19,7 @@ export const syncFirestoreToLocalDB = async () => {
       const data = doc.data();
       // Adjust field names as necessary. Here we're assuming `shopId` and `shopTitle` exist.
       await drizzleDb.insert(shopSearchList).values({
+        docId: doc.id, // Firestore document ID for matching updates/deletions
         shopId: data.shopId,
         shopTitle: data.shopTitle,
       });
