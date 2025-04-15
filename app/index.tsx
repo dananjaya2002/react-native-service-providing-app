@@ -14,6 +14,9 @@ import { UserStorageService } from "../storage/functions/userStorageService";
 
 import { UserData } from "../interfaces/UserData";
 
+import * as SQLite from "expo-sqlite";
+import useFirestoreShopListSync from "@/hooks/useFirestoreShopListSync";
+
 // export default function Index() {
 //   const [loading, setLoading] = useState(true); // To show loading screen while checking authentication
 //   const [user, setUser] = useState<any>(null); // To store the user info
@@ -172,3 +175,6 @@ const Index = () => {
 };
 
 export default Index;
+function useDrizzleStudio(db: SQLite.SQLiteDatabase) {
+  throw new Error("Function not implemented.");
+}
