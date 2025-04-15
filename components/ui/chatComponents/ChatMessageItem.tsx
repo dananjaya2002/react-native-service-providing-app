@@ -86,15 +86,30 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     <Animated.View style={containerStyle}>
       {renderMessageContent()}
       {item.messageType !== "AgreementRequest" && (
-        <View style={styles.timestampContainer}>
+        <View
+          style={[
+            styles.timestampContainer,
+            { justifyContent: item.senderId === userID ? "flex-end" : "flex-start" },
+          ]}
+        >
           {item.timestamp === null && item.status === "pending" ? (
             <Ionicons name="time-outline" size={12} color="#888" />
           ) : (
-            <Text style={styles.messageTimestamp}>
+            <Text
+              style={[
+                styles.messageTimestamp,
+                { color: item.senderId === userID ? "#dcdcdc" : "#565555" }, // Dynamic color based on sender
+              ]}
+            >
               {item.timestamp
                 ? item.timestamp.toDate
-                  ? item.timestamp.toDate().toLocaleTimeString()
-                  : new Date(item.timestamp).toLocaleTimeString()
+                  ? item.timestamp
+                      .toDate()
+                      .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                  : new Date(item.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                 : ""}
             </Text>
           )}
@@ -109,7 +124,8 @@ export default memo(ChatMessageItem);
 const styles = StyleSheet.create({
   messageContainer: {
     marginVertical: 6,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
     maxWidth: "80%",
     shadowColor: "#000",
@@ -132,9 +148,11 @@ const styles = StyleSheet.create({
   },
   sentMessage: {
     alignSelf: "flex-end",
+    marginRight: 6,
   },
   receivedMessage: {
     alignSelf: "flex-start",
+    marginLeft: 6,
   },
   messageText: {
     fontSize: 16,
@@ -152,8 +170,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   messageTimestamp: {
-    fontSize: 12,
-    color: "#888",
+    fontSize: 10,
     marginLeft: 4,
   },
   messageImage: {

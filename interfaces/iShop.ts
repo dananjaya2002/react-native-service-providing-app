@@ -77,3 +77,10 @@ interface gpsCoordinates {
   latitude: number;
   longitude: number;
 }
+
+export interface ShopSearchBarItem {
+  id: number;
+  doc_id: string;
+  shop_id: string;
+  shopTitle: string;
+}

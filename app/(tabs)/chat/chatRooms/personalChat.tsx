@@ -198,7 +198,11 @@ export default function ChatList() {
         <View style={styles.chatContent}>
           <Text style={styles.chatName}>{otherUserName || "Unknown User"}</Text>
           <Text style={styles.chatMessage} numberOfLines={1}>
-            {item.lastMessage || "No messages yet"}
+            {item.lastMessage === "<Agreement Requested>"
+              ? "Agreement Request"
+              : item.lastMessage?.startsWith("http")
+              ? "Image"
+              : item.lastMessage || "No messages yet"}
           </Text>
         </View>
         <View style={styles.chatMeta}>
