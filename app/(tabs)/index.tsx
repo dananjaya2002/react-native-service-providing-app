@@ -45,7 +45,7 @@ import { app, db } from "../../FirebaseConfig";
 
 // Typescript Interfaces
 import { ShopList, ShopCategory, ShopLocationCategory } from "../../interfaces/iShop";
-import { ShopMinimal, useSyncShopsSQL } from "@/hooks/useLocalShopList";
+// import { ShopMinimal, useSyncShopsSQL } from "@/hooks/useLocalShopList";
 import { searchLocalShops } from "@/utility/u_searchShops";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
@@ -136,10 +136,6 @@ const HomeScreen: React.FC = () => {
   //     .filter((item) => selectedValues.includes(item.value)) // Keep only matching items
   //     .map((item) => item.label); // Extract only labels
   // };
-
-  // State to store search results (minimal shop data)
-  const [results, setResults] = useState<ShopMinimal[]>([]);
-  useSyncShopsSQL(); // Initialize SQLite database on component mount
 
   // Callback passed to SearchSection
   const handleSearch = async (searchValue: string) => {
@@ -372,7 +368,7 @@ const HomeScreen: React.FC = () => {
         <View className="flex-row h-[50] mx-2">
           <View className="flex-1 mr-1">
             {/* Search Bar Section  */}
-            <SearchBar onSearch={handleSearch} placeholder="Search items..." />
+            {/* <SearchBar onSearch={handleSearch} placeholder="Search items..." /> */}
           </View>
           <View className="bg-green-600 w-[50] h-full justify-center item-center">
             {/* Slider Sheet Button  */}
