@@ -64,15 +64,15 @@ const Index = () => {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      //router.push("/(tabs)");
-      router.push("/DevSection/DevUI");
-      //router.push("/(tabs)/shop");
+    // const timer = setTimeout(() => {
+    //   //router.push("/(tabs)");
+    //   router.push("/(tabs)");
+    //   //router.push("/(tabs)/shop");
 
-      const shopId = "123";
-      //router.push(`../customer/${shopId}`);
-    }, 50);
-    return () => clearTimeout(timer);
+    //   const shopId = "123";
+    //   //router.push(`../customer/${shopId}`);
+    // }, 50);
+    // return () => clearTimeout(timer);
 
     const fetchDocuments = async () => {
       try {

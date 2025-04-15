@@ -2,19 +2,16 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import SearchSection from "../../components/ui/searchSection";
-import { ShopItem } from "../../hooks/useSearchShopList";
+import { ShopSearchBarItem } from "@/interfaces/iShop";
 
 const DevUI: React.FC = () => {
-  const handleSearchSubmit = (results: ShopItem[]) => {
+  const handleSearchSubmit = (results: ShopSearchBarItem[]) => {
     console.log("Submitted search results:", results);
   };
 
   return (
     <View style={styles.container}>
-      <SearchSection
-        onSearchSubmit={handleSearchSubmit}
-        placeholder="Search items..."
-      />
+      <SearchSection onSearchSubmit={handleSearchSubmit} placeholder="Search items..." />
     </View>
   );
 };

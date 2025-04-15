@@ -13,7 +13,7 @@ const db = SQLite.openDatabaseSync("app_database.db");
 // Create an instance of Drizzle ORM with the latest configuration.
 const orm = drizzle(db);
 
-export interface ShopItem {
+export interface ShopSearchBarItem {
   id: number;
   doc_id: string;
   shop_id: string;
@@ -21,7 +21,7 @@ export interface ShopItem {
 }
 
 export const useSearchShopList = (query: string) => {
-  const [results, setResults] = useState<ShopItem[]>([]);
+  const [results, setResults] = useState<ShopSearchBarItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -49,7 +49,7 @@ export const useSearchShopList = (query: string) => {
             doc_id: result.docId,
             shop_id: result.shopId,
             shopTitle: result.shopTitle,
-          })) as ShopItem[]
+          })) as ShopSearchBarItem[]
         );
       } catch (e) {
         setError(e as Error);

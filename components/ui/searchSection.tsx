@@ -1,5 +1,5 @@
 // components/ui/SearchSection.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   TextInput,
@@ -10,10 +10,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSearchShopList, ShopItem } from "../../hooks/useSearchShopList";
+import { useSearchShopList } from "../../hooks/useSearchShopList";
+import { ShopSearchBarItem } from "@/interfaces/iShop";
 
 export interface SearchSectionProps {
-  onSearchSubmit: (results: ShopItem[]) => void;
+  onSearchSubmit: (results: ShopSearchBarItem[]) => void;
   placeholder?: string;
 }
 
@@ -22,15 +23,28 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   placeholder = "Search",
 }) => {
   const [searchText, setSearchText] = useState("");
+  const [shouldDisplayResults, setShouldDisplayResults] = useState(false);
 
   const { results, loading, error } = useSearchShopList(searchText);
 
   const handleTextChange = (text: string) => {
     setSearchText(text);
+    if (shouldDisplayResults === false) {
+      setShouldDisplayResults(true); // Show results when typing
+    }
+    if (!searchText.trim()) {
+      setShouldDisplayResults(false);
+    }
   };
 
   const handleSubmit = () => {
-    onSearchSubmit(results); // Send current results to parent
+    // Remove duplicates based on `doc_id`
+    const uniqueResults = results.filter(
+      (item, index, self) => index === self.findIndex((t) => t.doc_id === item.doc_id)
+    );
+    console.log("Submitted search results:", uniqueResults);
+    onSearchSubmit(uniqueResults); // Send current results to parent
+    setShouldDisplayResults(false); // Toggle the state
   };
 
   return (
@@ -50,7 +64,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
       </View>
 
       {/* Search results list */}
-      {searchText.length >= 3 && (
+      {searchText.length >= 3 && shouldDisplayResults && (
         <View style={styles.resultsWrapper}>
           {loading && <ActivityIndicator size="small" color="#333" style={{ margin: 10 }} />}
           {error && <Text style={styles.errorText}>Error: {error.message}</Text>}
@@ -59,7 +73,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({
           )}
           <ScrollView style={styles.resultsContainer}>
             {results.map((item) => (
-              <View key={item.id} style={styles.resultItem}>
+              <View key={item.doc_id} style={styles.resultItem}>
                 <Text style={styles.resultText}>{item.shopTitle}</Text>
               </View>
             ))}
@@ -75,6 +89,7 @@ export default SearchSection;
 const styles = StyleSheet.create({
   wrapper: {
     width: "100%",
+    zIndex: 10,
   },
   container: {
     flexDirection: "row",
@@ -98,7 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
   },
   resultsWrapper: {
-    marginTop: 12,
+    marginTop: 1,
     backgroundColor: "#FFF",
     borderRadius: 8,
     paddingVertical: 8,
