@@ -1,5 +1,5 @@
 // root/Utility/U_createNewChatRoom.tsx
-import { addDoc, collection, doc, getDoc, getDocs, Timestamp } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { UserStorageService } from "../storage/functions/userStorageService";
 import { Alert } from "react-native";
@@ -33,6 +33,21 @@ export const createNewChatRoom = async (shopData: ShopDataForCharRoomCreating): 
         profileImageUrl: savedUserData.profileImageUrl,
       },
       lastUpdatedTime: Timestamp.now(), // Storing as a Firestore timestamp
+    });
+
+    // Create the "ChatRoomMoreInfo" sub-collection
+    const chatRoomMoreInfoRef = collection(docRef, "ChatRoomMoreInfo");
+
+    // Add "lastReadMessagesCount" document
+    await setDoc(doc(chatRoomMoreInfoRef, "lastReadMessagesCount"), {
+      customer: 0,
+      serviceProvider: 0,
+    });
+
+    // Add "participantOnlineStatus" document
+    await setDoc(doc(chatRoomMoreInfoRef, "participantOnlineStatus"), {
+      customer: false,
+      serviceProvider: false,
     });
 
     return docRef.id;
