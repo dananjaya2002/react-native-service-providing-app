@@ -19,21 +19,6 @@ import { UserStorageService } from "../../../../storage/functions/userStorageSer
 // Define types
 import { UserData, UserInfo } from "../../../../interfaces/UserData";
 import { ChatRoom } from "../../../../interfaces/iChat";
-// type UserInfo = {
-//   docRef: DocumentReference; // Reference to the user document in Firestore
-//   name: string;
-//   profileImageUrl: string;
-// };
-
-// type ChatRoom = {
-//   id: string;
-//   customerRef: string;
-//   serviceProvider: UserInfo;
-//   customer: UserInfo;
-//   name?: string;
-//   lastMessage?: string;
-//   timestamp?: Timestamp;
-// };
 
 /**
  * User's Personal Chat Page'
@@ -42,19 +27,10 @@ import { ChatRoom } from "../../../../interfaces/iChat";
 export default function ChatList() {
   const router = useRouter();
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-  const chatRoomsRef = useRef<ChatRoom[]>([]); // dev only
   const [isLoading, setIsLoading] = useState(true);
   const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
 
-  //const { userID = "waSF6FwvSDcG0Nm23JvI" } = useLocalSearchParams(); // Fallback Customer Ravidu Gunavardana !!! FALLBACK VALUE IS FOR DEV ONLY
-
   const userRoleDocFieldPath = "customer.docRef";
-
-  // const customerId = async () => {
-  //   const savedUserData = (await UserStorageService.getUserData()) as UserData;
-  //   console.log("Saved User Data: ", savedUserData.userId);
-  //   return savedUserData.userId;
-  // };
 
   // Fetch saved user data asynchronously
   useEffect(() => {
@@ -69,31 +45,24 @@ export default function ChatList() {
     fetchUserData();
   }, []);
 
-  /**
-   * Fetch Data from the firebase
-   */
+  //Fetch Data from the firebase
   useEffect(() => {
     if (!userDocRefID) {
-      // Don't run query until we have a valid userDocRefID
       return;
     }
-
-    console.log("userRoleDocFieldPath: ", userRoleDocFieldPath);
-    console.log("userDocRefID: ", userDocRefID);
-    // Indicate loading has started
     setIsLoading(true);
 
-    // Use cached chat rooms if available
-    if (chatRoomsRef.current.length > 0) {
-      console.log("✅ Using cached chat rooms");
-      setChatRooms(chatRoomsRef.current);
-      setIsLoading(false);
-      return;
-    }
+    // // Use cached chat rooms if available
+    // if (chatRoomsRef.current.length > 0) {
+    //   console.log("✅ Using cached chat rooms");
+    //   setChatRooms(chatRoomsRef.current);
+    //   setIsLoading(false);
+    //   return;
+    // }
 
     const chatCollectionRef = collection(db, "Chat");
     const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userDocRefID));
-    console.log("Collection Ref: ", chatCollectionRef);
+
     // Attach the real-time listener
     const unsubscribe = onSnapshot(
       chatQuery,
@@ -104,35 +73,24 @@ export default function ChatList() {
           ...doc.data(),
         })) as ChatRoom[];
 
-        console.log("Fetched chat rooms:", chatRooms);
         setChatRooms(chatRooms);
-        chatRoomsRef.current = chatRooms; // For caching during development
-
-        // Data has been fetched—turn off loading indicator
         setIsLoading(false);
       },
       (error) => {
         console.error("Error fetching chat rooms:", error);
-        // On error, also stop loading
         setIsLoading(false);
+        Alert.alert(
+          "Error",
+          error.message || "Failed to fetch chat rooms. Please try again later."
+        );
       }
     );
-
     // Cleanup listener on unmount
     return () => unsubscribe();
   }, [userDocRefID]);
 
-  console.log("Chat rooms:", chatRooms);
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string, otherPartyUserId: string) => {
-    //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
-    // console.log("Card clicked, navigating to chat:", chatRoom, otherPartyUserId);
-    // console.log("userDocRefID: ", userDocRefID);
-    // console.log("userRoleDocFieldPath: ", userRoleDocFieldPath);
-    // console.log("userDocRefID: ", userDocRefID);
-    // console.log("otherPartyUserId: ", otherPartyUserId);
-    // console.log("chatRoom: ", chatRoom);
-
     try {
       router.push({
         pathname: "/(tabs)/chat/chatWindow/chatUi",
@@ -145,9 +103,8 @@ export default function ChatList() {
       });
     } catch (error) {
       console.error("Error during navigation:", error);
+      Alert.alert("Navigation Error", "Unable to open the chat. Please try again.");
     }
-
-    //console.log("Navigating to chat room:", chatRoom);
   };
 
   // Render each chat item
@@ -187,6 +144,8 @@ export default function ChatList() {
         onPress={() => {
           navigateToChat(item.id, item.serviceProvider.docRef);
         }}
+        accessible={true}
+        accessibilityLabel={`Chat with ${otherUserName}`}
       >
         <View style={styles.avatar}>
           <Image
@@ -212,6 +171,7 @@ export default function ChatList() {
     );
   };
 
+  // --------------  Main UI rendering Section --------------
   return (
     <View style={styles.container}>
       {isLoading ? (
