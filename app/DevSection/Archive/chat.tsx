@@ -126,7 +126,7 @@ export default function ChatList() {
     //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
 
     router.push({
-      pathname: "/chat/chatUi",
+      pathname: "/(tabs)/chat/chatWindow/chatUi",
       params: {
         userID: userRef,
         chatRoomDocRefId: chatRoom,
