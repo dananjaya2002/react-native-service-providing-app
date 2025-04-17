@@ -33,7 +33,9 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { UserData } from "@/interfaces/UserData";
-import { ShopPageData } from "@/interfaces/iShop";
+import { ShopList, ShopPageData } from "@/interfaces/iShop";
+import { getShopPageData } from "@/utility/U_getUserShopPageData";
+import { getShopListData } from "@/utility/u_getShopListData";
 
 // export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 // type UserRoles = "customer" | "serviceProvider";
@@ -76,10 +78,16 @@ export default function ChatScreen() {
     console.log("Fetching other party data...");
     console.log("Other Party User ID:", otherPartyUserId);
     if (!otherPartyUserId) return;
+
     const fetchOtherPartyData = async () => {
       try {
-        const data = await getUserData(otherPartyUserId);
-        setOtherPartyData(data);
+        if (userRole === "customer") {
+          const data = await getUserData(otherPartyUserId);
+          setOtherPartyData(data);
+        } else if (userRole === "serviceProvider") {
+          const data = await getShopListData(otherPartyUserId);
+          setOtherPartyData(data);
+        }
       } catch (error) {
         console.error("Error fetching other party data:", error);
         Alert.alert("Error", "Failed to fetch other party data.");

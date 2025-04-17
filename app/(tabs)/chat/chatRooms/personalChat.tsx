@@ -118,7 +118,6 @@ export default function ChatList() {
       timestampText = "Just now";
     } else if (typeof item.timestamp === "string") {
       timestampText = item.timestamp;
-      console.log("\n\nis timestampText: ", typeof item.timestamp === "string");
     } else {
       const date = item.timestamp.toDate();
       const today = new Date();
