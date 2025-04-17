@@ -80,7 +80,9 @@ const AgreementFAButton: React.FC<AgreementFAButtonProps> = ({ onPress, chatRoom
       </Pressable>
       {isSent && sentDate && (
         <Text style={styles.dateText}>
-          {`Sent on ${sentDate.toLocaleDateString()} ${sentDate.toLocaleTimeString()}`}
+          {`Sent:  ${sentDate.toLocaleDateString()} ${sentDate.getHours()}:${
+            sentDate.getMinutes() < 10 ? "0" : ""
+          }${sentDate.getMinutes()}`}
         </Text>
       )}
     </View>
@@ -92,8 +94,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(244,244,244,0.8)",
     position: "absolute",
-    paddingVertical: 10,
-    top: 0,
+    paddingVertical: 5,
+    top: 60,
     right: 0,
     left: 0,
     zIndex: 1,
@@ -102,12 +104,12 @@ const styles = StyleSheet.create({
   },
   fab: {
     borderRadius: 15,
-    paddingVertical: 15,
+    paddingVertical: 10,
     paddingHorizontal: 40,
     alignItems: "center",
     justifyContent: "center",
     minWidth: 250,
-    minHeight: 50,
+    minHeight: 40,
 
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
@@ -123,11 +125,11 @@ const styles = StyleSheet.create({
   },
   fabText: {
     color: "white",
-    fontSize: 16,
+    fontSize: 13,
   },
   dateText: {
-    marginTop: 10,
-    fontSize: 14,
+    marginTop: 5,
+    fontSize: 11,
     color: "#555",
   },
 });
