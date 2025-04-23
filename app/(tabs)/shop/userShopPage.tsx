@@ -97,7 +97,8 @@ const Shop = () => {
           setShopData(fetchedData); // set state
           saveShopData(fetchedData); // Save the data in AsyncStorage
         } else {
-          console.error(" 🔴 Shop shopData not found. 🔴 ");
+          
+          router.push("/(tabs)/shop/shop_Create"); // Navigate to shop_create.tsx
         }
       } catch (error) {
         console.error("Error fetching data:", error);
