@@ -1,24 +1,27 @@
-// import ChatAgreementCard from "@/components/section2/chatComponents/chatAgreement";
-// import React, { useState } from "react";
-// import { View, Text, StyleSheet, Pressable } from "react-native";
+// app/DevSection/DevUI.tsx
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import SearchSection from "../../components/ui/searchSection";
+import { ShopSearchBarItem } from "@/interfaces/iShop";
 
-// const DevUI: React.FC = () => {
-//   return (
-//     <View style={styles.root}>
-//       <ChatAgreementCard chatDocId="kcGcWg604yOKnjIUmBa5" />
-//     </View>
-//   );
-// };
+const DevUI: React.FC = () => {
+  const handleSearchSubmit = (results: ShopSearchBarItem[]) => {
+    console.log("Submitted search results:", results);
+  };
 
-// const styles = StyleSheet.create({
-//   // Container mimicking parent UI
-//   root: {
-//     flex: 1,
-//     backgroundColor: "#f4bf9c",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   // Elevated, card-like container for a premium look.
-// });
+  return (
+    <View style={styles.container}>
+      <SearchSection onSearchSubmit={handleSearchSubmit} placeholder="Search items..." />
+    </View>
+  );
+};
 
-// export default DevUI;
+export default DevUI;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#ebebeb",
+  },
+});

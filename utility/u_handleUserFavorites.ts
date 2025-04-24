@@ -1,6 +1,5 @@
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
-import fs from "fs"; // Import the 'fs' module
 
 import { UserData } from "../interfaces/UserData";
 
@@ -32,5 +31,28 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
   } catch (error) {
     console.error("Error fetching user favorites:", error);
     return [];
+  }
+};
+
+export const updateUserFavoritesServices = async (updatedData: ShopList[]): Promise<boolean> => {
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // 1-second timeout
+    console.log("Simulated update of user favorites", updatedData.length);
+    return true; // Simulate success
+    const savedUserData = (await UserStorageService.getUserData()) as UserData;
+    if (!savedUserData) {
+      Alert.alert("Error", "User data not found. Please log in again.");
+      return false;
+    }
+
+    const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "UserFavoritesShops");
+
+    // Overwrite the entire document with the new data
+    await setDoc(userDocRef, updatedData);
+    console.log(`Successfully updated user favorites for user ID: ${savedUserData.userId}`);
+    return true;
+  } catch (error) {
+    console.error("Error updating user favorites:", error);
+    return false;
   }
 };

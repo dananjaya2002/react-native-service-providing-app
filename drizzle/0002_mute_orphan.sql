@@ -1,0 +1,1 @@
+ALTER TABLE `shop_search_lists` ADD `doc_id` text NOT NULL;

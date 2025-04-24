@@ -44,7 +44,17 @@ import {
 import { app, db } from "../../FirebaseConfig";
 
 // Typescript Interfaces
-import { ShopList, ShopCategory, ShopLocationCategory } from "../../interfaces/iShop";
+import {
+  ShopList,
+  ShopCategory,
+  ShopLocationCategory,
+  ShopSearchBarItem,
+} from "../../interfaces/iShop";
+// import { ShopMinimal, useSyncShopsSQL } from "@/hooks/useLocalShopList";
+import { searchLocalShops } from "@/utility/u_searchShops";
+import SearchSection from "../../components/ui/searchSection";
+import { getSearchResultShops } from "@/utility/u_getSearchResultShops";
+import ShopCardPlaceholder from "@/components/ui/placeholderComponents/shopCardPlaceholder";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
 
@@ -115,7 +125,8 @@ const HomeScreen: React.FC = () => {
   // Pagination State
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false); // Flag to check if more data is available
 
   const [filtersUpdated, setFiltersUpdated] = useState(false); // Flag to trigger re-fetch
 
@@ -134,6 +145,31 @@ const HomeScreen: React.FC = () => {
   //     .filter((item) => selectedValues.includes(item.value)) // Keep only matching items
   //     .map((item) => item.label); // Extract only labels
   // };
+
+  // Callback passed to SearchSection
+  const handleSearchSubmit = async (results: ShopSearchBarItem[]) => {
+    console.log("Submit Button Pressed!");
+    // for (const result of results) {
+    //   // console.log("Search Result Doc ID:", result.doc_id);
+    //   // console.log("Search Result Shop ID:", result.shop_id);
+    //   // console.log("Search Result Shop ID:", result.id);
+    //   console.log("Search Result Shop Title:", result.shopTitle);
+    // }
+    setShops([]);
+    setLastDoc(null);
+    setHasMore(true);
+
+    const searchShopResults = await getSearchResultShops(results);
+    const resultsWithId = searchShopResults.map((item, index) => ({
+      ...item,
+      id: item.id || index.toString(), // Use `id` if available, otherwise fallback to index
+    }));
+
+    console.log("\n\nSearch Results:", searchShopResults);
+    setShops(resultsWithId);
+    setHasMore(false); // No more pages after search
+  };
+
   const buildQueryConstraints = (): QueryConstraint[] => {
     const selectedLocationLabels = selectedLocations.map((location) => location.locationName);
     console.log("Selected Locations:", selectedLocationLabels);
@@ -200,7 +236,7 @@ const HomeScreen: React.FC = () => {
           setShops(newShops);
         }
         setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
-        setHasMore(querySnapshot.docs.length === PAGE_SIZE);
+        setHasMore(querySnapshot.docs.length === PAGE_SIZE); // Check if more data is available
       } else {
         setHasMore(false);
       }
@@ -213,7 +249,7 @@ const HomeScreen: React.FC = () => {
   // Initial fetch on mount
   useEffect(() => {
     //fetchShopsPage(); // This line is enough to fetch the first page
-    if (__DEV__ && didFetchRef.current) return console.log("🟩 Already fetched shops!");
+    // if (__DEV__ && didFetchRef.current) return console.log("🟩 Already fetched shops!");
     fetchShopsPage();
     didFetchRef.current = true;
   }, []);
@@ -240,7 +276,9 @@ const HomeScreen: React.FC = () => {
   // Load more shops when end is reached
   const fetchMoreShops = async () => {
     if (!lastDoc || !hasMore || loading) return;
+    setIsLoadingMore(true);
     await fetchShopsPage(lastDoc);
+    setIsLoadingMore(false);
   };
 
   // ShopCategory card  Press Handler
@@ -255,11 +293,6 @@ const HomeScreen: React.FC = () => {
   const handleFilterButtonPress = () => {
     setDrawerOpen(false);
     doFiltering();
-  };
-
-  // Temporary Not in use
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
   };
 
   // To Close Drawer on Back Button Press
@@ -311,6 +344,9 @@ const HomeScreen: React.FC = () => {
     console.log("Removed ShopCategory");
   };
 
+  // Determine how many placeholders to show if loading
+  const placeholderItems = Array.from({ length: 10 }, (_, index) => index);
+
   return (
     <Drawer
       open={drawerOpen}
@@ -361,7 +397,7 @@ const HomeScreen: React.FC = () => {
         <View className="flex-row h-[50] mx-2">
           <View className="flex-1 mr-1">
             {/* Search Bar Section  */}
-            <SearchBar onSearch={handleSearch} placeholder="Search items..." />
+            <SearchSection onSearchSubmit={handleSearchSubmit} placeholder="Search items..." />
           </View>
           <View className="bg-green-600 w-[50] h-full justify-center item-center">
             {/* Slider Sheet Button  */}
@@ -391,12 +427,20 @@ const HomeScreen: React.FC = () => {
         />
         {/* ShopList List */}
         <View className="flex-1 px-2">
-          <FlatList
-            data={shops}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ShopCard item={item} onShopClick={handleShopClick} />}
-            onEndReached={fetchMoreShops}
-          />
+          {loading && !isLoadingMore ? (
+            <FlatList
+              data={placeholderItems}
+              keyExtractor={(item) => item.toString()}
+              renderItem={() => <ShopCardPlaceholder />}
+            />
+          ) : (
+            <FlatList
+              data={shops}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <ShopCard item={item} onShopClick={handleShopClick} />}
+              onEndReached={fetchMoreShops}
+            />
+          )}
         </View>
       </View>
     </Drawer>
