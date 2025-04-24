@@ -42,22 +42,10 @@ import { ChatRoom } from "../../../../interfaces/iChat";
 export default function ChatList() {
   const router = useRouter();
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-  const chatRoomsRef = useRef<ChatRoom[]>([]); // dev only
   const [isLoading, setIsLoading] = useState(true);
   const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
 
-  //const { userID = "waSF6FwvSDcG0Nm23JvI" } = useLocalSearchParams(); // Fallback Customer Ravidu Gunavardana !!! FALLBACK VALUE IS FOR DEV ONLY
-
-  // Identify user type
-  const userRoleType = "customerRef";
-
   const userRoleDocFieldPath = "serviceProvider.docRef";
-
-  // const customerId = async () => {
-  //   const savedUserData = (await UserStorageService.getUserData()) as UserData;
-  //   console.log("Saved User Data: ", savedUserData.userId);
-  //   return savedUserData.userId;
-  // };
 
   // Fetch saved user data asynchronously
   useEffect(() => {
@@ -83,22 +71,11 @@ export default function ChatList() {
       return;
     }
 
-    console.log("userRoleDocFieldPath: ", userRoleDocFieldPath);
-    console.log("userDocRefID: ", userDocRefID);
     // Indicate loading has started
     setIsLoading(true);
 
-    // Use cached chat rooms if available
-    if (chatRoomsRef.current.length > 0) {
-      console.log("✅ Using cached chat rooms");
-      setChatRooms(chatRoomsRef.current);
-      setIsLoading(false);
-      return;
-    }
-
     const chatCollectionRef = collection(db, "Chat");
     const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userDocRefID));
-    console.log("Collection Ref: ", chatCollectionRef);
     // Attach the real-time listener
     const unsubscribe = onSnapshot(
       chatQuery,
@@ -109,17 +86,16 @@ export default function ChatList() {
           ...doc.data(),
         })) as ChatRoom[];
 
-        console.log("Fetched chat rooms:", chatRooms);
         setChatRooms(chatRooms);
-        chatRoomsRef.current = chatRooms; // For caching during development
-
-        // Data has been fetched—turn off loading indicator
         setIsLoading(false);
       },
       (error) => {
         console.error("Error fetching chat rooms:", error);
-        // On error, also stop loading
         setIsLoading(false);
+        Alert.alert(
+          "Error",
+          error.message || "Failed to fetch chat rooms. Please try again later."
+        );
       }
     );
 
@@ -127,21 +103,24 @@ export default function ChatList() {
     return () => unsubscribe();
   }, [userDocRefID]);
 
-  console.log("Chat rooms:", chatRooms);
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string, otherPartyUserId: string) => {
     //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
 
-    router.push({
-      pathname: "/(tabs)/chat/chatWindow/chatUi",
-      params: {
-        userID: userDocRefID,
-        chatRoomDocRefId: chatRoom,
-        userRole: "serviceProvider",
-        otherPartyUserId,
-      },
-    });
-    //console.log("Navigating to chat room:", chatRoom);
+    try {
+      router.push({
+        pathname: "/(tabs)/chat/chatWindow/chatUi",
+        params: {
+          userID: userDocRefID,
+          chatRoomDocRefId: chatRoom,
+          userRole: "serviceProvider",
+          otherPartyUserId,
+        },
+      });
+    } catch (error) {
+      console.error("Error navigating to chat:", error);
+      Alert.alert("Navigation Error", "Failed to navigate to the chat room. Please try again.");
+    }
   };
 
   // Render each chat item
@@ -178,7 +157,11 @@ export default function ChatList() {
     return (
       <TouchableOpacity
         style={styles.chatItem}
-        onPress={() => navigateToChat(item.id, item.customer.profileImageUrl)}
+        onPress={() => {
+          navigateToChat(item.id, item.serviceProvider.docRef);
+        }}
+        accessible={true}
+        accessibilityLabel={`Chat with ${otherUserName}`}
       >
         <View style={styles.avatar}>
           <Image
@@ -190,7 +173,11 @@ export default function ChatList() {
         <View style={styles.chatContent}>
           <Text style={styles.chatName}>{otherUserName || "Unknown User"}</Text>
           <Text style={styles.chatMessage} numberOfLines={1}>
-            {item.lastMessage || "No messages yet"}
+            {item.lastMessage === "<Agreement Requested>"
+              ? "Agreement Sent"
+              : item.lastMessage?.startsWith("http")
+              ? "Image"
+              : item.lastMessage || "No messages yet"}
           </Text>
         </View>
         <View style={styles.chatMeta}>
@@ -199,6 +186,8 @@ export default function ChatList() {
       </TouchableOpacity>
     );
   };
+
+  // --------------  Main UI rendering Section --------------
 
   return (
     <View style={styles.container}>

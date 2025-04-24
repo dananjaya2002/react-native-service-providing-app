@@ -10,6 +10,7 @@ import {
   Keyboard,
   Text,
   Image,
+  Alert,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -32,7 +33,9 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { UserData } from "@/interfaces/UserData";
-import { ShopPageData } from "@/interfaces/iShop";
+import { ShopList, ShopPageData } from "@/interfaces/iShop";
+import { getShopPageData } from "@/utility/U_getUserShopPageData";
+import { getShopListData } from "@/utility/u_getShopListData";
 
 // export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 // type UserRoles = "customer" | "serviceProvider";
@@ -56,18 +59,38 @@ export default function ChatScreen() {
   const [currentMessage, setCurrentMessage] = useState("");
   const [otherPartyData, setOtherPartyData] = useState<UserData | null>(null);
   // custom hook to manage chat messages
-  const { chatArray, loadMoreMessages, sendMessage, loadingMore, checkCommentAvailability } =
-    useChat(chatRoomDocRefId, userID);
+  const {
+    chatArray,
+    loadMoreMessages,
+    sendMessage,
+    loadingMore,
+    checkCommentAvailability,
+    participantOnlineStatus,
+  } = useChat(chatRoomDocRefId, userID, userRole);
+
+  // User Online Status ------------------------------------------------------------------------------------
+  useEffect(() => {
+    console.log("Participant Online Status:", participantOnlineStatus);
+  }, [participantOnlineStatus]);
 
   // Get the other party's data from firebase
   useEffect(() => {
+    console.log("Fetching other party data...");
+    console.log("Other Party User ID:", otherPartyUserId);
     if (!otherPartyUserId) return;
+
     const fetchOtherPartyData = async () => {
       try {
-        const data = await getUserData(otherPartyUserId);
-        setOtherPartyData(data);
+        if (userRole === "customer") {
+          const data = await getUserData(otherPartyUserId);
+          setOtherPartyData(data);
+        } else if (userRole === "serviceProvider") {
+          const data = await getShopListData(otherPartyUserId);
+          setOtherPartyData(data);
+        }
       } catch (error) {
         console.error("Error fetching other party data:", error);
+        Alert.alert("Error", "Failed to fetch other party data.");
       }
     };
 
@@ -190,6 +213,7 @@ export default function ChatScreen() {
       <ChatHeader
         profileImageUrl={otherPartyData?.profileImageUrl || "undefined"}
         profileName={otherPartyData?.userName || "undefined"}
+        isParticipantOnline={participantOnlineStatus}
       />
       {/* AgreementFAButton - Service Provider */}
       {userRole === "serviceProvider" && (

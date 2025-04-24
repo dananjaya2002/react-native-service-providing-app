@@ -158,6 +158,7 @@ const CustomerShopView = () => {
           userID: userDocRefID,
           chatRoomDocRefId: chatRoomId,
           userRole: "customer",
+          otherPartyUserId: serviceProviderID,
         },
       });
     } else if (option === "Map") {

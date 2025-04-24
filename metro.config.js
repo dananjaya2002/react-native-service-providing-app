@@ -6,3 +6,5 @@ const config = getDefaultConfig(__dirname);
 
 /** @type {import('expo/metro-config').MetroConfig} */
 module.exports = withNativeWind(config, { input: "./global.css" });
+
+config.resolver.sourceExts.push("sql");

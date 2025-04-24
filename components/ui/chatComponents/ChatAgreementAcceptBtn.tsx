@@ -85,7 +85,15 @@ const ChatAgreementAcceptsCard: React.FC<ChatAgreementAcceptsCardProps> = ({
         {initialLoading || loading ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>{accepted ? "Accepted" : "Accept"}</Text>
+          <Text style={styles.buttonText}>
+            {userRole === "customer"
+              ? accepted
+                ? "Accepted"
+                : "Accept"
+              : accepted
+              ? "Accepted"
+              : "Waiting"}
+          </Text>
         )}
       </Pressable>
     </View>
@@ -97,7 +105,7 @@ export default ChatAgreementAcceptsCard;
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    paddingVertical: 24,
+    paddingVertical: 12,
     paddingHorizontal: 20,
     backgroundColor: "#ffffff",
     borderRadius: 16,
@@ -109,15 +117,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: "#333",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   button: {
     width: "80%",
-    height: 56,
-    borderRadius: 28,
+    height: 46,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -136,7 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2ecc71",
   },
   buttonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: "#fff",
   },

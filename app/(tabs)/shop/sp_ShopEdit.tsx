@@ -194,7 +194,7 @@ const shopEditService: React.FC = () => {
       }
       setLoading(true);
       const newServiceObject: ShopServices = {
-        id: (shopServiceData.length - 1).toString(), // -1 for the placeholder item
+        id: shopServiceData.length.toString(),
         title: sheetTitle,
         imageUrl: sheetImageUrl,
         description: sheetDescription,

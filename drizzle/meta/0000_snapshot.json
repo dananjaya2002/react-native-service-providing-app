@@ -1,0 +1,49 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "f20465c8-ea31-40e5-b718-2f2d2e693850",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "shop_search_lists": {
+      "name": "shop_search_lists",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "shop_id": {
+          "name": "shop_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "shopTitle": {
+          "name": "shopTitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

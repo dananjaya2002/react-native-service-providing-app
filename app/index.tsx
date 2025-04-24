@@ -14,6 +14,9 @@ import { UserStorageService } from "../storage/functions/userStorageService";
 
 import { UserData } from "../interfaces/UserData";
 
+import * as SQLite from "expo-sqlite";
+import useFirestoreShopListSync from "@/hooks/useFirestoreShopListSync";
+
 // export default function Index() {
 //   const [loading, setLoading] = useState(true); // To show loading screen while checking authentication
 //   const [user, setUser] = useState<any>(null); // To store the user info
@@ -61,15 +64,15 @@ const Index = () => {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      //router.push("/(tabs)");
-      router.push("/(tabs)/favorites");
-      //router.push("/(tabs)/shop");
+    // const timer = setTimeout(() => {
+    //   //router.push("/(tabs)");
+    //   router.push("/(tabs)");
+    //   //router.push("/(tabs)/shop");
 
-      const shopId = "123";
-      //router.push(`../customer/${shopId}`);
-    }, 50);
-    return () => clearTimeout(timer);
+    //   const shopId = "123";
+    //   //router.push(`../customer/${shopId}`);
+    // }, 50);
+    // return () => clearTimeout(timer);
 
     const fetchDocuments = async () => {
       try {
@@ -120,9 +123,7 @@ const Index = () => {
     return {
       userId: rawData.userId,
       isServiceProvider: rawData.isServiceProvider,
-      password: rawData.password,
       userName: rawData.userName,
-      favorites: rawData.favorites,
       // Map the external 'profilePicture' to your interface's 'profileImageUrl'
       profileImageUrl: rawData.profileImageUrl,
     };
@@ -174,3 +175,6 @@ const Index = () => {
 };
 
 export default Index;
+function useDrizzleStudio(db: SQLite.SQLiteDatabase) {
+  throw new Error("Function not implemented.");
+}

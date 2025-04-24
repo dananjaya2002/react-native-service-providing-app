@@ -1,5 +1,5 @@
 // hooks/useChat.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   collection,
   query,
@@ -12,9 +12,10 @@ import {
   writeBatch,
   serverTimestamp,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
-import { MessageTypes, ChatMessage } from "../interfaces/iChat";
+import { MessageTypes, ChatMessage, UserRoles } from "../interfaces/iChat";
 
 //export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 
@@ -30,7 +31,7 @@ import { MessageTypes, ChatMessage } from "../interfaces/iChat";
 
 const PAGE_SIZE = 10;
 
-export function useChat(chatRoomDocRefId: string, userID: string) {
+export function useChat(chatRoomDocRefId: string, userID: string, userRole: UserRoles) {
   const [chatArray, setChatArray] = useState<ChatMessage[]>([]);
   const [notUploadedMessages, setNotUploadedMessages] = useState<ChatMessage[]>([]);
   const [lastDoc, setLastDoc] = useState<any>(null);
@@ -221,6 +222,87 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
     return { shouldDisplayCommentUI: true, waitingTime: 0 };
   };
 
+  /**
+   *
+   *
+   * User Online Status and Unread Messages Maintain Section
+   *
+   *
+   */
+  const [participantOnlineStatus, setParticipantOnlineStatus] = useState<boolean>(false);
+
+  // Subscribe to participant online status.
+  useEffect(() => {
+    if (!chatRoomDocRefId) return;
+
+    const participantStatusDocRef = doc(
+      db,
+      "Chat",
+      chatRoomDocRefId,
+      "ChatRoomMoreInfo",
+      "participantOnlineStatus"
+    );
+
+    const unsubscribe = onSnapshot(participantStatusDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        if (userRole === "customer") {
+          setParticipantOnlineStatus(docSnapshot.data().serviceProvider as boolean);
+        } else if (userRole === "serviceProvider") {
+          setParticipantOnlineStatus(docSnapshot.data().customer as boolean);
+        }
+      } else {
+        console.warn("participantOnlineStatus document does not exist.");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [chatRoomDocRefId]);
+
+  // Set the participant online status when the component mounts and unmounts.
+  useEffect(() => {
+    if (userRole === "customer") {
+      updateParticipantOnlineStatus({ customer: true });
+    }
+    if (userRole === "serviceProvider") {
+      updateParticipantOnlineStatus({ serviceProvider: true });
+    }
+
+    return () => {
+      if (userRole === "customer") {
+        updateParticipantOnlineStatus({ customer: false });
+      }
+      if (userRole === "serviceProvider") {
+        updateParticipantOnlineStatus({ serviceProvider: false });
+      }
+    };
+  }, [userRole, chatRoomDocRefId]);
+
+  const updateParticipantOnlineStatus = async (status: {
+    customer?: boolean;
+    serviceProvider?: boolean;
+  }) => {
+    if (!chatRoomDocRefId) return;
+
+    try {
+      const participantStatusDocRef = doc(
+        db,
+        "Chat",
+        chatRoomDocRefId,
+        "ChatRoomMoreInfo",
+        "participantOnlineStatus"
+      );
+
+      await setDoc(participantStatusDocRef, status, { merge: true });
+      console.log("Participant online status updated:", status);
+    } catch (error) {
+      console.error("Error updating participant online status:", error);
+    }
+  };
+
+  // ==================================================================================================================
+  // Return Section
+  // ==================================================================================================================
+
   return {
     chatArray,
     loadMoreMessages,
@@ -228,5 +310,6 @@ export function useChat(chatRoomDocRefId: string, userID: string) {
     notUploadedMessages,
     loadingMore,
     checkCommentAvailability,
+    participantOnlineStatus,
   };
 }
