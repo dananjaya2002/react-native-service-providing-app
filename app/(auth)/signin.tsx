@@ -1,139 +1,165 @@
-// app/(auth)/SignIn.tsx
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  TouchableOpacity,
-} from "react-native";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
-import { auth } from "../../FirebaseConfig";
-import { router } from "expo-router";
+import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator } from "react-native";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "expo-router";
+import { auth, db } from "../../FirebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
+import { uploadImageToCloud } from "../../utility/u_uploadImageNew"; // Import the Cloudinary upload function
+import { UserData } from "../../interfaces/UserData"; // Import the UserData interface
 
-export default function SignIn() {
+const Signin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [userName, setUserName] = useState(""); // Add userName input
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // Loading state for image upload
+  const router = useRouter();
 
-  const handleSignIn = async () => {
+  const handleImagePick = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const selectedImageUri = result.assets[0].uri;
+        setImageUri(selectedImageUri);
+
+        // Start uploading the image
+        setLoading(true);
+        const uploadedUrl = await uploadImageToCloud(selectedImageUri);
+        setLoading(false);
+
+        if (uploadedUrl) {
+          setImageUrl(uploadedUrl);
+          Alert.alert("Image Uploaded", "Image uploaded successfully!");
+        } else {
+          Alert.alert("Upload Failed", "Failed to upload the image.");
+        }
+      }
+    } catch (error: any) {
+      setLoading(false);
+      console.error("Error picking image:", error);
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (loading) {
+      Alert.alert("Please Wait", "Image is still uploading. Please wait until the upload is complete.");
+      return;
+    }
+
+    if (!imageUrl) {
+      Alert.alert("Image Required", "Please upload an image before signing up.");
+      return;
+    }
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create a UserData object
+      const userData: UserData = {
+        userId: user.uid,
+        userName: userName,        
+        profileImageUrl: imageUrl,
+        isServiceProvider: false, // Default value, can be updated later        
+      };
+
+      // Save the user data to Firestore
+      const userDocRef = doc(db, "Users", user.uid, "UserData", "UserLoginData");
+      await setDoc(userDocRef, userData, { merge: true });
+
+      Alert.alert("Sign-Up Successful", "You have successfully signed up!");
       router.push("/(tabs)");
-    } catch (error) {
-      Alert.alert("Error", (error as Error).message);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Title */}
-      <Text style={styles.title}>Lanka Service</Text>
-      {/* Email Input */}
+      <Text style={styles.title}>Sign Up</Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
       <TextInput
+        style={styles.input}
+        placeholder="User Name"
+        value={userName}
+        onChangeText={setUserName}
+      />
+      <TextInput
+        style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
-        autoCapitalize="none"
-        style={styles.input}
       />
-
-      {/* Password Input */}
       <TextInput
+        style={styles.input}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        autoCapitalize="none"
-        style={styles.input}
       />
-      {/* Sign-In Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-        <Text style={styles.buttonText}>Sign In</Text>
+      <TouchableOpacity style={styles.imagePicker} onPress={handleImagePick}>
+        <Text style={styles.imagePickerText}>Pick an Image</Text>
       </TouchableOpacity>
-      {/* Google Sign-In Button */}
-      <TouchableOpacity style={styles.googleButton}>
-        <Text style={styles.googleButtonText}>Sign In With Google Account</Text>
-      </TouchableOpacity>
+      {imageUri && <Image source={{ uri: imageUri }} style={styles.imagePreview} />}
+      {loading && <ActivityIndicator size="large" color="#3498db" />}
+      <Button title="Sign Up" onPress={handleSignUp} />
     </View>
   );
-}
+};
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    padding: 20,
+    backgroundColor: "#fff",
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 30,
-    color: "#333",
-  },
-  formContainer: {
-    width: "80%",
+    marginBottom: 20,
+    textAlign: "center",
   },
   input: {
-    height: 50,
-    width: "90%",
-    borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-  },
-  button: {
-    backgroundColor: "#007bff",
+    borderColor: "#ccc",
     padding: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
+    borderRadius: 5,
   },
-  buttonText: {
+  error: {
+    color: "red",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  imagePicker: {
+    backgroundColor: "#3498db",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  imagePickerText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
   },
-  orText: {
-    textAlign: "center",
-    marginVertical: 10,
-    color: "#666",
-  },
-  secondaryButton: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 15,
-  },
-  secondaryButtonText: {
-    color: "#007bff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  googleButton: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  googleButtonText: {
-    color: "#333",
-    fontWeight: "bold",
-    fontSize: 16,
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignSelf: "center",
   },
 });
+
+export default Signin;
