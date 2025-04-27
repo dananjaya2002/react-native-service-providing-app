@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,17 @@ import {
   StyleSheet,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { db } from "../../../FirebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { UserStorageService } from "../../../storage/functions/userStorageService";
 import { ShopPageData } from "../../../interfaces/iShop";
+import { SystemDataStorage } from "../../../storage/functions/systemDataStorage";
+import { Dropdown } from "react-native-element-dropdown"; // Import Dropdown
 
 const ShopCreate = () => {
   const router = useRouter();
@@ -24,6 +29,22 @@ const ShopCreate = () => {
   const [serviceInfo, setServiceInfo] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(true); // State to control popup visibility
+  const [categories, setCategories] = useState<string[]>([]); // State to store categories
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fetchedCategories = await SystemDataStorage.getServiceCategories();
+        if (fetchedCategories) {
+          setCategories(fetchedCategories.map((category) => category.categoryName)); // Assuming category has a 'name' property
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleCreateShop = async () => {
     if (!shopName || !shopDescription || !shopCategory || !phoneNumber) {
@@ -124,39 +145,52 @@ const ShopCreate = () => {
 
       <Text style={styles.title}>Create Your Shop</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Shop Name"
-        value={shopName}
-        onChangeText={setShopName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Shop Description"
-        value={shopDescription}
-        onChangeText={setShopDescription}
-        multiline
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Shop Category"
-        value={shopCategory}
-        onChangeText={setShopCategory}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="phone-pad"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Service Info"
-        value={serviceInfo}
-        onChangeText={setServiceInfo}
-        multiline
-      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <TextInput
+            style={styles.input}
+            placeholder="Shop Name"
+            value={shopName}
+            onChangeText={setShopName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Shop Description"
+            value={shopDescription}
+            onChangeText={setShopDescription}
+            multiline
+          />
+          <Dropdown
+            style={styles.dropdown}
+            data={categories.map((category) => ({
+              label: category,
+              value: category,
+            }))}
+            labelField="label"
+            valueField="value"
+            placeholder="Select a category"
+            value={shopCategory}
+            onChange={(item) => setShopCategory(item.value)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Service Info"
+            value={serviceInfo}
+            onChangeText={setServiceInfo}
+            multiline
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
@@ -244,6 +278,14 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: "#fff",
   },
 });
 

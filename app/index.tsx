@@ -1,197 +1,92 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
-import { auth } from "../FirebaseConfig"; // Make sure to import your auth instance
-import { onAuthStateChanged } from "firebase/auth"; // Import this to track authentication state
-import { router, useRouter } from "expo-router";
-import CustomLoader from "@/components/unUsed/2/loadingIndicator";
-
-import { db } from "../FirebaseConfig";
-
-import "../global.css"; // Import global CSS file (NativeWind)
-import { doc, DocumentData, getDoc } from "firebase/firestore";
-
-import { UserStorageService } from "../storage/functions/userStorageService";
-
-import { UserData } from "../interfaces/UserData";
-
-import * as SQLite from "expo-sqlite";
-import useFirestoreShopListSync from "@/hooks/useFirestoreShopListSync";
-
-// export default function Index() {
-//   const [loading, setLoading] = useState(true); // To show loading screen while checking authentication
-//   const [user, setUser] = useState<any>(null); // To store the user info
-
-//   useEffect(() => {
-//     // Check authentication state
-//     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-//       if (currentUser) {
-//         setUser(currentUser); // User is signed in
-//         router.push("/(tabs)"); // Redirect to the main app (tabs)
-//       } else {
-//         setUser(null); // No user is signed in
-//         router.push("/(auth)/login"); // Redirect to sign-in page
-//       }
-//       setLoading(false); // Stop the loading screen once checked
-//     });
-
-//     // Clean up the subscription on unmount
-//     return () => unsubscribe();
-//   }, []);
-
-//   if (loading) {
-//     // Show loading screen while checking auth state
-//     return <CustomLoader />;
-//   }
-
-//   // Render null or any other UI if user is signed in
-//   return null;
-// }
-
-// Manually set the userId and collectionName for testing purposes
-const docIds: string[] = [
-  "68jIzshLLLaRJ7QM1QnJ",
-  "6OidFCuMNizeBiGv2Fyn",
-  "6acGPQnW54XVN8AAbW5v",
-  "GjOQqJcCeVkeFmHap3Sn",
-];
-const collectionName = "Users";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { fetchAndStoreServiceCategories } from "@/utility/u_getSystemInfo";
+import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import components for SVG rendering
+import { UserStorageService } from "@/storage/functions/userStorageService";
+import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 
 const Index = () => {
   const router = useRouter(); // Get router instance
 
-  const [docsData, setDocsData] = useState<UserData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    // const timer = setTimeout(() => {
-    //   //router.push("/(tabs)");
-    //   router.push("/(tabs)");
-    //   //router.push("/(tabs)/shop");
-
-    //   const shopId = "123";
-    //   //router.push(`../customer/${shopId}`);
-    // }, 50);
-    // return () => clearTimeout(timer);
-
-    const fetchDocuments = async () => {
+    const initializeApp = async () => {
       try {
-        // Fetch all documents concurrently
-        const fetchPromises = docIds.map((userId) => {
-          const docRef = doc(db, "Users", userId, "UserData", "UserLoginData");
-          return getDoc(docRef);
-        });
+        console.log("Initializing app...");
+        await updateServiceCategories(); // Call the function to update service categories
 
-        const snapshots = await Promise.all(fetchPromises);
-
-        // Process the fetched snapshots and filter out any missing docs
-        const data = snapshots
-          .map((snapshot, index) => {
-            if (snapshot.exists()) {
-              return { userId: docIds[index], ...snapshot.data() } as UserData;
-            }
-            return null;
-          })
-          .filter((doc): doc is UserData => doc !== null);
-
-        setDocsData(data);
-      } catch (err: any) {
-        console.error("Error fetching documents: ", err);
-        setError("Error fetching documents");
+        // Check if user data exists
+        const userData = await UserStorageService.getUserData();
+        if (userData) {
+          await getUserFavoritesServices(); // Store User Favorites in local storage
+          setTimeout(() => {
+            console.log("User data found:", userData);
+            router.push("/(tabs)"); // Navigate to the home page if user data exists
+          }, 1000); // Add a slight delay for better UX
+        } else {
+          setTimeout(() => {
+            console.log("No user data found. Redirecting to login...");
+            router.push("/(auth)/login"); // Navigate to the login page if no user data
+          }, 1000); // Add a slight delay for better UX
+        }
+      } catch (error) {
+        setLoading(false);
+        console.error("Error during initialization: ", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDocuments();
+    initializeApp();
   }, []);
 
-  //console.log("\n\ndocsData: ", docsData);
+  const updateServiceCategories = async () => {
+    try {
+      console.log("Updating Service Categories...");
+      const success = await fetchAndStoreServiceCategories();
+      if (success) {
+        console.log("Service Categories updated successfully ✅");
+      } else {
+        console.warn("No Service Categories to update.");
+      }
+    } catch (error) {
+      console.error("Error updating Service Categories: ", error);
+    }
+  };
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     //router.push("/(tabs)");
-  //     router.push("/(tabs)");
-
-  //     const shopId = "123";
-  //     //router.push(`../customer/${shopId}`);
-  //   }, 50);
-  //   return () => clearTimeout(timer); // Cleanup the timer if the component unmounts before the timeout completes
-  // }, []); // Empty array ensures this runs once
-
-  function transformUserData(rawData: UserData): UserData {
-    return {
-      userId: rawData.userId,
-      isServiceProvider: rawData.isServiceProvider,
-      userName: rawData.userName,
-      // Map the external 'profilePicture' to your interface's 'profileImageUrl'
-      profileImageUrl: rawData.profileImageUrl,
-    };
+  if (loading) {
+    // Show loading screen while initializing
+    return (
+      <View style={styles.loadingContainer}>
+        {/* Activity Indicator */}
+        <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
+        {/* Loading Text */}
+        <Text style={styles.loadingText}>Lanka Service</Text>
+      </View>
+    );
   }
 
-  const onItemPress = async (doc: UserData) => {
-    // Transform the data before saving it.
-    const formattedDoc = transformUserData(doc);
-    await UserStorageService.saveUserData(formattedDoc);
-    console.log("Saved User Data: ", formattedDoc);
-    router.push("/(tabs)");
-  };
-
-  const displayData = async () => {
-    const savedUserData = await UserStorageService.getUserData();
-    Alert.alert("Saved User Data", JSON.stringify(savedUserData, null, 2));
-  };
-  const getRandomColor = () => {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
-  const colors = ["#3498db", "#2ecc71", "#e74c3c", "#f39c12"]; // Array of your 4 colors
-  let colorIndex = 0;
-
-  return (
-    <View className="flex-1 bg-gray-400 justify-center items-center">
-      {docsData.map((doc) => {
-        const currentColor = colors[colorIndex % colors.length]; // Cycle through colors
-        colorIndex++;
-        return (
-          <TouchableOpacity
-            key={doc.userName}
-            className="px-20 py-3 rounded-lg justify-center items-center m-4"
-            style={{ backgroundColor: currentColor }}
-            onPress={() => onItemPress(doc)}
-          >
-            <Text className="text-white font-bold text-lg">{doc.userName}</Text>
-            <Text className="text-white font-bold text-sm">
-              ID: {doc.userId}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-
-      {/* Add a button to navigate to login.tsx */}
-      <TouchableOpacity
-        className="px-20 py-3 rounded-lg justify-center items-center m-4 bg-blue-500"
-        onPress={() => router.push("./check")}
-      >
-        <Text className="text-white font-bold text-lg">Go to Login</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  return <View className="flex-1 bg-gray-400 justify-center items-center"></View>;
 };
 
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  activityIndicator: {
+    marginTop: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+});
+
 export default Index;
-function useDrizzleStudio(db: SQLite.SQLiteDatabase) {
-  throw new Error("Function not implemented.");
-}

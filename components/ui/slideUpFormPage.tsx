@@ -17,6 +17,9 @@ import {
   KeyboardToolbar,
 } from "react-native-keyboard-controller";
 
+import { Dropdown } from "react-native-element-dropdown";
+import { SystemDataStorage } from "../../storage/functions/systemDataStorage";
+
 /**
  * Get screen dimensions and calculate target positions.
  */
@@ -105,12 +108,46 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
     const [description, setDescription] = useState(initialDescription);
     const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
     const [category, setCategory] = useState(initialCategory);
+    const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
 
     /** Local state to track if the sheet is open. */
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     /** Shared value for vertical translation (animation). */
     const translateY = useSharedValue(screenHeight);
+
+    /**
+     * Fetch service categories and populate the dropdown.
+     */
+    useEffect(() => {
+      const fetchCategories = async () => {
+        try {
+          const serviceCategories = await SystemDataStorage.getServiceCategories();
+          if (serviceCategories) {
+            const formattedCategories = serviceCategories.map((category) => ({
+              label: category.categoryName,
+              value: category.categoryID,
+            }));
+            setCategories(formattedCategories);
+
+            // Find category by label
+            const matchedCategory = formattedCategories.find(
+              (item) => item.label === initialCategory
+            );
+
+            if (matchedCategory) {
+              setCategory(matchedCategory.value); // 👈 store value internally
+            } else {
+              console.warn(`No matching category found for label: ${initialCategory}`);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching service categories:", error);
+        }
+      };
+
+      fetchCategories();
+    }, [initialCategory]);
 
     /**
      * Slide up the sheet.
@@ -170,7 +207,13 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
      * Sends the current form data to the onUpdate callback and closes the sheet.
      */
     const handleUpdate = () => {
-      onUpdate({ title, description, phoneNumber, category });
+      const selectedCategory = categories.find((item) => item.value === category);
+      onUpdate({
+        title,
+        description,
+        phoneNumber,
+        category: selectedCategory?.label || "", // send label back if that's what parent expects
+      });
       handleSlideDown(); // Close the sheet.
     };
 
@@ -196,13 +239,16 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
                 value={title}
                 onChangeText={setTitle}
               />
-              <TextInput
-                style={[styles.input, styles.multilineInput]}
-                placeholder="Description"
-                placeholderTextColor="#888"
-                value={description}
-                onChangeText={setDescription}
-                multiline
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={categories}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Category"
+                value={category}
+                onChange={(item) => setCategory(item.value)}
               />
               <TextInput
                 style={styles.input}
@@ -214,11 +260,12 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
               />
               <View className="h-8"></View>
               <TextInput
-                style={styles.input}
-                placeholder="Category"
+                style={[styles.input, styles.multilineInput]}
+                placeholder="Description"
                 placeholderTextColor="#888"
-                value={category}
-                onChangeText={setCategory}
+                value={description}
+                onChangeText={setDescription}
+                multiline
               />
               <TouchableOpacity style={styles.button} onPress={handleUpdate}>
                 <Text style={styles.buttonText}>Updated</Text>
@@ -286,6 +333,24 @@ const styles = StyleSheet.create({
   multilineInput: {
     height: 80,
     textAlignVertical: "top",
+  },
+  dropdown: {
+    height: 45,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    color: "#333",
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color: "#888",
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+    color: "#333",
   },
   button: {
     backgroundColor: "#577be5",

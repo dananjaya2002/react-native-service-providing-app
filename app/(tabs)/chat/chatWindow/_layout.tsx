@@ -13,7 +13,7 @@ export default function ChatWindowLayout() {
       <Stack.Screen
         name="shopRatingPage"
         options={{
-          headerShown: true,
+          headerShown: false,
           headerStyle: { backgroundColor: "#f9f9f9" },
           headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
           headerTintColor: "#333",

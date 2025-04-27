@@ -1,6 +1,7 @@
 // userStorageService.tsx
 import { StorageService } from "../asyncStorage";
 import { UserData } from "../../interfaces/UserData";
+import { ShopList } from "@/interfaces/iShop";
 
 // export interface UserData {
 //   favorites?: string[];
@@ -13,6 +14,7 @@ import { UserData } from "../../interfaces/UserData";
 // !!! DO NOT CHANGE THESE VALUES IF ALREADY BEING USED !!!
 export const STORAGE_KEYS = {
   USER_DATA: "user_data",
+  USER_FAVORITES: "user_favorites",
   USER_SETTINGS: "user_settings", // not implemented yet
   // Add more keys as needed
 };
@@ -36,6 +38,25 @@ export class UserStorageService {
   //Clear user data from storage
   static async clearUserData(): Promise<void> {
     await StorageService.removeItem(STORAGE_KEYS.USER_DATA);
+  }
+  /**
+   *
+   * USER_FAVORITES Section
+   *
+   */
+  // Save user favorites to storage
+  static async saveUserFavorites(favorites: ShopList[]): Promise<void> {
+    await StorageService.storeObject<ShopList[]>(STORAGE_KEYS.USER_FAVORITES, favorites);
+  }
+
+  // Get user favorites from storage
+  static async getUserFavorites(): Promise<ShopList[] | null> {
+    return await StorageService.getObject<ShopList[]>(STORAGE_KEYS.USER_FAVORITES);
+  }
+
+  // Clear user favorites from storage
+  static async clearUserFavorites(): Promise<void> {
+    await StorageService.removeItem(STORAGE_KEYS.USER_FAVORITES);
   }
   /**
    *

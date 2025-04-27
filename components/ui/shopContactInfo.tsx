@@ -19,7 +19,7 @@ const ShopContactInfo: React.FC<ShopContactInfoProps> = ({
   const contactOptions: ContactOption[] = [
     { text: "Call", iconName: "call" },
     { text: "Chat", iconName: "chatbubbles" },
-    { text: "Map", iconName: "map" },
+    { text: "Save", iconName: "bookmark" },
     { text: "Share", iconName: "share" },
   ];
 

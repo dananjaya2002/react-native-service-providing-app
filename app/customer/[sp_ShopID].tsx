@@ -8,6 +8,7 @@ import {
   FlatList,
   Linking,
   Alert,
+  Share,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import Animated, {
@@ -32,9 +33,11 @@ import { DocumentSnapshot, QueryDocumentSnapshot, Timestamp } from "firebase/fir
 import { UserStorageService } from "../../storage/functions/userStorageService";
 
 // TypeScript interfaces
-import { ShopPageData, UserComment } from "../../interfaces/iShop";
+import { ShopList, ShopPageData, UserComment } from "../../interfaces/iShop";
 import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
 import { UserData } from "../../interfaces/UserData";
+import { generateShareMessage } from "@/utility/u_shareShop";
+import { addShopToFavorites } from "@/utility/u_handleUserFavorites";
 
 const CustomerShopView = () => {
   // Retrieve the dynamic parameter "serviceProviderID" from the URL
@@ -48,6 +51,7 @@ const CustomerShopView = () => {
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [loadingScreen, setLoadingScreen] = useState(false);
   const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
+  const [shopListType, setShopListType] = useState<ShopList | null>(null);
 
   const hasFetchedData_DEV_MOD = useRef(false); // DEVELOPMENT ONLY
 
@@ -87,6 +91,22 @@ const CustomerShopView = () => {
         const fetchedData = await getShopPageData(serviceProviderID);
         if (fetchedData) {
           setShopData(fetchedData);
+
+          // Create a ShopList type object
+          const shopListObject: ShopList = {
+            id: serviceProviderID,
+            shopName: fetchedData.shopName,
+            shopDescription: fetchedData.shopDescription,
+            shopPageImageUrl: fetchedData.shopPageImageUrl,
+            shopCategory: fetchedData.shopCategory,
+            shopLocation: fetchedData.shopLocation,
+            shopPageRef: serviceProviderID,
+            userDocId: serviceProviderID,
+            avgRating: fetchedData.avgRating,
+            rating: fetchedData.avgRating,
+            totalRatingsCount: fetchedData.totalRingsCount,
+          };
+          setShopListType(shopListObject);
         }
       } catch (error) {
         console.error("Error fetching shopData:", error);
@@ -137,6 +157,7 @@ const CustomerShopView = () => {
     }
   };
 
+  // Handle contact option selection
   const handleContactOptionSelect = async (option: string) => {
     console.log("Selected option:", option);
 
@@ -161,8 +182,24 @@ const CustomerShopView = () => {
           otherPartyUserId: serviceProviderID,
         },
       });
-    } else if (option === "Map") {
+    } else if (option === "Save") {
+      if (!shopListType) {
+        console.error("Shop list type is null. Cannot add to favorites.");
+        return;
+      }
+      const success = await addShopToFavorites(shopListType);
+      if (success) {
+        console.log("Shop added to favorites or already exists.");
+      } else {
+        console.log("Failed to add shop to favorites.");
+      }
     } else if (option === "Share") {
+      const message = generateShareMessage(shopData);
+      Share.share({
+        message,
+      })
+        .then((res) => console.log("Share success:", res))
+        .catch((err) => console.error("Share error:", err));
     } else if (option === "Call") {
       const phoneUrl = `tel:${shopData.phoneNumber}`;
       Linking.openURL(phoneUrl).catch((err) => {

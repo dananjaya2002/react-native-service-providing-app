@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   FlatList,
+  Alert,
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -19,7 +20,7 @@ import UserComments from "@/components/ui/userComment";
 import FloatingButtonBar from "@/components/ui/FloatingButtonBar";
 
 import { useShop } from "@/context/ShopContext";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import UpdateSheet, { UpdateSheetRef } from "../../../components/ui/slideUpFormPage";
 import UserReviewStars from "@/components/ui/userReviewStars";
 import ShopContactInfo from "@/components/ui/shopContactInfo";
@@ -50,6 +51,8 @@ const Shop = () => {
   const [userCommentList, setUserCommentList] = useState<any[]>([]);
   const [shopData, setShopData] = useState<ShopPageData | null>(null);
   const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [itemList, setItemList] = useState<ShopServices[]>([]);
 
   /**
    *
@@ -57,72 +60,121 @@ const Shop = () => {
    *
    */
 
-  useEffect(() => {
-    async function fetchUserData() {
-      try {
-        const savedUserData = (await UserStorageService.getUserData()) as UserData;
-        setUserDocRefID(savedUserData.userId);
-        console.log("User data fetched:", savedUserData.userId);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    }
-    fetchUserData();
-  }, []);
+  /**
+   * Trigger a specific function when the page is focused
+   */
+  useFocusEffect(
+    useCallback(() => {
+      const fetchDataOnFocus = async () => {
+        setIsLoading(true);
+        console.log("Page is focused. Fetching data...");
+        try {
+          const savedUserData = await fetchUserData();
+          if (!savedUserData?.isServiceProvider) {
+            router.push("/(tabs)/shop/shop_Create");
+            return;
+          }
+          if (savedUserData.userId) {
+            // Only now safe to use savedUserData.userId
+            const { comments, lastDoc: newLastDoc } = await fetchUserComments({
+              initialLoad: true,
+              userId: savedUserData.userId,
+            });
+
+            setUserCommentList(comments);
+            setLastCommentDoc(newLastDoc);
+
+            const fetchedData = await getShopPageData(savedUserData.userId);
+            if (fetchedData) {
+              setShopData(fetchedData);
+              setItemList(fetchedData.items ? Object.values(fetchedData.items) : []);
+            } else {
+              console.log("No shop data found. Redirecting to shop creation page.");
+              router.push("/(tabs)/shop/shop_Create");
+            }
+          }
+        } catch (error) {
+          console.error("Error in fetching process:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchDataOnFocus();
+    }, [])
+  );
 
   /**
    *
    * Get Data from the Database
    *
    */
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!userDocRefID) {
-          return;
-        }
-        // Attempt to fetch shopData data
-        const { comments, lastDoc: newLastDoc } = await fetchUserComments({
-          initialLoad: true,
-          userId: userDocRefID,
-        });
-
-        console.log("Comments fetched:", comments);
-        setUserCommentList(comments);
-        setLastCommentDoc(newLastDoc);
-
-        // Attempt to fetch shopData shopData
-        const fetchedData = await getShopPageData(userDocRefID);
-        if (fetchedData) {
-          setShopData(fetchedData); // set state
-          saveShopData(fetchedData); // Save the data in AsyncStorage
-        } else {
-          
-          router.push("/(tabs)/shop/shop_Create"); // Navigate to shop_create.tsx
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+  const fetchUserData = async () => {
+    try {
+      const savedUserData = (await UserStorageService.getUserData()) as UserData;
+      if (savedUserData?.userId) {
+        setUserDocRefID(savedUserData.userId);
+        console.log("User data fetched:", savedUserData.userId);
+        return savedUserData;
+      } else {
+        console.log("No user data found.");
+        setIsLoading(false); // Stop loading if no user data
       }
-    };
-    fetchData();
-  }, [userDocRefID]);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setIsLoading(false); // Stop loading on error
+    }
+  };
+
+  // const fetShopData = async () => {
+  //   try {
+  //     if (!userDocRefID) {
+  //       setIsLoading(false);
+  //       return;
+  //     }
+  //     // Attempt to fetch shopData data
+  //     const { comments, lastDoc: newLastDoc } = await fetchUserComments({
+  //       initialLoad: true,
+  //       userId: userDocRefID,
+  //     });
+
+  //     console.log("Comments fetched:", comments);
+  //     setUserCommentList(comments);
+  //     setLastCommentDoc(newLastDoc);
+
+  //     // Attempt to fetch shopData shopData
+  //     const fetchedData = await getShopPageData(userDocRefID);
+  //     if (fetchedData) {
+  //       console.log("Shop data fetched:");
+  //       setShopData(fetchedData); // set state
+  //       setItemList(fetchedData.items ? Object.values(fetchedData.items) : []); // Update itemList with fetched data
+  //     } else {
+  //       console.log("No shop data found. Redirecting to shop creation page.");
+  //       setIsLoading(false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //   } finally {
+  //     setIsLoading(false); // Set loading to false after data fetching
+  //   }
+  // };
 
   /**
    *
    * Save Shop Data in AsyncStorage
    *
    */
-  const saveShopData = async (shopData: ShopPageData) => {
-    try {
-      await OwnerShopPageAsyncStorage.saveUserData(shopData);
-      console.log("Shop data saved successfully!");
-    } catch (error) {
-      console.error("Error saving shop data:", error);
-    }
-  };
+  // const saveShopData = async (shopData: ShopPageData) => {
+  //   try {
+  //     await OwnerShopPageAsyncStorage.saveUserData(shopData);
+  //     console.log("Shop data saved successfully!");
+  //   } catch (error) {
+  //     console.error("Error saving shop data:", error);
+  //   }
+  // };
 
   // loading indicator
-  if (!shopData) {
+  if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#007bff" />
@@ -130,7 +182,13 @@ const Shop = () => {
       </View>
     );
   }
-  const itemList = shopData.items ? Object.values(shopData.items) : [];
+
+  if (!shopData) {
+    <View className="flex-1 justify-center items-center bg-white">
+      <Text className="mt-4 text-lg font-semibold text-gray-600">Shop Data Not Found</Text>
+    </View>;
+    return;
+  }
 
   /**
    *
@@ -241,7 +299,7 @@ const Shop = () => {
           </View>
         </View>
 
-        <View className="h-auto mx-6 my-4 flex-row flex-wrap justify-evenly p-2 rounded-2xl bg-primary">
+        {/* <View className="h-auto mx-6 my-4 flex-row flex-wrap justify-evenly p-2 rounded-2xl bg-primary">
           <View className="w-full h-auto">
             <Text className="text-lg text-center font-semibold">Store Overview</Text>
           </View>
@@ -251,7 +309,7 @@ const Shop = () => {
           <StatusCard status="Agreements" count={shopData.dashboardInfo.agreement} />
           <StatusCard status="Avg Ratings" count={shopData.dashboardInfo.avgRatings} />
           <StatusCard status="Messages" count={shopData.dashboardInfo.messages} />
-        </View>
+        </View> */}
 
         <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">
           <Text className="text-sm text-left px-3">

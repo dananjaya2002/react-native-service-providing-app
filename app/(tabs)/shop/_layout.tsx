@@ -18,7 +18,7 @@ export default function UserShopLayout() {
       <Stack.Screen name="sp_ShopEdit" />
 
       {/* Shop create screen */}
-      <Stack.Screen name="shop_Create" />
+      <Stack.Screen name="ShopCreate" />
     </Stack>
   );
 }

@@ -117,6 +117,12 @@ const ShopRatingPage = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ justifyContent: "flex-end" }}>
           {/* Header Section */}
+          <HeaderMain
+            title="Rate the Service"
+            onPressBack={() => router.back()}
+            showProfileIcon={true}
+            showLogoutButton={false}
+          />
 
           <View style={styles.headerContainer}>
             <Image
