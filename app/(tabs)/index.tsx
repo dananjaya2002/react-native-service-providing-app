@@ -55,6 +55,7 @@ import { searchLocalShops } from "@/utility/u_searchShops";
 import SearchSection from "../../components/ui/searchSection";
 import { getSearchResultShops } from "@/utility/u_getSearchResultShops";
 import ShopCardPlaceholder from "@/components/ui/placeholderComponents/shopCardPlaceholder";
+import { SystemDataStorage } from "@/storage/functions/systemDataStorage";
 
 const reactLogo = require("../../assets/images/reactLogo.png");
 
@@ -78,38 +79,38 @@ const data: MultiSelectDropdownItemProps[] = [
   { label: "Jaffna", value: "4" },
   { label: "Negombo", value: "5" },
 ];
-const dummyData: Record<string, ShopCategory> = {
-  cat1: {
-    categoryID: "cat1",
-    categoryName: "Automotive",
-    iconName: "car",
-  },
-  cat2: {
-    categoryID: "cat2",
-    categoryName: "Electronics",
-    iconName: "hardware-chip",
-  },
-  cat3: {
-    categoryID: "cat3",
-    categoryName: "Beauty",
-    iconName: "flower",
-  },
-  cat4: {
-    categoryID: "cat4",
-    categoryName: "Cleaning",
-    iconName: "water",
-  },
-  cat5: {
-    categoryID: "cat5",
-    categoryName: "Transport",
-    iconName: "bus",
-  },
-  cat6: {
-    categoryID: "cat6",
-    categoryName: "Home Fix",
-    iconName: "hammer",
-  },
-};
+// const dummyData: Record<string, ShopCategory> = {
+//   cat1: {
+//     categoryID: "cat1",
+//     categoryName: "Automotive",
+//     iconName: "car",
+//   },
+//   cat2: {
+//     categoryID: "cat2",
+//     categoryName: "Electronics",
+//     iconName: "hardware-chip",
+//   },
+//   cat3: {
+//     categoryID: "cat3",
+//     categoryName: "Beauty",
+//     iconName: "flower",
+//   },
+//   cat4: {
+//     categoryID: "cat4",
+//     categoryName: "Cleaning",
+//     iconName: "water",
+//   },
+//   cat5: {
+//     categoryID: "cat5",
+//     categoryName: "Transport",
+//     iconName: "bus",
+//   },
+//   cat6: {
+//     categoryID: "cat6",
+//     categoryName: "Home Fix",
+//     iconName: "hammer",
+//   },
+// };
 const PAGE_SIZE = 5;
 
 const HomeScreen: React.FC = () => {
@@ -119,6 +120,7 @@ const HomeScreen: React.FC = () => {
 
   const [selectedLocations, setSelectedLocations] = useState<ShopLocationCategory[]>([]); // Selected Locations
   const [selectedCategory, setSelectedCategory] = useState<ShopCategory | null>(null); // Selected ShopCategory
+  const [allServiceCategories, setAllServiceCategories] = useState<ShopCategory[]>([]);
 
   const [shops, setShops] = useState<ShopList[]>([]); // ShopList List
 
@@ -136,25 +138,23 @@ const HomeScreen: React.FC = () => {
 
   const selectedCategoryRef = useRef<ShopCategory | null>(null);
 
-  // Helper function to get matching labels from selected values
-  // const getMatchingLabels = (
-  //   selectedValues: string[],
-  //   data: MultiSelectDropdownItemProps[]
-  // ): string[] => {
-  //   return data
-  //     .filter((item) => selectedValues.includes(item.value)) // Keep only matching items
-  //     .map((item) => item.label); // Extract only labels
-  // };
+  useEffect(() => {
+    // Fetch categories from storage on component mount
+    const fetchCategories = async () => {
+      const storedCategories = await SystemDataStorage.getServiceCategories();
+      if (storedCategories) {
+        setAllServiceCategories(storedCategories);
+      } else {
+        console.warn("No categories found in storage.");
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // Callback passed to SearchSection
   const handleSearchSubmit = async (results: ShopSearchBarItem[]) => {
     console.log("Submit Button Pressed!");
-    // for (const result of results) {
-    //   // console.log("Search Result Doc ID:", result.doc_id);
-    //   // console.log("Search Result Shop ID:", result.shop_id);
-    //   // console.log("Search Result Shop ID:", result.id);
-    //   console.log("Search Result Shop Title:", result.shopTitle);
-    // }
     setShops([]);
     setLastDoc(null);
     setHasMore(true);
@@ -371,7 +371,7 @@ const HomeScreen: React.FC = () => {
           <View className="flex-1">
             {/* Vertical ShopCategory Cards */}
             <FlatList
-              data={Object.values(dummyData)} // Convert object to array
+              data={Object.values(allServiceCategories)} // Convert object to array
               keyExtractor={(item) => item.categoryID}
               renderItem={({ item }) => (
                 <CategoryCardType2 category={item} onCategoryPress={handleCategoryCardPress} />
@@ -393,7 +393,7 @@ const HomeScreen: React.FC = () => {
     >
       {/* Main Section  */}
       <View className="flex-1 bg-primary">
-        <Header title="Home" />
+        <Header title="Home" showProfileIcon={true} showLogoutButton={true} />
         <View className="flex-row h-[50] mx-2">
           <View className="flex-1 mr-1">
             {/* Search Bar Section  */}
@@ -416,7 +416,7 @@ const HomeScreen: React.FC = () => {
         </View>
         {/* Horizontal ShopCategory Card List */}
 
-        {/* <CategoriesList categories={dummyData} onCategoryPress={handleCategoryCardPress} /> */}
+        {/* <CategoriesList categories={allServiceCategories} onCategoryPress={handleCategoryCardPress} /> */}
 
         {/* Chips */}
         <DisplaySelectedChip

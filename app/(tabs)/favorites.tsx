@@ -24,6 +24,7 @@ import HeaderMain from "@/components/ui/header_Main";
 import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import FBASaveButton from "@/components/ui/buttons/saveButton_FAB";
+import { UserStorageService } from "@/storage/functions/userStorageService";
 
 const favorites = () => {
   const navigation = useNavigation();
@@ -37,8 +38,8 @@ const favorites = () => {
     const fetchBookmarks = async () => {
       setLoading(true);
       try {
-        const userFavorites = await getUserFavoritesServices();
-        favorites.current = userFavorites;
+        const userFavorites = await UserStorageService.getUserFavorites(); // Fetch data from local storage
+        favorites.current = userFavorites || [];
       } catch (error) {
         console.error("Error fetching bookmarks:", error);
         Alert.alert("Error", "Failed to fetch bookmarks. Please try again later.");

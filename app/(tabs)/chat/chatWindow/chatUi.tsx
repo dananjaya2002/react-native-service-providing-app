@@ -271,7 +271,7 @@ export default function ChatScreen() {
             disabled={commentWaitingTime > 0}
             onPress={() => {
               router.push({
-                pathname: "/(tabs)/chat/chatWindow/chatUi",
+                pathname: "/(tabs)/chat/chatWindow/shopRatingPage",
                 params: {
                   serviceProviderId: otherPartyUserId,
                 },

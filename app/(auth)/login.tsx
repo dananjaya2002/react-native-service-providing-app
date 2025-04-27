@@ -1,57 +1,101 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Platform,
+} from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "expo-router"; // Import useRouter for navigation
 import { auth } from "../../FirebaseConfig";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { UserStorageService } from "@/storage/functions/userStorageService";
+import { getUserData } from "@/utility/u_getUserData";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // State for loading indicator
   const router = useRouter(); // Initialize the router for navigation
 
   const handleLogin = async () => {
+    setLoading(true); // Set loading to true when the button is pressed
+    setError(""); // Clear any previous errors
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Login successful!");
-      router.push("/(tabs)"); // Navigate to home after successful login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Fetch user data from Firestore
+      const userData = await getUserData(user.uid);
+      if (!userData) {
+        throw new Error("Failed to fetch user data.");
+      }
+
+      // Save user data to local storage
+      await UserStorageService.saveUserData(userData);
+
+      setTimeout(() => {
+        router.push("/(tabs)"); // Navigate to home after a short delay
+      }, 2000);
+      setLoading(false);
     } catch (err: any) {
+      setLoading(false);
       setError(err.message);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Login" onPress={handleLogin} />
-      <TouchableOpacity onPress={() => router.push("/(auth)/signin")}>
-        <Text style={styles.link}>Don't have an account? Sign Up</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust behavior based on platform
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <View style={styles.inner}>
+          <Text style={styles.title}>Login</Text>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#0000ff" /> // Show loading indicator
+          ) : (
+            <Button title="Login" onPress={handleLogin} disabled={loading} /> // Disable button while loading
+          )}
+          <TouchableOpacity onPress={() => router.push("/(auth)/signin")}>
+            <Text style={styles.link}>Don't have an account? Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
+  },
+  inner: {
+    flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#fff",    
   },
   title: {
     fontSize: 24,
@@ -80,4 +124,3 @@ const styles = StyleSheet.create({
 });
 
 export default Login;
-
