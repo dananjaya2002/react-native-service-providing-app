@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { auth } from "../FirebaseConfig"; // Make sure to import your auth instance
 import { onAuthStateChanged } from "firebase/auth"; // Import this to track authentication state
 import { router, useRouter } from "expo-router";
@@ -166,10 +173,20 @@ const Index = () => {
             onPress={() => onItemPress(doc)}
           >
             <Text className="text-white font-bold text-lg">{doc.userName}</Text>
-            <Text className="text-white font-bold text-sm">ID: {doc.userId}</Text>
+            <Text className="text-white font-bold text-sm">
+              ID: {doc.userId}
+            </Text>
           </TouchableOpacity>
         );
       })}
+
+      {/* Add a button to navigate to login.tsx */}
+      <TouchableOpacity
+        className="px-20 py-3 rounded-lg justify-center items-center m-4 bg-blue-500"
+        onPress={() => router.push("./check")}
+      >
+        <Text className="text-white font-bold text-lg">Go to Login</Text>
+      </TouchableOpacity>
     </View>
   );
 };
