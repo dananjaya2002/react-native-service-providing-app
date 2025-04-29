@@ -1,6 +1,8 @@
-import React from "react";
-import { Pressable, Text, StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Pressable, Text, StyleSheet, View, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { ShopList } from "@/interfaces/iShop";
+import { addShopToFavorites, isShopInFavorites } from "@/utility/u_handleUserFavorites";
 
 // Define the shape of each contact option
 export interface ContactOption {
@@ -9,29 +11,101 @@ export interface ContactOption {
 }
 
 interface ShopContactInfoProps {
-  // Callback to "return" the clicked button's string value
-  onOptionSelect?: (option: string) => void;
+  shop?: ShopList; // ShopList object passed as a prop (nullable/optional)
+  onOptionSelect?: (option: string) => void; // Optional callback for other options
 }
 
 const ShopContactInfo: React.FC<ShopContactInfoProps> = ({
+  shop,
   onOptionSelect = (option) => console.log(option),
 }) => {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [loading, setLoading] = useState(true); // For activity indicator
+  const [buttonDisabled, setButtonDisabled] = useState(false); // To disable the button after 10 seconds
+
+  // Check if the shop is already in favorites when the component mounts
+  useEffect(() => {
+    if (!shop) {
+      // If no shop is provided, start a timeout to disable the button after 10 seconds
+      const timeout = setTimeout(() => {
+        setButtonDisabled(true);
+        setLoading(false); // Stop loading after timeout
+      }, 10000); // 10 seconds
+
+      return () => clearTimeout(timeout); // Cleanup timeout on unmount
+    }
+
+    const checkIfBookmarked = async () => {
+      setLoading(true); // Show loading indicator while checking
+      const bookmarked = await isShopInFavorites(shop);
+      setIsBookmarked(bookmarked);
+      setLoading(false); // Hide loading indicator after check
+    };
+
+    checkIfBookmarked();
+  }, [shop]);
+
+  const handlePress = async (option: ContactOption) => {
+    if (option.text === "Save") {
+      if (!shop) {
+        Alert.alert("Error", "Shop data is not available.");
+        return;
+      }
+
+      if (isBookmarked) {
+        Alert.alert("Info", "This shop is already in your favorites.");
+        return;
+      }
+
+      const success = await addShopToFavorites(shop);
+      if (success) {
+        setIsBookmarked(true);
+        Alert.alert("Success", "Shop added to your favorites.");
+      } else {
+        Alert.alert("Error", "Failed to add shop to favorites. Please try again.");
+      }
+    } else {
+      onOptionSelect(option.text); // Handle other options via the callback
+    }
+  };
+
   const contactOptions: ContactOption[] = [
     { text: "Call", iconName: "call" },
     { text: "Chat", iconName: "chatbubbles" },
-    { text: "Save", iconName: "bookmark" },
+    {
+      text: "Save",
+      iconName: isBookmarked ? "bookmark" : "bookmark-outline", // Dynamic icon
+    },
     { text: "Share", iconName: "share" },
   ];
 
-  const handlePress = (option: ContactOption) => {
-    onOptionSelect(option.text);
-  };
   return (
     <View style={styles.container}>
       {contactOptions.map((option, index) => (
-        <Pressable key={index} style={styles.button} onPress={() => handlePress(option)}>
-          <Ionicons name={option.iconName} size={28} color="#333" />
-          <Text style={styles.buttonText}>{option.text}</Text>
+        <Pressable
+          key={index}
+          style={[
+            styles.button,
+            option.text === "Save" && buttonDisabled ? styles.disabledButton : null, // Disable button visually
+          ]}
+          onPress={() => handlePress(option)}
+          disabled={option.text === "Save" && (loading || buttonDisabled)} // Disable button functionally
+        >
+          {option.text === "Save" && loading ? ( // Show activity indicator for "Save" button
+            <ActivityIndicator size="small" color="#007bff" />
+          ) : (
+            <>
+              <Ionicons name={option.iconName} size={28} color={buttonDisabled ? "#ccc" : "#333"} />
+              <Text
+                style={[
+                  styles.buttonText,
+                  buttonDisabled ? { color: "#ccc" } : null, // Change text color if disabled
+                ]}
+              >
+                {option.text}
+              </Text>
+            </>
+          )}
         </Pressable>
       ))}
     </View>
@@ -60,6 +134,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     // Android elevation
     elevation: 5,
+  },
+  disabledButton: {
+    backgroundColor: "#f0f0f0", // Visually indicate the button is disabled
   },
   buttonText: {
     fontSize: 12,

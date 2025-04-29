@@ -52,6 +52,7 @@ const CustomerShopView = () => {
   const [loadingScreen, setLoadingScreen] = useState(false);
   const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
   const [shopListType, setShopListType] = useState<ShopList | null>(null);
+  const [isBookmark, setIsBookmark] = useState(false);
 
   const hasFetchedData_DEV_MOD = useRef(false); // DEVELOPMENT ONLY
 
@@ -107,6 +108,11 @@ const CustomerShopView = () => {
             totalRatingsCount: fetchedData.totalRingsCount,
           };
           setShopListType(shopListObject);
+
+          // Check if the shop is already bookmarked
+          const userFavorites = (await UserStorageService.getUserFavorites()) || [];
+          const isBookmarked = userFavorites.some((favorite) => favorite.id === shopListObject.id);
+          setIsBookmark(isBookmarked); // Update the state based on the result
         }
       } catch (error) {
         console.error("Error fetching shopData:", error);
@@ -261,7 +267,10 @@ const CustomerShopView = () => {
         </View>
 
         <View className="flex-row justify-center items-center mx-8 my-3">
-          <ShopContactInfo onOptionSelect={handleContactOptionSelect} />
+          <ShopContactInfo
+            onOptionSelect={handleContactOptionSelect}
+            shop={shopListType || undefined}
+          />
         </View>
 
         <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">
