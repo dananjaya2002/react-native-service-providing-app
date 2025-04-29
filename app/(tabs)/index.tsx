@@ -8,6 +8,7 @@ import {
   Image,
   Platform,
   BackHandler,
+  StyleSheet,
 } from "react-native";
 
 import ShopCard from "../../components/ui/shopCard";
@@ -56,7 +57,7 @@ import SearchSection from "../../components/ui/searchSection";
 import { getSearchResultShops } from "@/utility/u_getSearchResultShops";
 import ShopCardPlaceholder from "@/components/ui/placeholderComponents/shopCardPlaceholder";
 import { SystemDataStorage } from "@/storage/functions/systemDataStorage";
-
+import { useTheme } from "../../context/ThemeContext";
 const reactLogo = require("../../assets/images/reactLogo.png");
 
 // interface Shop {
@@ -114,6 +115,8 @@ const data: MultiSelectDropdownItemProps[] = [
 const PAGE_SIZE = 5;
 
 const HomeScreen: React.FC = () => {
+  const { colors, theme, setTheme } = useTheme();
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const [drawerOpen, setDrawerOpen] = useState(false); // Drawer State
@@ -201,11 +204,11 @@ const HomeScreen: React.FC = () => {
    *
    */
   const fetchShopsPage = async (cursor?: QueryDocumentSnapshot<DocumentData>) => {
-    // if (didFetchRef.current) {
-    //   console.log("🟥 Force Stopped Fetching");
-    //   return;
-    // }
-    // didFetchRef.current = true;
+    if (didFetchRef.current) {
+      console.log("🟥 Force Stopped Fetching");
+      return; // Dev MOD to prevent re-fetching
+    }
+    didFetchRef.current = true;
 
     console.log("⏬⏬ Fetching ⏬⏬");
     setLoading(true);
@@ -352,81 +355,65 @@ const HomeScreen: React.FC = () => {
       open={drawerOpen}
       onOpen={() => setDrawerOpen(true)}
       onClose={() => setDrawerOpen(false)}
-      drawerPosition="right" // Slide from right to left
-      drawerStyle={{
-        backgroundColor: "#ecf0f1",
-        width: 300,
-        padding: 20,
-      }}
+      drawerPosition="right"
+      drawerStyle={[styles.drawer, { backgroundColor: colors.background }]}
       renderDrawerContent={() => (
-        <View className="flex-1">
-          {/* Slide Left Menu */}
-          <Text style={{ fontSize: 18, fontWeight: "bold" }}>Filter Options</Text>
+        <View style={styles.drawerContent}>
+          <Text style={styles.filterTitle}>Filter Options</Text>
+
           <MultiSelectComponent
             data={data}
             selected={selectedLocations}
             onSelectedChange={setSelectedLocations}
           />
 
-          <View className="flex-1">
-            {/* Vertical ShopCategory Cards */}
+          <View style={styles.flatListContainer}>
             <FlatList
-              data={Object.values(allServiceCategories)} // Convert object to array
+              data={Object.values(allServiceCategories)}
               keyExtractor={(item) => item.categoryID}
               renderItem={({ item }) => (
                 <CategoryCardType2 category={item} onCategoryPress={handleCategoryCardPress} />
               )}
-              contentContainerStyle={{ padding: 10 }}
+              contentContainerStyle={styles.categoryListContent}
             />
           </View>
 
-          {/* Filter Button at the bottom */}
           <TouchableOpacity
-            onPress={() => handleFilterButtonPress()}
-            className="p-4 bg-blue-700"
-            style={{ bottom: 0, width: "100%", borderRadius: 15 }}
+            onPress={handleFilterButtonPress}
+            style={[styles.filterButton, { backgroundColor: colors.secondary }]}
           >
-            <Text className="font-bold text-white text-lg self-center">Filter</Text>
+            <Text style={styles.filterButtonText}>Filter</Text>
           </TouchableOpacity>
         </View>
       )}
     >
-      {/* Main Section  */}
-      <View className="flex-1 bg-primary">
+      {/* Main Content of the Home Screen */}
+      <View style={[styles.main, { backgroundColor: colors.background }]}>
         <Header title="Home" showProfileIcon={true} showLogoutButton={true} />
-        <View className="flex-row h-[50] mx-2">
-          <View className="flex-1 mr-1">
-            {/* Search Bar Section  */}
+
+        <View style={styles.searchRow}>
+          <View style={styles.searchSection}>
             <SearchSection onSearchSubmit={handleSearchSubmit} placeholder="Search items..." />
           </View>
-          <View className="bg-green-600 w-[50] h-full justify-center item-center">
-            {/* Slider Sheet Button  */}
+
+          <View style={[styles.filterToggleButton, { backgroundColor: "#004887" }]}>
             <TouchableOpacity
               onPress={() => setDrawerOpen((prev) => !prev)}
-              style={{
-                backgroundColor: "#f2f2f2",
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
+              style={styles.filterIconButton}
             >
-              <Ionicons name="filter" size={36} color="black" />
+              <Ionicons name="filter" size={36} color="#ffff" />
             </TouchableOpacity>
           </View>
         </View>
-        {/* Horizontal ShopCategory Card List */}
 
-        {/* <CategoriesList categories={allServiceCategories} onCategoryPress={handleCategoryCardPress} /> */}
-
-        {/* Chips */}
         <DisplaySelectedChip
           selectedLocations={selectedLocations}
           selectedCategory={selectedCategory}
           onRemoveLocation={handleRemoveLocation}
           onRemoveCategory={handleRemoveCategory}
         />
-        {/* ShopList List */}
-        <View className="flex-1 px-2">
+
+        <View style={styles.shopListContainer}>
           {loading && !isLoadingMore ? (
             <FlatList
               data={placeholderItems}
@@ -446,5 +433,67 @@ const HomeScreen: React.FC = () => {
     </Drawer>
   );
 };
+
+const styles = StyleSheet.create({
+  drawer: {
+    width: 300,
+    padding: 20,
+  },
+  drawerContent: {
+    flex: 1,
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  flatListContainer: {
+    flex: 1,
+    marginTop: 10,
+  },
+  categoryListContent: {
+    padding: 10,
+  },
+  filterButton: {
+    padding: 16,
+    borderRadius: 12,
+    alignSelf: "center",
+    width: "90%",
+  },
+  filterButtonText: {
+    fontWeight: "bold",
+    color: "white",
+    fontSize: 18,
+    textAlign: "center",
+  },
+  main: {
+    flex: 1,
+  },
+  searchRow: {
+    flexDirection: "row",
+    height: 50,
+    marginHorizontal: 8,
+  },
+  searchSection: {
+    flex: 1,
+    marginRight: 4,
+  },
+  filterToggleButton: {
+    width: 50,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  filterIconButton: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shopListContainer: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+});
 
 export default HomeScreen;

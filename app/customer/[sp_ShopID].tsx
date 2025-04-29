@@ -9,6 +9,7 @@ import {
   Linking,
   Alert,
   Share,
+  StyleSheet,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import Animated, {
@@ -38,8 +39,10 @@ import { ShopDataForCharRoomCreating } from "../../interfaces/iChat";
 import { UserData } from "../../interfaces/UserData";
 import { generateShareMessage } from "@/utility/u_shareShop";
 import { addShopToFavorites } from "@/utility/u_handleUserFavorites";
+import { useTheme } from "../../context/ThemeContext";
 
 const CustomerShopView = () => {
+  const { colors, theme, setTheme } = useTheme();
   // Retrieve the dynamic parameter "serviceProviderID" from the URL
   const { sp_ShopID } = useLocalSearchParams<{ sp_ShopID: string }>();
   const serviceProviderID = sp_ShopID;
@@ -50,7 +53,7 @@ const CustomerShopView = () => {
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [loadingScreen, setLoadingScreen] = useState(false);
-  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [shopListType, setShopListType] = useState<ShopList | null>(null);
   const [isBookmark, setIsBookmark] = useState(false);
 
@@ -60,7 +63,7 @@ const CustomerShopView = () => {
     async function fetchUserData() {
       try {
         const savedUserData = (await UserStorageService.getUserData()) as UserData;
-        setUserDocRefID(savedUserData.userId);
+        setUserData(savedUserData);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -124,9 +127,9 @@ const CustomerShopView = () => {
   // Loading placeholder
   if (!shopData) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007bff" />
-        <Text className="mt-4 text-lg font-semibold text-gray-600">Loading, please wait...</Text>
+        <Text style={styles.loadingText}>Loading, please wait...</Text>
       </View>
     );
   }
@@ -174,7 +177,7 @@ const CustomerShopView = () => {
     };
 
     if (option === "Chat") {
-      if (userDocRefID == serviceProviderID) {
+      if (userData?.userId == serviceProviderID) {
         Alert.alert("You cannot chat with yourself.");
         return;
       }
@@ -182,7 +185,7 @@ const CustomerShopView = () => {
       router.push({
         pathname: "/(tabs)/chat/chatWindow/chatUi",
         params: {
-          userID: userDocRefID,
+          userID: userData?.userId,
           chatRoomDocRefId: chatRoomId,
           userRole: "customer",
           otherPartyUserId: serviceProviderID,
@@ -221,7 +224,7 @@ const CustomerShopView = () => {
   const ListFooter = () => (
     <View>
       {loadingMoreComments ? (
-        <View style={{ height: 50, width: "100%", justifyContent: "center", alignItems: "center" }}>
+        <View style={styles.animatedPlaceholder}>
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
       ) : (
@@ -233,64 +236,73 @@ const CustomerShopView = () => {
   // Header content that will scroll along with the FlatList
   const ListHeader = () => (
     <View>
-      <View className="flex-col bg-white">
-        <View className="flex-row items-center py-2 bg-primary">
-          <View className="w-10" />
-          <Text className="text-2xl font-bold flex-1 text-center">Explore Services</Text>
-          <View className="px-3">
-            <FontAwesome name="user-circle" size={24} color="black" />
+      {/* Header Section */}
+      <View style={[styles.headerWrapper, { backgroundColor: colors.background }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeftSpacer} />
+          <Text style={styles.headerTitle}>Explore Services</Text>
+          <View style={styles.headerIconWrapper}>
+            {userData?.profileImageUrl ? (
+              <Image
+                source={{ uri: userData.profileImageUrl }}
+                style={{ width: 34, height: 34, borderRadius: 18 }}
+                onError={() => console.error("Failed to load user profile image")}
+              />
+            ) : (
+              <FontAwesome name="user-circle" size={34} color="black" />
+            )}
           </View>
         </View>
 
-        <View className="relative w-full h-[200px] items-center justify-center">
+        {/* Banner */}
+        <View style={styles.bannerContainer}>
           <ImageBackground
             source={{ uri: shopData.shopPageImageUrl }}
             blurRadius={15}
-            className="absolute w-full h-full"
+            style={styles.bannerBackground}
           >
-            <View className="flex-1" />
+            <View style={styles.bannerOverlay} />
           </ImageBackground>
-          <Image
-            source={{ uri: shopData.shopPageImageUrl }}
-            resizeMode="center"
-            className="h-full w-full"
-          />
+          <Image source={{ uri: shopData.shopPageImageUrl }} style={styles.bannerImage} />
         </View>
 
-        <View className="h-auto px-4 py-2 bg-white shadow-xl">
-          <Text className="text-2xl text-start font-semibold flex-1">{shopData.shopName}</Text>
-          <Text className="text-md text-start font-normal">{shopData.shopDescription}</Text>
+        {/* Shop Info */}
+        <View style={[styles.shopInfoContainer, { backgroundColor: colors.card_background }]}>
+          <Text style={styles.shopName}>{shopData.shopName}</Text>
+          <Text style={styles.shopDescription}>{shopData.shopDescription}</Text>
           <UserReviewStars
             averageRating={shopData.avgRating}
             totalRatings={shopData.dashboardInfo.totalRatings}
           />
         </View>
 
-        <View className="flex-row justify-center items-center mx-8 my-3">
-          <ShopContactInfo
-            onOptionSelect={handleContactOptionSelect}
-            shop={shopListType || undefined}
-          />
+        {/* Contact Buttons */}
+        <View style={[styles.contactContainerWrapper, { backgroundColor: colors.card_background }]}>
+          <View style={[styles.contactContainer, {}]}>
+            <ShopContactInfo onOptionSelect={handleContactOptionSelect} shop={shopListType!} />
+          </View>
         </View>
 
-        <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">
-          <Text className="text-sm text-left px-3">
-            {shopData.serviceInfo.replace(/\\n/g, "\n")}
-          </Text>
+        {/* Service Info */}
+        <View style={[styles.serviceInfoContainer, { backgroundColor: colors.card_background }]}>
+          <Text style={styles.serviceInfoText}>{shopData.serviceInfo.replace(/\\n/g, "\n")}</Text>
         </View>
 
-        <View className="h-auto bg-primary py-3">
+        {/* Items Carousel */}
+        <View style={[styles.itemsContainer]}>
           <HorizontalScrollView items={itemList} />
         </View>
-        <View className="bg-primary">
-          <Text className="text-lg font-semibold mx-4">Comments</Text>
+
+        {/* Comments Header */}
+        <View style={styles.commentsHeaderContainer}>
+          <Text style={styles.commentsHeaderText}>Comments</Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-primary">
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={userCommentList}
         keyExtractor={(_, index) => index.toString()}
@@ -316,5 +328,138 @@ const CustomerShopView = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  // Root
+  container: {
+    flex: 1,
+  },
+  // Loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#4B5563",
+  },
+  // Animated placeholder
+  animatedPlaceholder: {
+    height: 50,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // Header wrapper
+  headerWrapper: {
+    //empty
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  headerLeftSpacer: {
+    width: 40,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  headerIconWrapper: {
+    paddingHorizontal: 12,
+  },
+  // Banner
+  bannerContainer: {
+    position: "relative",
+    width: "100%",
+    height: 200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bannerBackground: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  bannerOverlay: {
+    flex: 1,
+  },
+  bannerImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "center",
+  },
+  // Shop Info
+  shopInfoContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    zIndex: 1,
+  },
+  shopName: {
+    fontSize: 24,
+    fontWeight: "600",
+  },
+  shopDescription: {
+    fontSize: 16,
+    fontWeight: "400",
+    marginTop: 4,
+  },
+  // Contact
+  contactContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginVertical: 0,
+  },
+  contactContainerWrapper: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  // Service Info
+  serviceInfoContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: "#6B7280",
+  },
+  serviceInfoText: {
+    fontSize: 14,
+    textAlign: "left",
+    paddingHorizontal: 12,
+  },
+  // Items carousel
+  itemsContainer: {
+    paddingVertical: 0,
+    marginBottom: 18,
+  },
+  // Comments header
+  commentsHeaderContainer: {
+    marginBottom: 8,
+  },
+  commentsHeaderText: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginHorizontal: 16,
+  },
+});
 
 export default CustomerShopView;

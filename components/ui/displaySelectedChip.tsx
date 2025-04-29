@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Location {
@@ -27,31 +27,63 @@ const DisplaySelectedChip: React.FC<DisplaySelectedChipProps> = ({
   onRemoveCategory,
 }) => {
   return (
-    <View className="px-3 py-2 flex-row flex-wrap gap-1">
-      {/* Render a chip for each selected location */}
+    <View style={styles.container}>
+      {/* Location Chips */}
       {selectedLocations.map((location) => (
         <TouchableOpacity
           key={location.id}
-          className="bg-green-300 rounded-2xl flex-row gap-2 px-3 py-2"
+          style={[styles.chip, styles.locationChip]}
           onPress={() => onRemoveLocation(location)}
         >
-          <Text className="text-sm">{location.locationName}</Text>
+          <Text style={styles.chipText}>{location.locationName}</Text>
           <Ionicons name="close-circle-outline" size={22} color="#c31111" />
         </TouchableOpacity>
       ))}
 
-      {/* Render a chip for selected category, if any */}
+      {/* Category Chip */}
       {selectedCategory && (
-        <TouchableOpacity
-          className="bg-blue-300 rounded-2xl flex-row gap-2 px-3 py-2"
-          onPress={onRemoveCategory}
-        >
-          <Text className="text-sm font-medium ml-1">{selectedCategory.categoryName}</Text>
-          <Ionicons name="close-circle-outline" size={22} color="#c31111" style={{}} />
+        <TouchableOpacity style={[styles.chip, styles.categoryChip]} onPress={onRemoveCategory}>
+          <Text style={styles.categoryChipText}>{selectedCategory.categoryName}</Text>
+          <Ionicons name="close-circle-outline" size={22} color="#c31111" />
         </TouchableOpacity>
       )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  chipText: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  locationChip: {
+    backgroundColor: "#86efac",
+  },
+  categoryChip: {
+    backgroundColor: "#93c5fd",
+  },
+  categoryChipText: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginRight: 6,
+    marginLeft: 4,
+  },
+});
 
 export default DisplaySelectedChip;

@@ -3,10 +3,10 @@ import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } fr
 import { auth } from "../FirebaseConfig"; // Import Firebase auth instance
 import { onAuthStateChanged } from "firebase/auth"; // Import auth state listener
 import { useRouter } from "expo-router";
-import CustomLoader from "@/components/unUsed/2/loadingIndicator";
+// import CustomLoader from "@/components/unUsed/2/loadingIndicator";
 import { db } from "../FirebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import '../global.css'; // Import global styles
+import "../global.css"; // Import global styles
 import { UserStorageService } from "../storage/functions/userStorageService";
 import { UserData } from "../interfaces/UserData";
 
@@ -52,7 +52,12 @@ const Check = () => {
 
   if (loading) {
     // Show loading screen while fetching user data
-    return <CustomLoader />;
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text>CustomLoader replacement.</Text>
+      </View>
+    );
   }
 
   if (error) {
