@@ -5,6 +5,7 @@ import { fetchAndStoreServiceCategories } from "@/utility/u_getSystemInfo";
 import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import components for SVG rendering
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
+import LottieView from "lottie-react-native";
 
 const Index = () => {
   const router = useRouter(); // Get router instance
@@ -12,6 +13,11 @@ const Index = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // setTimeout(() => {
+    //   router.push("/DevSection/DevUI");
+    // }, 1000);
+    // return;
+
     const initializeApp = async () => {
       try {
         console.log("Initializing app...");
@@ -60,6 +66,12 @@ const Index = () => {
     // Show loading screen while initializing
     return (
       <View style={styles.loadingContainer}>
+        <LottieView
+          source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
+          autoPlay
+          loop
+          style={styles.animation}
+        />
         {/* Activity Indicator */}
         <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
         {/* Loading Text */}
@@ -86,6 +98,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
+  },
+  animation: {
+    width: 400, // Adjust the width as needed
+    height: 400, // Adjust the height as needed
   },
 });
 
