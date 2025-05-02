@@ -19,6 +19,7 @@ import { UserStorageService } from "../../../storage/functions/userStorageServic
 import { ShopPageData } from "../../../interfaces/iShop";
 import { SystemDataStorage } from "../../../storage/functions/systemDataStorage";
 import { Dropdown } from "react-native-element-dropdown"; // Import Dropdown
+import { createShopPage } from "@/utility/u_createShopPage";
 
 const ShopCreate = () => {
   const router = useRouter();
@@ -48,7 +49,10 @@ const ShopCreate = () => {
 
   const handleCreateShop = async () => {
     if (!shopName || !shopDescription || !shopCategory || !phoneNumber) {
-      Alert.alert("Error", "Please fill in all the required fields.");
+      Alert.alert(
+        "Error",
+        "Please fill in all the required fields: Shop Name, Description, Category, and Phone Number."
+      );
       return;
     }
 
@@ -57,7 +61,7 @@ const ShopCreate = () => {
     try {
       const userData = await UserStorageService.getUserData();
       if (!userData || !userData.userId) {
-        Alert.alert("Error", "User data not found.");
+        Alert.alert("Error", "User data not found. Please log in again.");
         setLoading(false);
         return;
       }
@@ -90,14 +94,20 @@ const ShopCreate = () => {
         avgRating: 0, // Added avgRating property
       };
 
-      const shopDocRef = doc(db, "Users", userData.userId, "Shop", "ShopPageInfo");
-      await setDoc(shopDocRef, shopData);
-
-      Alert.alert("Success", "Shop created successfully!");
-      router.push("/(tabs)/shop/userShopPage");
+      const result = await createShopPage(userData.userId, shopData);
+      if (result) {
+        console.log("✅ Shop created successfully!");
+        try {
+          router.push("/(tabs)/shop/userShopPage");
+        } catch (err) {
+          console.error("Navigation error:", err);
+        }
+      } else {
+        Alert.alert("Error", "Failed to create shop. Please try again.");
+      }
     } catch (error) {
-      console.error("Error creating shop:", error);
-      Alert.alert("Error", "Failed to create shop. Please try again.");
+      console.error("❌ Error creating shop:", error);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
