@@ -63,3 +63,52 @@ export const fetchAndStoreServiceCategories = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Fetches Cities from Firebase and stores them in AsyncStorage.
+ *
+ * @returns A promise resolving to true if data is successfully stored, false otherwise.
+ */
+export const getAndStoreCities = async (): Promise<boolean> => {
+  try {
+    console.log("Fetching Cities from Firebase 🔄");
+
+    // Reference to the document in Firestore
+    const docRef = doc(db, "System", "locations");
+    const docSnap = await getDoc(docRef);
+
+    // Check if the document exists
+    if (!docSnap.exists()) {
+      console.warn("No Cities found.");
+      return false;
+    }
+
+    // Extract the cities array from the raw data
+    const rawData = docSnap.data();
+
+    // Ensure the cities key exists and is an array
+    const citiesArray = rawData.cities;
+    if (!Array.isArray(citiesArray)) {
+      console.warn("Invalid Cities data format.");
+      return false;
+    }
+
+    // Transform the cities array into the Cities[] type
+    const cities = citiesArray.map((city: any) => ({
+      label: city.label,
+      value: city.value,
+    })) as Cities[];
+
+    // Store the cities if data is retrieved
+    if (cities.length > 0) {
+      await SystemDataStorage.saveCities(cities);
+      return true;
+    } else {
+      console.warn("No Cities to store.");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error fetching and storing Cities: ", error);
+    return false;
+  }
+};
