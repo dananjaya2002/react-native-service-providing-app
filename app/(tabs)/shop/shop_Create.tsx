@@ -11,15 +11,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { db } from "../../../FirebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { UserStorageService } from "../../../storage/functions/userStorageService";
-import { ShopPageData } from "../../../interfaces/iShop";
+import { ShopCategory, ShopPageData } from "../../../interfaces/iShop";
 import { SystemDataStorage } from "../../../storage/functions/systemDataStorage";
 import { Dropdown } from "react-native-element-dropdown"; // Import Dropdown
 import { createShopPage } from "@/utility/u_createShopPage";
+import * as ImagePicker from "expo-image-picker";
+import { uploadImageToCloud } from "@/utility/u_uploadImageNew";
 
 const ShopCreate = () => {
   const router = useRouter();
@@ -28,16 +31,25 @@ const ShopCreate = () => {
   const [shopCategory, setShopCategory] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [serviceInfo, setServiceInfo] = useState("");
+  const [shopLocation, setShopLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(true); // State to control popup visibility
-  const [categories, setCategories] = useState<string[]>([]); // State to store categories
+  const [categories, setCategories] = useState<ShopCategory[]>([]); // State to store categories
+  const [cities, setCities] = useState<Cities[]>([]); // State to store cities
+  const [shopPageImageUrl, setShopPageImageUrl] = useState<string>("");
+  const [loadingImage, setLoadingImage] = useState(false); // Loading state for image upload
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const fetchedCategories = await SystemDataStorage.getServiceCategories();
+        const fetchedCities = await SystemDataStorage.getCities();
+        console.log("Fetched cities:", fetchedCities);
         if (fetchedCategories) {
-          setCategories(fetchedCategories.map((category) => category.categoryName)); // Assuming category has a 'name' property
+          setCategories(fetchedCategories);
+        }
+        if (fetchedCities) {
+          setCities(fetchedCities);
         }
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -53,6 +65,10 @@ const ShopCreate = () => {
         "Error",
         "Please fill in all the required fields: Shop Name, Description, Category, and Phone Number."
       );
+      // console.log("shopName", shopName);
+      // console.log("shopDescription", shopDescription);
+      // console.log("shopCategory", shopCategory);
+      // console.log("phoneNumber", phoneNumber);
       return;
     }
 
@@ -68,13 +84,13 @@ const ShopCreate = () => {
 
       // Create shop data based on the ShopPageData interface
       const shopData: ShopPageData = {
-        shopName,
-        shopDescription,
-        shopCategory,
-        phoneNumber,
-        serviceInfo,
-        shopPageImageUrl: "", // Placeholder for shop image URL
-        shopLocation: "", // Placeholder for shop location
+        shopName: shopName,
+        shopDescription: shopDescription,
+        shopCategory: shopCategory,
+        phoneNumber: phoneNumber,
+        serviceInfo: serviceInfo,
+        shopPageImageUrl: shopPageImageUrl, // Placeholder for shop image URL
+        shopLocation: shopLocation, // Placeholder for shop location
         gpsCoordinates: {
           latitude: 0, // Default latitude
           longitude: 0, // Default longitude
@@ -120,6 +136,45 @@ const ShopCreate = () => {
     }
   };
 
+  // Function to handle image picking and uploading
+  const handleImagePick = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "Sorry, we need camera roll permissions to upload an image."
+      );
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
+
+      if (!result.canceled) {
+        const selectedImageUri = result.assets[0].uri;
+        setShopPageImageUrl(selectedImageUri);
+
+        setLoadingImage(true);
+        const uploadedUrl = await uploadImageToCloud(selectedImageUri);
+        setLoadingImage(false);
+
+        if (uploadedUrl) {
+          setShopPageImageUrl(uploadedUrl); // Assign the uploaded URL to shopPageImageUrl
+        } else {
+          Alert.alert("Upload Failed", "Failed to upload the shop image.");
+        }
+      }
+    } catch (error: any) {
+      setLoadingImage(false);
+      console.error("Error picking and uploading image:", error);
+      Alert.alert("Error", error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Modal for Popup */}
@@ -137,16 +192,16 @@ const ShopCreate = () => {
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => handlePopupResponse(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 style={[styles.modalButton, styles.confirmButton]}
                 onPress={() => handlePopupResponse(true)}
               >
                 <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => handlePopupResponse(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -160,6 +215,13 @@ const ShopCreate = () => {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <TouchableOpacity style={styles.imagePicker} onPress={handleImagePick}>
+            <Text style={styles.imagePickerText}>Pick Shop Image</Text>
+          </TouchableOpacity>
+          {shopPageImageUrl && (
+            <Image source={{ uri: shopPageImageUrl }} style={styles.imagePreview} />
+          )}
+          {loadingImage && <ActivityIndicator size="large" color="#3498db" />}
           <TextInput
             style={styles.input}
             placeholder="Shop Name"
@@ -175,15 +237,27 @@ const ShopCreate = () => {
           />
           <Dropdown
             style={styles.dropdown}
-            data={categories.map((category) => ({
-              label: category,
-              value: category,
+            data={categories}
+            labelField="categoryName"
+            valueField="categoryID"
+            placeholder="Select a category"
+            value={shopCategory}
+            onChange={(item) => {
+              setShopCategory(item.categoryName);
+              // console.log("Selected category:", item.categoryName, "item.label", item.label);
+            }}
+          />
+          <Dropdown
+            style={styles.dropdown}
+            data={cities.map((city) => ({
+              label: city.label,
+              value: city.value,
             }))}
             labelField="label"
             valueField="value"
-            placeholder="Select a category"
-            value={shopCategory}
-            onChange={(item) => setShopCategory(item.value)}
+            placeholder="Select a city"
+            value={shopLocation} // Assuming you have a state for shop location
+            onChange={(item) => setShopLocation(item.value)} // Update shop location state
           />
           <TextInput
             style={styles.input}
@@ -296,6 +370,24 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     backgroundColor: "#fff",
+  },
+  imagePicker: {
+    backgroundColor: "#3498db",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  imagePickerText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignSelf: "center",
   },
 });
 

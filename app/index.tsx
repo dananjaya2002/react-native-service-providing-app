@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { fetchAndStoreServiceCategories } from "@/utility/u_getSystemInfo";
+import { fetchAndStoreServiceCategories, getAndStoreCities } from "@/utility/u_getSystemInfo";
 import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import components for SVG rendering
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
@@ -22,7 +22,8 @@ const Index = () => {
       try {
         console.log("Initializing app...");
         await updateServiceCategories(); // Call the function to update service categories
-
+        await getAndStoreCities(); // Call the function to get and store cities
+        console.log("Service Categories and Cities updated successfully ✅");
         // Check if user data exists
         const userData = await UserStorageService.getUserData();
         if (userData) {

@@ -2,6 +2,8 @@ import { doc, collection, writeBatch } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { ShopPageData, ShopList } from "../interfaces/iShop";
 import { Alert } from "react-native";
+import { UserStorageService } from "@/storage/functions/userStorageService";
+import { UserData } from "@/interfaces/UserData";
 
 /**
  * Creates a shop page and updates relevant collections in Firebase using a batch operation.
@@ -18,12 +20,24 @@ export const createShopPage = async (userID: string, shopData: ShopPageData): Pr
       return false;
     }
 
+    // Getting Local stored user data.
+    const localUserData = await UserStorageService.getUserData();
+    if (!localUserData) {
+      console.error("❌ Error: User data is null.");
+      Alert.alert("Error: Cannot find user Data from the local storage.");
+      return false;
+    }
+
     // Initialize a batch
     const batch = writeBatch(db);
 
     // Create a subcollection "Shop" under /Users/<userID> and add "ShopPageInfo"
     const userShopDocRef = doc(collection(db, `Users/${userID}/Shop`), "ShopPageInfo");
     batch.set(userShopDocRef, shopData);
+
+    // Update the /Users/<userID>/UserData/UserLoginData document to set "isServiceProvider" to true
+    const userLoginDataDocRef = doc(db, `Users/${userID}/UserData/UserLoginData`);
+    batch.update(userLoginDataDocRef, { isServiceProvider: true });
 
     // Create a document in /ShopList/ collection with userID
     const shopListData: ShopList = {
@@ -52,6 +66,15 @@ export const createShopPage = async (userID: string, shopData: ShopPageData): Pr
 
     // Commit the batch
     await batch.commit();
+
+    // Create an object with updated local user data
+    const updatedLocalUserData: UserData = {
+      ...localUserData,
+      isServiceProvider: true,
+    };
+
+    // Update the local storage with the updated user data
+    await UserStorageService.saveUserData(updatedLocalUserData);
 
     console.log("✅ Shop page created successfully using batch.");
     return true;
