@@ -6,6 +6,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { UserStorageService } from "../../storage/functions/userStorageService";
 import { UserData } from "../../interfaces/UserData";
 import { fetchAndStoreServiceCategories } from "@/utility/u_getSystemInfo";
+import { clearUserData } from "@/utility/u_cleanUpForNewUser";
+import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 
 const docIds: string[] = [
   "3pb3ivjRuAQmMjaSK15v",
@@ -81,9 +83,11 @@ const Dev_UserSimulation = () => {
   }
 
   const onItemPress = async (doc: UserData) => {
+    clearUserData(); // Clear any existing user data before saving new data
     // Transform the data before saving it.
     const formattedDoc = transformUserData(doc);
     await UserStorageService.saveUserData(formattedDoc);
+    await getUserFavoritesServices();
     console.log("Saved User Data: ", formattedDoc);
     router.push("/(tabs)");
   };

@@ -118,11 +118,14 @@ const ShopCreate = () => {
         avgRating: 0, // Added avgRating property
       };
 
+      // console.log("Shop data to be created:", shopData);
+      // return;
+
       const result = await createShopPage(userData.userId, shopData);
       if (result) {
         console.log("✅ Shop created successfully!");
         try {
-          router.push("/(tabs)/shop/userShopPage");
+          router.replace("/(tabs)/shop/userShopPage");
         } catch (err) {
           console.error("Navigation error:", err);
         }
@@ -247,25 +250,21 @@ const ShopCreate = () => {
             style={styles.dropdown}
             data={categories}
             labelField="categoryName"
-            valueField="categoryID"
+            valueField="categoryName"
             placeholder="Select a category"
             value={shopCategory}
             onChange={(item) => {
               setShopCategory(item.categoryName);
-              // console.log("Selected category:", item.categoryName, "item.label", item.label);
             }}
           />
           <Dropdown
             style={styles.dropdown}
-            data={cities.map((city) => ({
-              label: city.label,
-              value: city.value,
-            }))}
+            data={cities} // No mapping needed if Cities already has label/value
             labelField="label"
-            valueField="value"
+            valueField="label"
             placeholder="Select a city"
-            value={shopLocation} // Assuming you have a state for shop location
-            onChange={(item) => setShopLocation(item.label)} // Update shop location state
+            value={shopLocation}
+            onChange={(item) => setShopLocation(item.label)}
           />
           <TextInput
             style={styles.input}
@@ -288,7 +287,7 @@ const ShopCreate = () => {
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleCreateShop}>
-          <Text style={styles.buttonText}></Text>
+          <Text style={styles.buttonText}>Create</Text>
         </TouchableOpacity>
       )}
     </View>

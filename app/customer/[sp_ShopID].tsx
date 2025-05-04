@@ -182,7 +182,7 @@ const CustomerShopView = () => {
         return;
       }
       const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
-      router.push({
+      router.replace({
         pathname: "/(tabs)/chat/chatWindow/chatUi",
         params: {
           userID: userData?.userId,
@@ -270,10 +270,14 @@ const CustomerShopView = () => {
         <View style={[styles.shopInfoContainer, { backgroundColor: colors.card_background }]}>
           <Text style={styles.shopName}>{shopData.shopName}</Text>
           <Text style={styles.shopDescription}>{shopData.shopDescription}</Text>
-          <UserReviewStars
-            averageRating={shopData.avgRating}
-            totalRatings={shopData.dashboardInfo.totalRatings}
-          />
+          <View style={styles.infoRow}>
+            <UserReviewStars
+              averageRating={shopData.avgRating}
+              totalRatings={shopData.dashboardInfo.totalRatings}
+            />
+            <Text style={styles.locationBadge}>{shopData.shopLocation}</Text>
+            <Text style={styles.categoryBadge}>{shopData.shopCategory}</Text>
+          </View>
         </View>
 
         {/* Contact Buttons */}
@@ -459,6 +463,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginHorizontal: 16,
+  },
+  locationBadge: {
+    backgroundColor: "#F7F7F7", // primary color
+    borderRadius: 8,
+    marginLeft: 24,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    fontSize: 14,
+    color: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  categoryBadge: {
+    backgroundColor: "#F7F7F7", // primary color
+    borderRadius: 8,
+    marginLeft: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    fontSize: 14,
+    color: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
   },
 });
 

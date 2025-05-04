@@ -33,8 +33,10 @@ import {
   deleteSelectedServices,
 } from "@/utility/updateShopService";
 import { router } from "expo-router";
+import { useTheme } from "@/context/ThemeContext";
 
 const shopEditService: React.FC = () => {
+  const { colors, theme, setTheme } = useTheme();
   // General states
   const [shopServiceData, setShopServiceData] = useState<ShopServices[]>([]);
   const [loading, setLoading] = useState(true);
@@ -313,14 +315,14 @@ const shopEditService: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-primary">
+    <View style={[{ flex: 1 }, { backgroundColor: colors.background }]}>
       <HeaderMain
         title="Edit Services"
         onPressBack={() => {
           router.back(); // Navigate to the previous screen using Expo Router
         }}
       />
-      <View className="flex-1">
+      <View style={[{ flex: 1 }]}>
         <View className=" h-32 w-screen py-2 px-4">
           {/* Add new Service Section */}
           <Pressable

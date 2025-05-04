@@ -44,10 +44,17 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
   }
 };
 
+/**
+ * Updates the user's favorite shops in the Firestore database and local storage.
+ *
+ * @param {ShopList[]} updatedData - The updated list of favorite shops to be saved.
+ * @returns {Promise<boolean>} A promise that resolves to `true` if the operation is successful, otherwise `false`.
+ */
 export const updateUserFavoritesServices = async (updatedData: ShopList[]): Promise<boolean> => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // 1-second timeout
-    console.log("Simulated update of user favorites", updatedData.length);
+    // await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second timeout
+    // console.log("Simulated update of user favorites", updatedData.length);
+    // console.log("Simulated update of user favorites", updatedData);
     // return true; // Simulate success
     const savedUserData = (await UserStorageService.getUserData()) as UserData;
     if (!savedUserData) {

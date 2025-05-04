@@ -271,8 +271,8 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
               bottomOffset={84}
               showsVerticalScrollIndicator={true}
               bounces={true}
+              style={{}}
             >
-              <View className="h-32"></View>
               <View style={{ marginBottom: 15 }}>
                 <ImagePickerBox
                   initialImage={shopPageImageUrl ?? ""}
