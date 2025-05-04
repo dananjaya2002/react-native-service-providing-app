@@ -33,7 +33,7 @@ const ShopCreate = () => {
   const [serviceInfo, setServiceInfo] = useState("");
   const [shopLocation, setShopLocation] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(true); // State to control popup visibility
+  const [showPopup, setShowPopup] = useState(false); // State to control popup visibility
   const [categories, setCategories] = useState<ShopCategory[]>([]); // State to store categories
   const [cities, setCities] = useState<Cities[]>([]); // State to store cities
   const [shopPageImageUrl, setShopPageImageUrl] = useState<string>("");
@@ -44,6 +44,14 @@ const ShopCreate = () => {
       try {
         const fetchedCategories = await SystemDataStorage.getServiceCategories();
         const fetchedCities = await SystemDataStorage.getCities();
+        const userData = await UserStorageService.getUserData();
+        if (!userData || !userData.userId) {
+          Alert.alert("Error", "User data not found. Please log in again.");
+          return;
+        }
+        if (!userData.isServiceProvider) {
+          setShowPopup(true); // Show the popup if the user is not a service provider
+        }
         console.log("Fetched cities:", fetchedCities);
         if (fetchedCategories) {
           setCategories(fetchedCategories);
@@ -60,15 +68,15 @@ const ShopCreate = () => {
   }, []);
 
   const handleCreateShop = async () => {
-    if (!shopName || !shopDescription || !shopCategory || !phoneNumber) {
-      Alert.alert(
-        "Error",
-        "Please fill in all the required fields: Shop Name, Description, Category, and Phone Number."
-      );
-      // console.log("shopName", shopName);
-      // console.log("shopDescription", shopDescription);
-      // console.log("shopCategory", shopCategory);
-      // console.log("phoneNumber", phoneNumber);
+    if (
+      !shopName ||
+      !shopDescription ||
+      !shopCategory ||
+      !phoneNumber ||
+      !shopLocation ||
+      !shopPageImageUrl
+    ) {
+      Alert.alert("Error", "Please fill in all the required fields.");
       return;
     }
 
@@ -106,7 +114,7 @@ const ShopCreate = () => {
           totalComments: 0,
         },
         items: [], // Empty array for shop services
-        totalRingsCount: 0,
+        totalRatingsCount: 0,
         avgRating: 0, // Added avgRating property
       };
 
@@ -257,7 +265,7 @@ const ShopCreate = () => {
             valueField="value"
             placeholder="Select a city"
             value={shopLocation} // Assuming you have a state for shop location
-            onChange={(item) => setShopLocation(item.value)} // Update shop location state
+            onChange={(item) => setShopLocation(item.label)} // Update shop location state
           />
           <TextInput
             style={styles.input}
@@ -280,7 +288,7 @@ const ShopCreate = () => {
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleCreateShop}>
-          <Text style={styles.buttonText}>Create Shop</Text>
+          <Text style={styles.buttonText}></Text>
         </TouchableOpacity>
       )}
     </View>

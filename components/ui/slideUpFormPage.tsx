@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   BackHandler,
+  Alert,
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
@@ -19,6 +20,7 @@ import {
 
 import { Dropdown } from "react-native-element-dropdown";
 import { SystemDataStorage } from "../../storage/functions/systemDataStorage";
+import ImagePickerBox from "./BottomSheets/bsImagePicker";
 
 /**
  * Get screen dimensions and calculate target positions.
@@ -48,15 +50,21 @@ const openPosition = screenHeight - sheetHeight; // Start Position to slide up t
  *    - close(): Slides the sheet down.
  */
 type UpdateSheetProps = {
-  title?: string;
-  description?: string;
-  phoneNumber?: string;
-  category?: string;
+  title: string;
+  description: string;
+  phoneNumber: string;
+  category: string;
+  shopPageImageUrl: string;
+  shopLocation: string;
+  shopServiceInfo: string;
   onUpdate: (data: {
     title: string;
     description: string;
     phoneNumber: string;
     category: string;
+    shopPageImageUrl: string;
+    shopLocation: string;
+    shopServiceInfo: string;
   }) => void;
   onOpen?: () => void;
   onClose?: () => void;
@@ -97,6 +105,10 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
       description: initialDescription = "",
       phoneNumber: initialPhoneNumber = "",
       category: initialCategory = "",
+      shopPageImageUrl = "",
+      shopLocation = "",
+      shopServiceInfo: initialShopServiceInfo = "",
+
       onUpdate,
       onOpen,
       onClose,
@@ -107,8 +119,14 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
     const [title, setTitle] = useState(initialTitle);
     const [description, setDescription] = useState(initialDescription);
     const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
+    const [pickedShopPageImageUrl, setPickedShopPageImageUrl] = useState(shopPageImageUrl);
+    const [shopServiceInfo, setShopServiceInfo] = useState(initialShopServiceInfo);
+    // category
     const [category, setCategory] = useState(initialCategory);
-    const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
+    const [categoryList, setCategoryList] = useState<{ label: string; value: string }[]>([]);
+    // locations
+    const [locationList, setLocationList] = useState<Cities[]>([]);
+    const [selectedShopLocation, setSelectedShopLocation] = useState<string>(shopLocation);
 
     /** Local state to track if the sheet is open. */
     const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -117,32 +135,48 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
     const translateY = useSharedValue(screenHeight);
 
     /**
-     * Fetch service categories and populate the dropdown.
+     * Fetch service categoryList and populate the dropdown.
      */
     useEffect(() => {
       const fetchCategories = async () => {
         try {
           const serviceCategories = await SystemDataStorage.getServiceCategories();
+          const locationList = await SystemDataStorage.getCities();
+          console.log("locationList: ", locationList);
+          console.log("ShopLocation: ", shopLocation);
+
+          // setup categories
           if (serviceCategories) {
             const formattedCategories = serviceCategories.map((category) => ({
               label: category.categoryName,
               value: category.categoryID,
             }));
-            setCategories(formattedCategories);
-
-            // Find category by label
+            setCategoryList(formattedCategories);
             const matchedCategory = formattedCategories.find(
               (item) => item.label === initialCategory
             );
-
             if (matchedCategory) {
               setCategory(matchedCategory.value); // 👈 store value internally
             } else {
               console.warn(`No matching category found for label: ${initialCategory}`);
             }
           }
+
+          // setup Locations
+          if (locationList) {
+            setLocationList(locationList);
+            const matchedLocation = locationList.find((item) => item.label === shopLocation);
+            if (!matchedLocation) {
+              // console.log("receive Location: ", shopLocation);
+              // console.log("locationList: ", locationList);
+              Alert.alert("Error", "Location is not matching with system locations");
+              return;
+            }
+            setSelectedShopLocation(matchedLocation.value);
+          }
         } catch (error) {
-          console.error("Error fetching service categories:", error);
+          console.error("Error fetching service categoryList:", error);
+          Alert.alert("Error", "Failed to fetch data. Please try again later.");
         }
       };
 
@@ -207,12 +241,15 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
      * Sends the current form data to the onUpdate callback and closes the sheet.
      */
     const handleUpdate = () => {
-      const selectedCategory = categories.find((item) => item.value === category);
+      const selectedCategory = categoryList.find((item) => item.value === category);
       onUpdate({
         title,
         description,
         phoneNumber,
         category: selectedCategory?.label || "", // send label back if that's what parent expects
+        shopPageImageUrl: pickedShopPageImageUrl,
+        shopLocation: selectedShopLocation,
+        shopServiceInfo: shopServiceInfo,
       });
       handleSlideDown(); // Close the sheet.
     };
@@ -230,8 +267,20 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
         <Animated.View style={[styles.sheet, animatedStyle]}>
           <View style={styles.sheetContent}>
             <Text style={styles.header}>Update Details</Text>
-            <KeyboardAwareScrollView bottomOffset={84}>
+            <KeyboardAwareScrollView
+              bottomOffset={84}
+              showsVerticalScrollIndicator={true}
+              bounces={true}
+            >
               <View className="h-32"></View>
+              <View style={{ marginBottom: 15 }}>
+                <ImagePickerBox
+                  initialImage={shopPageImageUrl ?? ""}
+                  onImageChange={(uri) => {
+                    setPickedShopPageImageUrl(uri ?? "");
+                  }}
+                />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Title"
@@ -243,12 +292,23 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
                 style={styles.dropdown}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
-                data={categories}
+                data={categoryList}
                 labelField="label"
                 valueField="value"
                 placeholder="Select Category"
                 value={category}
                 onChange={(item) => setCategory(item.value)}
+              />
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={locationList}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Location"
+                value={selectedShopLocation}
+                onChange={(item) => setSelectedShopLocation(item.value)}
               />
               <TextInput
                 style={styles.input}
@@ -261,10 +321,10 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
               <View className="h-8"></View>
               <TextInput
                 style={[styles.input, styles.multilineInput]}
-                placeholder="Description"
+                placeholder="Service Info"
                 placeholderTextColor="#888"
-                value={description}
-                onChangeText={setDescription}
+                value={shopServiceInfo}
+                onChangeText={setSelectedShopLocation}
                 multiline
               />
               <TouchableOpacity style={styles.button} onPress={handleUpdate}>

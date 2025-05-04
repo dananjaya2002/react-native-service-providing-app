@@ -2,6 +2,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
 import { ShopCategory } from "../interfaces/iShop";
 import { SystemDataStorage } from "../storage/functions/systemDataStorage";
+import { Alert } from "react-native";
 
 /**
  * Retrieves the Service Categories from Firebase.
@@ -52,7 +53,7 @@ export const fetchAndStoreServiceCategories = async (): Promise<boolean> => {
     // Store the categories if data is retrieved
     if (serviceCategories.length > 0) {
       await SystemDataStorage.saveServiceCategories(serviceCategories);
-      console.log("Service Categories successfully stored ✅");
+      console.log("Service Categories successfully stored ✅", serviceCategories);
       return true;
     } else {
       console.warn("No Service Categories to store.");
@@ -102,6 +103,7 @@ export const getAndStoreCities = async (): Promise<boolean> => {
     // Store the cities if data is retrieved
     if (cities.length > 0) {
       await SystemDataStorage.saveCities(cities);
+      console.log("Cities successfully stored ✅", cities);
       return true;
     } else {
       console.warn("No Cities to store.");
@@ -109,6 +111,7 @@ export const getAndStoreCities = async (): Promise<boolean> => {
     }
   } catch (error) {
     console.error("Error fetching and storing Cities: ", error);
+    Alert.alert("Error", "Failed to fetch cities. Please try again later.");
     return false;
   }
 };
