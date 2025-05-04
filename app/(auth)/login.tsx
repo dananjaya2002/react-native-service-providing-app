@@ -16,6 +16,7 @@ import { auth } from "../../FirebaseConfig";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserData } from "@/utility/u_getUserData";
+import { Ionicons } from "@expo/vector-icons";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -48,6 +49,12 @@ const Login = () => {
       setLoading(false);
       setError(err.message);
     }
+  };
+
+  // Function to handle FAB press
+  const handleFabPress = () => {
+    // Navigate to your desired page
+    router.push("/DevSection/Dev_UserSimulation"); // Replace with your target route
   };
 
   return (
@@ -83,6 +90,10 @@ const Login = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      {/* Floating Action Button */}
+      <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
+        <Ionicons name="arrow-forward" size={24} color="white" />
+      </TouchableOpacity>
     </KeyboardAvoidingView>
   );
 };
@@ -120,6 +131,23 @@ const styles = StyleSheet.create({
     color: "blue",
     textAlign: "center",
     textDecorationLine: "underline",
+  },
+  // FAB styles
+  fab: {
+    position: "absolute",
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    right: 20,
+    bottom: 20,
+    backgroundColor: "#007AFF",
+    borderRadius: 28,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
 

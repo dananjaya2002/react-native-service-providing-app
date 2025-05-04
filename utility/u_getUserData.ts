@@ -27,6 +27,7 @@ export const getUserData = async (id: string): Promise<UserData | null> => {
 
     // Fetch the main document data
     const docRef = doc(db, "Users", id, "UserData", "UserLoginData");
+    console.log("Document Reference: ", docRef.path); // Log the document reference path
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) {
       console.warn("User Info info not found.");

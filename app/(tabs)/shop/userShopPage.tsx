@@ -301,8 +301,8 @@ const Shop = () => {
         <View style={[styles.itemsContainer, { backgroundColor: colors.background }]}>
           <HorizontalScrollView items={itemList as ShopServices[]} />
         </View>
-        <View style={[styles.commentsHeaderContainer, { backgroundColor: colors.card_background }]}>
-          <Text style={styles.commentsHeaderText}>Comments</Text>
+        <View style={[styles.commentsHeaderContainer]}>
+          <Text style={styles.commentsHeaderText}>Comments ({userCommentList.length})</Text>
         </View>
       </View>
     </View>
@@ -508,8 +508,10 @@ const styles = StyleSheet.create({
   commentsHeaderContainer: {},
   commentsHeaderText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "800",
     marginHorizontal: 16,
+    marginBottom: 8,
+    marginTop: 16,
   },
   profileImage: {
     width: 28,
