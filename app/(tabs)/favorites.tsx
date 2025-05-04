@@ -75,6 +75,10 @@ const favorites = () => {
   }
 
   async function handleSave(): Promise<void> {
+    if (favorites.current.length === 0) {
+      Alert.alert("Info", "No favorites to save.");
+      return;
+    }
     try {
       setIsUpdating(true);
       await updateUserFavoritesServices(favorites.current);

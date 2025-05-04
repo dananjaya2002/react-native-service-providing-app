@@ -57,8 +57,14 @@ export const updateUserFavoritesServices = async (updatedData: ShopList[]): Prom
 
     const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "UserFavoritesShops");
 
-    // Overwrite the entire document with the new data
-    await setDoc(userDocRef, updatedData);
+    // Convert the array to an object with shop IDs as keys
+    const favoritesObject = updatedData.reduce((acc, shop) => {
+      acc[shop.id] = { ...shop };
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Use the object with setDoc instead of the array
+    await setDoc(userDocRef, favoritesObject);
 
     // Update the local storage with the new favorites
     await UserStorageService.saveUserFavorites(updatedData);

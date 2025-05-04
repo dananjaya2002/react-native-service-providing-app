@@ -108,7 +108,7 @@ const CustomerShopView = () => {
             userDocId: serviceProviderID,
             avgRating: fetchedData.avgRating,
             rating: fetchedData.avgRating,
-            totalRatingsCount: fetchedData.totalRingsCount,
+            totalRatingsCount: fetchedData.totalRatingsCount,
           };
           setShopListType(shopListObject);
 
@@ -192,16 +192,16 @@ const CustomerShopView = () => {
         },
       });
     } else if (option === "Save") {
-      if (!shopListType) {
-        console.error("Shop list type is null. Cannot add to favorites.");
-        return;
-      }
-      const success = await addShopToFavorites(shopListType);
-      if (success) {
-        console.log("Shop added to favorites or already exists.");
-      } else {
-        console.log("Failed to add shop to favorites.");
-      }
+      // if (!shopListType) {
+      //   console.error("Shop list type is null. Cannot add to favorites.");
+      //   return;
+      // }
+      // const success = await addShopToFavorites(shopListType);
+      // if (success) {
+      //   console.log("Shop added to favorites or already exists.");
+      // } else {
+      //   console.log("Failed to add shop to favorites.");
+      // }
     } else if (option === "Share") {
       const message = generateShareMessage(shopData);
       Share.share({

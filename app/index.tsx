@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { fetchAndStoreServiceCategories, getAndStoreCities } from "@/utility/u_getSystemInfo";
 import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import components for SVG rendering
@@ -21,9 +21,17 @@ const Index = () => {
     const initializeApp = async () => {
       try {
         console.log("Initializing app...");
-        await updateServiceCategories(); // Call the function to update service categories
-        await getAndStoreCities(); // Call the function to get and store cities
-        console.log("Service Categories and Cities updated successfully ✅");
+        const isServiceUpdated = await updateServiceCategories(); // Call the function to update service categories
+        const isLocationsUpdated = await getAndStoreCities(); // Call the function to get and store cities
+
+        if (isServiceUpdated!) {
+          Alert.alert("Error", "Service Data is not updated!");
+          return;
+        }
+        if (!isLocationsUpdated) {
+          Alert.alert("Error", "ShopLocation Data is not updated");
+          return;
+        }
         // Check if user data exists
         const userData = await UserStorageService.getUserData();
         if (userData) {

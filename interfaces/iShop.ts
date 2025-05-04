@@ -52,7 +52,7 @@ export interface ShopPageData {
   shopLocation: string;
   shopName: string;
   shopPageImageUrl: string;
-  totalRingsCount: number;
+  totalRatingsCount: number;
 }
 
 export interface ShopServices {
