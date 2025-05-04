@@ -6,6 +6,8 @@ import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import c
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 import LottieView from "lottie-react-native";
+import { syncFirestoreToLocalDB } from "@/db/syncFirestore";
+import { startRealtimeSync } from "@/db/realtimeSync";
 
 const Index = () => {
   const router = useRouter(); // Get router instance
@@ -24,12 +26,23 @@ const Index = () => {
         const isServiceUpdated = await updateServiceCategories(); // Call the function to update service categories
         const isLocationsUpdated = await getAndStoreCities(); // Call the function to get and store cities
 
+        // // Database Sync
+        // // OPTION A: Use only one-time sync
+        // console.log("Syncing shop search data to local database...");
+        // await syncFirestoreToLocalDB();
+        // console.log("Shop search data sync complete ✅");
+
+        // Start realtime sync to keep the database updated
+        // OPTION B: Use only realtime sync (which will populate the database on first run)
+        console.log("Starting realtime data sync...");
+        await startRealtimeSync();
+
         if (isServiceUpdated!) {
-          Alert.alert("Error", "Service Data is not updated!");
+          Alert.alert("Error", "Service Category Data is not updated!");
           return;
         }
         if (!isLocationsUpdated) {
-          Alert.alert("Error", "ShopLocation Data is not updated");
+          Alert.alert("Error", "City Data is not updated");
           return;
         }
         // Check if user data exists

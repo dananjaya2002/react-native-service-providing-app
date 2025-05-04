@@ -1,5 +1,5 @@
 // app/(tabs)/bookmarks.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import { useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import FBASaveButton from "@/components/ui/buttons/saveButton_FAB";
 import { UserStorageService } from "@/storage/functions/userStorageService";
+import { useFocusEffect } from "@react-navigation/native";
 
 const favorites = () => {
   const navigation = useNavigation();
@@ -33,23 +34,34 @@ const favorites = () => {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  // This will run every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Screen is focused");
+      fetchBookmarks();
+      // Optional: Return a cleanup function that runs when screen loses focus
+      return () => {
+        console.log("Screen lost focus");
+      };
+    }, []) // Empty dependency array means this only depends on screen focus/unfocus
+  );
 
   useEffect(() => {
-    const fetchBookmarks = async () => {
-      setLoading(true);
-      try {
-        const userFavorites = await UserStorageService.getUserFavorites(); // Fetch data from local storage
-        favorites.current = userFavorites || [];
-      } catch (error) {
-        console.error("Error fetching bookmarks:", error);
-        Alert.alert("Error", "Failed to fetch bookmarks. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBookmarks();
   }, []);
+
+  const fetchBookmarks = async () => {
+    setLoading(true);
+    try {
+      const userFavorites = await UserStorageService.getUserFavorites(); // Fetch data from local storage
+      favorites.current = userFavorites || [];
+    } catch (error) {
+      console.error("Error fetching bookmarks:", error);
+      Alert.alert("Error", "Failed to fetch bookmarks. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleShopClick = (item: ShopList, event: TapGestureHandlerStateChangeEvent): void => {
     router.push(`/customer/${item.userDocId}`);

@@ -17,6 +17,8 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserData } from "@/utility/u_getUserData";
 import { Ionicons } from "@expo/vector-icons";
+import { clearUserData } from "@/utility/u_cleanUpForNewUser";
+import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -37,6 +39,9 @@ const Login = () => {
       if (!userData) {
         throw new Error("Failed to fetch user data.");
       }
+
+      clearUserData(); // Clear any existing user data before saving new data
+      await getUserFavoritesServices();
 
       // Save user data to local storage
       await UserStorageService.saveUserData(userData);

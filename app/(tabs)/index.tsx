@@ -80,39 +80,8 @@ const data: MultiSelectDropdownItemProps[] = [
   { label: "Jaffna", value: "4" },
   { label: "Negombo", value: "5" },
 ];
-// const dummyData: Record<string, ShopCategory> = {
-//   cat1: {
-//     categoryID: "cat1",
-//     categoryName: "Automotive",
-//     iconName: "car",
-//   },
-//   cat2: {
-//     categoryID: "cat2",
-//     categoryName: "Electronics",
-//     iconName: "hardware-chip",
-//   },
-//   cat3: {
-//     categoryID: "cat3",
-//     categoryName: "Beauty",
-//     iconName: "flower",
-//   },
-//   cat4: {
-//     categoryID: "cat4",
-//     categoryName: "Cleaning",
-//     iconName: "water",
-//   },
-//   cat5: {
-//     categoryID: "cat5",
-//     categoryName: "Transport",
-//     iconName: "bus",
-//   },
-//   cat6: {
-//     categoryID: "cat6",
-//     categoryName: "Home Fix",
-//     iconName: "hammer",
-//   },
-// };
-const PAGE_SIZE = 5;
+
+const PAGE_SIZE = 11;
 
 const HomeScreen: React.FC = () => {
   const { colors, theme, setTheme } = useTheme();
@@ -124,6 +93,7 @@ const HomeScreen: React.FC = () => {
   const [selectedLocations, setSelectedLocations] = useState<ShopLocationCategory[]>([]); // Selected Locations
   const [selectedCategory, setSelectedCategory] = useState<ShopCategory | null>(null); // Selected ShopCategory
   const [allServiceCategories, setAllServiceCategories] = useState<ShopCategory[]>([]);
+  const [allCities, setAllCities] = useState<Cities[]>([]); // All Cities
 
   const [shops, setShops] = useState<ShopList[]>([]); // ShopList List
 
@@ -145,10 +115,16 @@ const HomeScreen: React.FC = () => {
     // Fetch categories from storage on component mount
     const fetchCategories = async () => {
       const storedCategories = await SystemDataStorage.getServiceCategories();
+      const storedCities = await SystemDataStorage.getCities();
       if (storedCategories) {
         setAllServiceCategories(storedCategories);
       } else {
         console.warn("No categories found in storage.");
+      }
+      if (storedCities) {
+        setAllCities(storedCities);
+      } else {
+        console.warn("No cities found in storage.");
       }
     };
 
@@ -204,11 +180,11 @@ const HomeScreen: React.FC = () => {
    *
    */
   const fetchShopsPage = async (cursor?: QueryDocumentSnapshot<DocumentData>) => {
-    if (didFetchRef.current) {
-      console.log("🟥 Force Stopped Fetching");
-      return; // Dev MOD to prevent re-fetching
-    }
-    didFetchRef.current = true;
+    // if (didFetchRef.current) {
+    //   console.log("🟥 Force Stopped Fetching");
+    //   return; // Dev MOD to prevent re-fetching
+    // }
+    // didFetchRef.current = true;
 
     console.log("⏬⏬ Fetching ⏬⏬");
     setLoading(true);
@@ -362,7 +338,7 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.filterTitle}>Filter Options</Text>
 
           <MultiSelectComponent
-            data={data}
+            data={allCities}
             selected={selectedLocations}
             onSelectedChange={setSelectedLocations}
           />
@@ -380,7 +356,7 @@ const HomeScreen: React.FC = () => {
 
           <TouchableOpacity
             onPress={handleFilterButtonPress}
-            style={[styles.filterButton, { backgroundColor: colors.secondary }]}
+            style={[styles.filterButton, { backgroundColor: colors.primary }]}
           >
             <Text style={styles.filterButtonText}>Filter</Text>
           </TouchableOpacity>
