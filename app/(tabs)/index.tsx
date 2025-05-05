@@ -9,6 +9,7 @@ import {
   Platform,
   BackHandler,
   StyleSheet,
+  Alert,
 } from "react-native";
 
 import ShopCard from "../../components/ui/shopCard";
@@ -18,7 +19,7 @@ import CategoriesList from "../../components/ui/categoriesList";
 
 import shopData from "../../assets/Data/data2";
 import SearchBar from "../../components/ui/searchSection";
-import { Link, router } from "expo-router";
+import { Link, router, usePathname } from "expo-router";
 import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 import { Drawer } from "react-native-drawer-layout";
 import { Ionicons } from "@expo/vector-icons";
@@ -81,7 +82,7 @@ const data: MultiSelectDropdownItemProps[] = [
   { label: "Negombo", value: "5" },
 ];
 
-const PAGE_SIZE = 11;
+const PAGE_SIZE = 10;
 
 const HomeScreen: React.FC = () => {
   const { colors, theme, setTheme } = useTheme();
@@ -274,29 +275,36 @@ const HomeScreen: React.FC = () => {
     doFiltering();
   };
 
-  // To Close Drawer on Back Button Press
+  const pathname = usePathname();
+  // To handle back button presses
   useEffect(() => {
     const backAction = () => {
       if (drawerOpen) {
-        setDrawerOpen(false); // Close the drawer if it is drawerOpen
-        return true; // Prevent default back action
+        setDrawerOpen(false);
+        return true;
       }
-      return false; // Allow default back action if drawer is not drawerOpen
+
+      console.log("Back Pressed!", pathname);
+
+      // If we're on the home screen and drawer is closed, exit the app
+      if (pathname === "/" || pathname === "/(tabs)" || pathname === "/(tabs)/index") {
+        Alert.alert(
+          "Exit App",
+          "Are you sure you want to exit?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Exit", style: "destructive", onPress: () => BackHandler.exitApp() },
+          ],
+          { cancelable: true }
+        );
+        return true; // Prevents default back behavior
+      }
+      return false;
     };
+
     const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
-    // Add a custom back handler for iOS
-    if (Platform.OS === "ios") {
-      const iosBackHandler = () => {
-        return true; // Prevent default behavior for iOS
-      };
-
-      // Add event listener for iOS-specific back behavior
-      const iosBackListener = BackHandler.addEventListener("hardwareBackPress", iosBackHandler);
-      return () => iosBackListener.remove();
-    }
-
     return () => backHandler.remove();
-  }, [drawerOpen]);
+  }, [drawerOpen, pathname]);
 
   const handleShopClick = (item: ShopList, gestureEvent: TapGestureHandlerStateChangeEvent) => {
     console.log("UserDocId = ", item.userDocId);

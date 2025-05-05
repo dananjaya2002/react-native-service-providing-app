@@ -19,7 +19,7 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
   try {
     const savedUserData = (await UserStorageService.getUserData()) as UserData;
     if (!savedUserData) {
-      Alert.alert("Error", "User data not found. Please log in again.");
+      // Alert.alert("Error", "User data not found. Please log in again.");
       return [];
     }
     const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "UserFavoritesShops");
@@ -58,7 +58,7 @@ export const updateUserFavoritesServices = async (updatedData: ShopList[]): Prom
     // return true; // Simulate success
     const savedUserData = (await UserStorageService.getUserData()) as UserData;
     if (!savedUserData) {
-      Alert.alert("Error", "User data not found. Please log in again.");
+      // Alert.alert("Error", "User data not found. Please log in again.");
       return false;
     }
 

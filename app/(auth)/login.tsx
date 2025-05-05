@@ -48,7 +48,7 @@ const Login = () => {
 
       setTimeout(() => {
         router.push("/(tabs)"); // Navigate to home after a short delay
-      }, 2000);
+      }, 100);
       setLoading(false);
     } catch (err: any) {
       setLoading(false);

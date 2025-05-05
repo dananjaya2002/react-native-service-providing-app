@@ -57,13 +57,13 @@ const Index = () => {
           setTimeout(() => {
             console.log("No user data found. Redirecting to login...");
             router.push("/(auth)/login"); // Navigate to the login page if no user data
+            setLoading(false); // Set loading to false after navigation
           }, 1000); // Add a slight delay for better UX
         }
       } catch (error) {
         setLoading(false);
         console.error("Error during initialization: ", error);
       } finally {
-        setLoading(false);
       }
     };
 
@@ -84,25 +84,39 @@ const Index = () => {
     }
   };
 
-  if (loading) {
-    // Show loading screen while initializing
-    return (
-      <View style={styles.loadingContainer}>
-        <LottieView
-          source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
-          autoPlay
-          loop
-          style={styles.animation}
-        />
-        {/* Activity Indicator */}
-        <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
-        {/* Loading Text */}
-        <Text style={styles.loadingText}>Lanka Service</Text>
-      </View>
-    );
-  }
+  // if (loading) {
+  //   // Show loading screen while initializing
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <LottieView
+  //         source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
+  //         autoPlay
+  //         loop
+  //         style={styles.animation}
+  //       />
+  //       {loading && (
+  //         <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
+  //       )}
 
-  return <View className="flex-1 bg-gray-400 justify-center items-center"></View>;
+  //       {/* Loading Text */}
+  //       <Text style={styles.loadingText}>Lanka Service</Text>
+  //     </View>
+  //   );
+  // }
+
+  return (
+    <View style={styles.loadingContainer}>
+      <LottieView
+        source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
+        autoPlay
+        loop
+        style={styles.animation}
+      />
+      <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
+      {/* Loading Text */}
+      <Text style={styles.loadingText}>Lanka Service</Text>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({

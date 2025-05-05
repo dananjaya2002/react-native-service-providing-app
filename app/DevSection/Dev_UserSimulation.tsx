@@ -96,7 +96,13 @@ const Dev_UserSimulation = () => {
   let colorIndex = 0;
 
   return (
-    <View className="flex-1 bg-gray-400 justify-center items-center">
+    <View className="flex-1 bg-gray-100 justify-center items-center">
+      <Text className="text-2xl font-bold text-black mb-4">
+        Development Area For Select a User Quickly
+      </Text>
+      <Text className="text-lg font-medium text-black mb-4">
+        All these users are actual users from the database.
+      </Text>
       {docsData.map((doc) => {
         const currentColor = colors[colorIndex % colors.length]; // Cycle through colors
         colorIndex++;
