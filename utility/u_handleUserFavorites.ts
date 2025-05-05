@@ -19,7 +19,7 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
   try {
     const savedUserData = (await UserStorageService.getUserData()) as UserData;
     if (!savedUserData) {
-      Alert.alert("Error", "User data not found. Please log in again.");
+      // Alert.alert("Error", "User data not found. Please log in again.");
       return [];
     }
     const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "UserFavoritesShops");
@@ -44,21 +44,34 @@ export const getUserFavoritesServices = async (): Promise<ShopList[]> => {
   }
 };
 
+/**
+ * Updates the user's favorite shops in the Firestore database and local storage.
+ *
+ * @param {ShopList[]} updatedData - The updated list of favorite shops to be saved.
+ * @returns {Promise<boolean>} A promise that resolves to `true` if the operation is successful, otherwise `false`.
+ */
 export const updateUserFavoritesServices = async (updatedData: ShopList[]): Promise<boolean> => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // 1-second timeout
-    console.log("Simulated update of user favorites", updatedData.length);
+    // await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second timeout
+    // console.log("Simulated update of user favorites", updatedData.length);
+    // console.log("Simulated update of user favorites", updatedData);
     // return true; // Simulate success
     const savedUserData = (await UserStorageService.getUserData()) as UserData;
     if (!savedUserData) {
-      Alert.alert("Error", "User data not found. Please log in again.");
+      // Alert.alert("Error", "User data not found. Please log in again.");
       return false;
     }
 
     const userDocRef = doc(db, "Users", savedUserData.userId, "UserData", "UserFavoritesShops");
 
-    // Overwrite the entire document with the new data
-    await setDoc(userDocRef, updatedData);
+    // Convert the array to an object with shop IDs as keys
+    const favoritesObject = updatedData.reduce((acc, shop) => {
+      acc[shop.id] = { ...shop };
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Use the object with setDoc instead of the array
+    await setDoc(userDocRef, favoritesObject);
 
     // Update the local storage with the new favorites
     await UserStorageService.saveUserFavorites(updatedData);

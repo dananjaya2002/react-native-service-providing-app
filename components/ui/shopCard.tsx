@@ -71,7 +71,7 @@ const ShopCard: React.FC<ShopCardProps> = ({
           </View>
           <View style={styles.row}>
             <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
+              <Ionicons name="star" size={16} color="#EF9B0F" />
               <Text style={styles.ratingText}>{item.avgRating.toFixed(1)}</Text>
             </View>
             {shouldDisplayFavoriteIcon && (
@@ -102,7 +102,7 @@ const ShopCard: React.FC<ShopCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "white",
+    backgroundColor: "#FFFFFF",
     height: 130,
     width: "100%",
     alignItems: "center",
@@ -119,16 +119,16 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   image: {
-    width: 110,
-    height: 110,
+    width: 114,
+    height: 114,
     borderRadius: 0,
     marginRight: 8,
   },
   contentContainer: {
     flex: 1,
     height: "100%",
-
     justifyContent: "space-between",
+    paddingVertical: 4,
   },
   subContainer: {
     flex: 1,

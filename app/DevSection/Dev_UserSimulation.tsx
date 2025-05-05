@@ -6,12 +6,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { UserStorageService } from "../../storage/functions/userStorageService";
 import { UserData } from "../../interfaces/UserData";
 import { fetchAndStoreServiceCategories } from "@/utility/u_getSystemInfo";
+import { clearUserData } from "@/utility/u_cleanUpForNewUser";
+import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 
 const docIds: string[] = [
-  "68jIzshLLLaRJ7QM1QnJ",
-  "6OidFCuMNizeBiGv2Fyn",
-  "6acGPQnW54XVN8AAbW5v",
-  "GjOQqJcCeVkeFmHap3Sn",
+  "3pb3ivjRuAQmMjaSK15v",
+  "D16ZnkrnqunSDhbuZEvd",
+  "EcF2dYNoKXXSZcOyrhmK",
+  "KK58uPO3PKmAEuGZZxtY",
 ];
 
 const Dev_UserSimulation = () => {
@@ -81,9 +83,11 @@ const Dev_UserSimulation = () => {
   }
 
   const onItemPress = async (doc: UserData) => {
+    clearUserData(); // Clear any existing user data before saving new data
     // Transform the data before saving it.
     const formattedDoc = transformUserData(doc);
     await UserStorageService.saveUserData(formattedDoc);
+    await getUserFavoritesServices();
     console.log("Saved User Data: ", formattedDoc);
     router.push("/(tabs)");
   };
@@ -92,7 +96,13 @@ const Dev_UserSimulation = () => {
   let colorIndex = 0;
 
   return (
-    <View className="flex-1 bg-gray-400 justify-center items-center">
+    <View className="flex-1 bg-gray-100 justify-center items-center">
+      <Text className="text-2xl font-bold text-black mb-4">
+        Development Area For Select a User Quickly
+      </Text>
+      <Text className="text-lg font-medium text-black mb-4">
+        All these users are actual users from the database.
+      </Text>
       {docsData.map((doc) => {
         const currentColor = colors[colorIndex % colors.length]; // Cycle through colors
         colorIndex++;

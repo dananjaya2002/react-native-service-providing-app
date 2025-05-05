@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   FlatList,
   Alert,
+  StyleSheet,
 } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -34,8 +35,11 @@ import { OwnerShopPageAsyncStorage } from "../../../storage/functions/ownerShopD
 import { ShopPageData, UserComment, ShopServices } from "../../../interfaces/iShop";
 import { ShopDataForCharRoomCreating } from "../../../interfaces/iChat";
 import { UserData } from "../../../interfaces/UserData";
+import { updateShopMainPage } from "@/utility/u_updateShopPage";
+import { useTheme } from "@/context/ThemeContext";
 
 const Shop = () => {
+  const { colors, theme, setTheme } = useTheme();
   const sheetRef = useRef<UpdateSheetRef>(null);
   // Shared value to control the FloatingButtonBar's vertical position.
   const floatingBarY = useSharedValue(0);
@@ -50,7 +54,7 @@ const Shop = () => {
   const [loadingMoreComments, setLoadingMoreComments] = useState(false);
   const [userCommentList, setUserCommentList] = useState<any[]>([]);
   const [shopData, setShopData] = useState<ShopPageData | null>(null);
-  const [userDocRefID, setUserDocRefID] = useState<string | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [itemList, setItemList] = useState<ShopServices[]>([]);
 
@@ -67,15 +71,24 @@ const Shop = () => {
     useCallback(() => {
       const fetchDataOnFocus = async () => {
         setIsLoading(true);
-        console.log("Page is focused. Fetching data...");
         try {
-          const savedUserData = await fetchUserData();
+          // get user data from AsyncStorage
+          const savedUserData = (await UserStorageService.getUserData()) as UserData;
+          if (!savedUserData) {
+            console.log("No user data found. Redirecting to login page.");
+            router.push("/(auth)/login");
+            return;
+          }
+          setUserData(savedUserData);
+
+          // check if user is service provider
           if (!savedUserData?.isServiceProvider) {
             router.push("/(tabs)/shop/shop_Create");
             return;
           }
+
+          // get shop comments
           if (savedUserData.userId) {
-            // Only now safe to use savedUserData.userId
             const { comments, lastDoc: newLastDoc } = await fetchUserComments({
               initialLoad: true,
               userId: savedUserData.userId,
@@ -89,12 +102,13 @@ const Shop = () => {
               setShopData(fetchedData);
               setItemList(fetchedData.items ? Object.values(fetchedData.items) : []);
             } else {
-              console.log("No shop data found. Redirecting to shop creation page.");
-              router.push("/(tabs)/shop/shop_Create");
+              console.log("No shop data found for the user.");
+              Alert.alert("Error", "No shop data found for the user.");
             }
           }
         } catch (error) {
           console.error("Error in fetching process:", error);
+          Alert.alert("Error", "An error occurred while fetching data. Please try again later.");
         } finally {
           setIsLoading(false);
         }
@@ -104,88 +118,19 @@ const Shop = () => {
     }, [])
   );
 
-  /**
-   *
-   * Get Data from the Database
-   *
-   */
-  const fetchUserData = async () => {
-    try {
-      const savedUserData = (await UserStorageService.getUserData()) as UserData;
-      if (savedUserData?.userId) {
-        setUserDocRefID(savedUserData.userId);
-        console.log("User data fetched:", savedUserData.userId);
-        return savedUserData;
-      } else {
-        console.log("No user data found.");
-        setIsLoading(false); // Stop loading if no user data
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      setIsLoading(false); // Stop loading on error
-    }
-  };
-
-  // const fetShopData = async () => {
-  //   try {
-  //     if (!userDocRefID) {
-  //       setIsLoading(false);
-  //       return;
-  //     }
-  //     // Attempt to fetch shopData data
-  //     const { comments, lastDoc: newLastDoc } = await fetchUserComments({
-  //       initialLoad: true,
-  //       userId: userDocRefID,
-  //     });
-
-  //     console.log("Comments fetched:", comments);
-  //     setUserCommentList(comments);
-  //     setLastCommentDoc(newLastDoc);
-
-  //     // Attempt to fetch shopData shopData
-  //     const fetchedData = await getShopPageData(userDocRefID);
-  //     if (fetchedData) {
-  //       console.log("Shop data fetched:");
-  //       setShopData(fetchedData); // set state
-  //       setItemList(fetchedData.items ? Object.values(fetchedData.items) : []); // Update itemList with fetched data
-  //     } else {
-  //       console.log("No shop data found. Redirecting to shop creation page.");
-  //       setIsLoading(false);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error);
-  //   } finally {
-  //     setIsLoading(false); // Set loading to false after data fetching
-  //   }
-  // };
-
-  /**
-   *
-   * Save Shop Data in AsyncStorage
-   *
-   */
-  // const saveShopData = async (shopData: ShopPageData) => {
-  //   try {
-  //     await OwnerShopPageAsyncStorage.saveUserData(shopData);
-  //     console.log("Shop data saved successfully!");
-  //   } catch (error) {
-  //     console.error("Error saving shop data:", error);
-  //   }
-  // };
-
   // loading indicator
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007bff" />
-        <Text className="mt-4 text-lg font-semibold text-gray-600">Loading, please wait...</Text>
+        <Text style={styles.loadingText}>Loading, please wait...</Text>
       </View>
     );
   }
 
   if (!shopData) {
-    <View className="flex-1 justify-center items-center bg-white">
-      <Text className="mt-4 text-lg font-semibold text-gray-600">Shop Data Not Found</Text>
+    <View style={styles.loadingContainer}>
+      <Text style={styles.loadingText}>Shop Data Not Found</Text>
     </View>;
     return;
   }
@@ -202,9 +147,6 @@ const Shop = () => {
 
   const handleRightPress = async () => {
     try {
-      // Store the data in AsyncStorage
-      //await AsyncStorage.setItem("shop_data", JSON.stringify(shopData));
-
       // Navigate to the next screen
       router.push("/(tabs)/shop/sp_ShopEdit");
     } catch (error) {
@@ -218,9 +160,57 @@ const Shop = () => {
     description: string;
     phoneNumber: string;
     category: string;
+    shopPageImageUrl: string;
   }) => {
-    console.log("Received updated values:", data);
-    // Handle the updated data (e.g., update state or call an API)
+    if (!userData) {
+      console.error("User data is not available.");
+      Alert.alert("Error", "User data is not available.");
+      return;
+    }
+    // Check if we need multiple document updates or just a partial update.
+    if (
+      data.title !== shopData.shopName ||
+      data.description !== shopData.shopDescription ||
+      data.shopPageImageUrl !== shopData.shopPageImageUrl
+    ) {
+      console.log("Received updated values:", data);
+      updateShopMainPage(
+        userData.userId,
+        data.title,
+        data.description,
+        data.phoneNumber,
+        data.category,
+        data.shopPageImageUrl,
+        true
+      );
+    } else {
+      updateShopMainPage(
+        userData.userId,
+        data.title,
+        data.description,
+        data.phoneNumber,
+        data.category,
+        data.shopPageImageUrl,
+        false
+      );
+    }
+
+    // Update the shop data in the UI
+    setShopData((prev) => {
+      if (!prev) {
+        console.error("Previous shop data is null.");
+        Alert.alert("Error", "Previous shop data is null.");
+        return null;
+      }
+      return {
+        ...prev,
+        shopName: data.title,
+        shopDescription: data.description,
+        phoneNumber: data.phoneNumber,
+        shopCategory: data.category,
+        shopPageImageUrl: data.shopPageImageUrl,
+      };
+    });
   };
 
   /**
@@ -230,11 +220,11 @@ const Shop = () => {
    */
   const handleEndReached = async () => {
     console.log("End reached, loading more comments...");
-    if (!loadingMoreComments && lastDoc && userDocRefID) {
+    if (!loadingMoreComments && lastDoc && userData) {
       setLoadingMoreComments(true);
       try {
         const { comments, lastDoc: newLastDoc } = await fetchUserComments({
-          userId: userDocRefID,
+          userId: userData.userId,
           lastDoc,
         });
         setUserCommentList((prev) => [...prev, ...comments]);
@@ -263,65 +253,56 @@ const Shop = () => {
   // Header content that will scroll along with the FlatList
   const ListHeader = () => (
     <View>
-      <View className="flex-col bg-white">
-        <View className="flex-row items-center py-2 bg-primary">
-          <View className="w-10" />
-          <Text className="text-2xl font-bold flex-1 text-center">Explore Services</Text>
-          <View className="px-3">
-            <FontAwesome name="user-circle" size={24} color="black" />
+      <View style={[styles.headerColumn, { backgroundColor: colors.background }]}>
+        <View style={styles.headerTopBar}>
+          <View style={styles.headerButtonPlaceholder} />
+          <Text style={[styles.headerTitle]}>Explore Services</Text>
+          <View style={styles.userIconContainer}>
+            {userData?.profileImageUrl ? (
+              <Image source={{ uri: userData?.profileImageUrl }} style={styles.profileImage} />
+            ) : (
+              <FontAwesome name="user-circle" size={28} color="black" />
+            )}
           </View>
         </View>
 
-        <View className="relative w-full h-[200px] items-center justify-center">
+        <View style={styles.imageContainer}>
           <ImageBackground
             source={{ uri: shopData.shopPageImageUrl }}
             blurRadius={15}
-            className="absolute w-full h-full"
+            style={styles.backgroundImage}
           >
-            <View className="flex-1" />
+            <View style={styles.flex1} />
           </ImageBackground>
           <Image
             source={{ uri: shopData.shopPageImageUrl }}
             resizeMode="center"
-            className="h-full w-full"
+            style={styles.foregroundImage}
           />
         </View>
 
-        <View className="h-auto px-4 py-2 bg-white shadow-xl">
-          <Text className="text-2xl text-start font-semibold flex-1">{shopData.shopName}</Text>
-          <Text className="text-md text-start font-normal">{shopData.shopDescription}</Text>
-          <View className="flex-row">
+        <View style={[styles.shopInfoContainer, { backgroundColor: colors.card_background }]}>
+          <Text style={styles.shopName}>{shopData.shopName}</Text>
+          <Text style={styles.shopDescription}>{shopData.shopDescription}</Text>
+          <View style={styles.infoRow}>
             <UserReviewStars
               averageRating={shopData.dashboardInfo.avgRatings}
               totalRatings={shopData.dashboardInfo.totalRatings}
             />
-            <Text className="bg-primary rounded-2xl ml-6 px-4 border border-gray-300">Colombo</Text>
+            <Text style={styles.locationBadge}>{shopData.shopLocation}</Text>
+            <Text style={styles.categoryBadge}>{shopData.shopCategory}</Text>
           </View>
         </View>
 
-        {/* <View className="h-auto mx-6 my-4 flex-row flex-wrap justify-evenly p-2 rounded-2xl bg-primary">
-          <View className="w-full h-auto">
-            <Text className="text-lg text-center font-semibold">Store Overview</Text>
-          </View>
-          <StatusCard status="Waiting" count={shopData.dashboardInfo.waiting} />
-          <StatusCard status="Completed" count={shopData.dashboardInfo.completed} />
-          <StatusCard status="Items" count={shopData.dashboardInfo.items} />
-          <StatusCard status="Agreements" count={shopData.dashboardInfo.agreement} />
-          <StatusCard status="Avg Ratings" count={shopData.dashboardInfo.avgRatings} />
-          <StatusCard status="Messages" count={shopData.dashboardInfo.messages} />
-        </View> */}
-
-        <View className="h-auto py-2 px-3 mb-6 border-[1px] border-y-gray-500 ">
-          <Text className="text-sm text-left px-3">
-            {shopData.serviceInfo.replace(/\\n/g, "\n")}
-          </Text>
+        <View style={[styles.serviceInfoContainer, { backgroundColor: colors.card_background }]}>
+          <Text style={styles.serviceInfoText}>{shopData.serviceInfo.replace(/\\n/g, "\n")}</Text>
         </View>
 
-        <View className="h-auto bg-primary py-3">
+        <View style={[styles.itemsContainer, { backgroundColor: colors.background }]}>
           <HorizontalScrollView items={itemList as ShopServices[]} />
         </View>
-        <View className="bg-primary">
-          <Text className="text-lg font-semibold mx-4">Comments</Text>
+        <View style={[styles.commentsHeaderContainer]}>
+          <Text style={styles.commentsHeaderText}>Comments ({userCommentList.length})</Text>
         </View>
       </View>
     </View>
@@ -329,7 +310,7 @@ const Shop = () => {
 
   return (
     <>
-      <View className="flex-1 bg-primary">
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FlatList
           data={userCommentList}
           keyExtractor={(_, index) => index.toString()}
@@ -361,10 +342,13 @@ const Shop = () => {
         description={shopData.shopDescription}
         phoneNumber={shopData.phoneNumber}
         category={shopData.shopCategory}
+        shopPageImageUrl={shopData.shopPageImageUrl}
+        shopLocation={shopData.shopLocation}
+        shopServiceInfo={shopData.serviceInfo}
         onUpdate={handleUpdate}
         onOpen={() => {
           // Slide the FloatingButtonBar down (off-screen).
-          // Adjust the value (e.g., 60) to match your bar’s height.
+          // Adjust the value (e.g., 60) to match your bar's height.
           floatingBarY.value = withTiming(80, { duration: 300 });
         }}
         onClose={() => {
@@ -395,5 +379,146 @@ const Shop = () => {
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "red", // primary color
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#666666",
+  },
+  flex1: {
+    flex: 1,
+  },
+  headerColumn: {
+    flexDirection: "column",
+  },
+  headerTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  headerButtonPlaceholder: {
+    width: 40,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+  },
+  userIconContainer: {
+    paddingHorizontal: 12,
+  },
+  imageContainer: {
+    position: "relative",
+    width: "100%",
+    height: 200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backgroundImage: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  foregroundImage: {
+    height: "100%",
+    width: "100%",
+  },
+  shopInfoContainer: {
+    height: "auto",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1,
+  },
+  shopName: {
+    fontSize: 24,
+    textAlign: "left",
+    fontWeight: "600",
+    flex: 1,
+  },
+  shopDescription: {
+    fontSize: 16,
+    textAlign: "left",
+    fontWeight: "normal",
+  },
+  infoRow: {
+    flexDirection: "row",
+  },
+  locationBadge: {
+    backgroundColor: "#F7F7F7", // primary color
+    borderRadius: 8,
+    marginLeft: 24,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    fontSize: 14,
+    color: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  categoryBadge: {
+    backgroundColor: "#F7F7F7", // primary color
+    borderRadius: 8,
+    marginLeft: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    fontSize: 14,
+    color: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  serviceInfoContainer: {
+    height: "auto",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 24,
+  },
+  serviceInfoText: {
+    marginTop: 8,
+    fontSize: 14,
+    textAlign: "left",
+    paddingHorizontal: 12,
+  },
+  itemsContainer: {
+    height: "auto",
+    paddingVertical: 12,
+  },
+  commentsHeaderContainer: {},
+  commentsHeaderText: {
+    fontSize: 18,
+    fontWeight: "800",
+    marginHorizontal: 16,
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  profileImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginLeft: 8,
+  },
+});
 
 export default Shop;

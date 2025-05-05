@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { fetchAndStoreServiceCategories } from "@/utility/u_getSystemInfo";
+import { fetchAndStoreServiceCategories, getAndStoreCities } from "@/utility/u_getSystemInfo";
 import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import components for SVG rendering
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
+import LottieView from "lottie-react-native";
+import { syncFirestoreToLocalDB } from "@/db/syncFirestore";
+import { startRealtimeSync } from "@/db/realtimeSync";
 
 const Index = () => {
   const router = useRouter(); // Get router instance
@@ -12,11 +15,36 @@ const Index = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // setTimeout(() => {
+    //   router.push("/DevSection/DevUI");
+    // }, 1000);
+    // return;
+
     const initializeApp = async () => {
       try {
         console.log("Initializing app...");
-        await updateServiceCategories(); // Call the function to update service categories
+        const isServiceUpdated = await updateServiceCategories(); // Call the function to update service categories
+        const isLocationsUpdated = await getAndStoreCities(); // Call the function to get and store cities
 
+        // // Database Sync
+        // // OPTION A: Use only one-time sync
+        // console.log("Syncing shop search data to local database...");
+        // await syncFirestoreToLocalDB();
+        // console.log("Shop search data sync complete ✅");
+
+        // Start realtime sync to keep the database updated
+        // OPTION B: Use only realtime sync (which will populate the database on first run)
+        console.log("Starting realtime data sync...");
+        await startRealtimeSync();
+
+        if (isServiceUpdated!) {
+          Alert.alert("Error", "Service Category Data is not updated!");
+          return;
+        }
+        if (!isLocationsUpdated) {
+          Alert.alert("Error", "City Data is not updated");
+          return;
+        }
         // Check if user data exists
         const userData = await UserStorageService.getUserData();
         if (userData) {
@@ -29,13 +57,13 @@ const Index = () => {
           setTimeout(() => {
             console.log("No user data found. Redirecting to login...");
             router.push("/(auth)/login"); // Navigate to the login page if no user data
+            setLoading(false); // Set loading to false after navigation
           }, 1000); // Add a slight delay for better UX
         }
       } catch (error) {
         setLoading(false);
         console.error("Error during initialization: ", error);
       } finally {
-        setLoading(false);
       }
     };
 
@@ -56,19 +84,39 @@ const Index = () => {
     }
   };
 
-  if (loading) {
-    // Show loading screen while initializing
-    return (
-      <View style={styles.loadingContainer}>
-        {/* Activity Indicator */}
-        <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
-        {/* Loading Text */}
-        <Text style={styles.loadingText}>Lanka Service</Text>
-      </View>
-    );
-  }
+  // if (loading) {
+  //   // Show loading screen while initializing
+  //   return (
+  //     <View style={styles.loadingContainer}>
+  //       <LottieView
+  //         source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
+  //         autoPlay
+  //         loop
+  //         style={styles.animation}
+  //       />
+  //       {loading && (
+  //         <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
+  //       )}
 
-  return <View className="flex-1 bg-gray-400 justify-center items-center"></View>;
+  //       {/* Loading Text */}
+  //       <Text style={styles.loadingText}>Lanka Service</Text>
+  //     </View>
+  //   );
+  // }
+
+  return (
+    <View style={styles.loadingContainer}>
+      <LottieView
+        source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
+        autoPlay
+        loop
+        style={styles.animation}
+      />
+      <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
+      {/* Loading Text */}
+      <Text style={styles.loadingText}>Lanka Service</Text>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -86,6 +134,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
+  },
+  animation: {
+    width: 400, // Adjust the width as needed
+    height: 400, // Adjust the height as needed
   },
 });
 
