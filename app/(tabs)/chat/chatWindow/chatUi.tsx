@@ -40,6 +40,22 @@ import { getShopListData } from "@/utility/u_getShopListData";
 // export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 // type UserRoles = "customer" | "serviceProvider";
 
+/**
+ * ChatScreen Component
+ *
+ * This component represents the chat screen of the application. It provides functionality for
+ * sending and receiving messages, uploading images, requesting agreements, and rating services.
+ * It also handles user interactions and displays chat messages in a list.
+ *
+ * @component
+ *
+ * @localparam {string} chatRoomDocRefId - The document reference ID of the chat room.
+ * @localparam {string} userID - The ID of the current user.
+ * @localparam {UserRoles} userRole - The role of the current user, either "customer" or "serviceProvider".
+ * @localparam {string} otherPartyUserId - The ID of the other party in the chat.
+ *
+ * @returns {JSX.Element} The rendered chat screen component.
+ */
 export default function ChatScreen() {
   // Retrieve the dynamic parameters from the URL
   const { chatRoomDocRefId, userID, userRole, otherPartyUserId } = useLocalSearchParams<{
@@ -211,8 +227,11 @@ export default function ChatScreen() {
     >
       {/* Chat Header with Profile Image and Name */}
       <ChatHeader
-        profileImageUrl={otherPartyData?.profileImageUrl || "undefined"}
-        profileName={otherPartyData?.userName || "undefined"}
+        profileImageUrl={
+          otherPartyData?.profileImageUrl ||
+          "https://res.cloudinary.com/dpjdmbozt/image/upload/v1746345933/placeholderUserImage_wqgtky.jpg"
+        }
+        profileName={otherPartyData?.userName || "....."}
         isParticipantOnline={participantOnlineStatus}
       />
       {/* AgreementFAButton - Service Provider */}

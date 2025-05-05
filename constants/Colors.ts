@@ -1,26 +1,31 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+// light and dark color palettes
+export const lightColors = {
+  primary: "#00296B",
+  secondary: "#FDC500",
+  background: "#48ACF0",
+  card_background: "#F5F5F5",
+  text: "#000000",
+  border: "#E0E0E0",
+  notification: "#FF3B30",
+  button_Primary: "#FDC500",
+  button_Secondary: "#00296B",
+  button_Text_Primary: "#FFFFFF",
+  button_Text_Secondary: "#FFFFFF",
 };
+
+export const darkColors = {
+  primary: "#00296B",
+  secondary: "#FDC500",
+  background: "#FFFFFF",
+  card_background: "#F5F5F5",
+  text: "#000000",
+  border: "#E0E0E0",
+  notification: "#FF3B30",
+  button_Primary: "#FDC500",
+  button_Secondary: "#00296B",
+  button_Text_Primary: "#FFFFFF",
+  button_Text_Secondary: "#FFFFFF",
+};
+
+// export a union of your theme names
+export type ThemeName = "light" | "dark";

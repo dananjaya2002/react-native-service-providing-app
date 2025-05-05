@@ -29,17 +29,17 @@ const ShopContactInfo: React.FC<ShopContactInfoProps> = ({
       // If no shop is provided, start a timeout to disable the button after 10 seconds
       const timeout = setTimeout(() => {
         setButtonDisabled(true);
-        setLoading(false); // Stop loading after timeout
+        setLoading(false);
       }, 10000); // 10 seconds
 
       return () => clearTimeout(timeout); // Cleanup timeout on unmount
     }
 
     const checkIfBookmarked = async () => {
-      setLoading(true); // Show loading indicator while checking
+      setLoading(true);
       const bookmarked = await isShopInFavorites(shop);
       setIsBookmarked(bookmarked);
-      setLoading(false); // Hide loading indicator after check
+      setLoading(false);
     };
 
     checkIfBookmarked();
@@ -57,12 +57,13 @@ const ShopContactInfo: React.FC<ShopContactInfoProps> = ({
         return;
       }
 
+      console.log("Adding shop to favorites:", shop);
       const success = await addShopToFavorites(shop);
       if (success) {
         setIsBookmarked(true);
         Alert.alert("Success", "Shop added to your favorites.");
       } else {
-        Alert.alert("Error", "Failed to add shop to favorites. Please try again.");
+        Alert.alert("Error", "Failed to modify Save Icon. Please try again.");
       }
     } else {
       onOptionSelect(option.text); // Handle other options via the callback

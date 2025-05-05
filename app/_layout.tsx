@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { ThemeProvider } from "../context/ThemeContext";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -16,6 +16,7 @@ import { ShopProvider } from "../context/ShopContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import "../utility/U_Dev_CustomLogger";
+import { useTheme } from "../context/ThemeContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,6 +26,8 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
+  const { colors, theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (loaded) {
@@ -40,7 +43,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1 }}>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <ThemeProvider>
             <ShopProvider>
               <KeyboardProvider>
                 <Stack screenOptions={{ headerShown: false }}>
@@ -58,7 +61,7 @@ export default function RootLayout() {
               </KeyboardProvider>
             </ShopProvider>
 
-            <StatusBar style="dark" backgroundColor="#fad6be" />
+            <StatusBar style="dark" backgroundColor={colors.background} />
           </ThemeProvider>
         </SafeAreaView>
       </SafeAreaProvider>

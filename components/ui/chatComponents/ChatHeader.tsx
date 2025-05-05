@@ -3,6 +3,7 @@ import { View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { useTheme } from "@/context/ThemeContext";
 
 interface ChatHeaderProps {
   profileImageUrl: string;
@@ -16,7 +17,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   isParticipantOnline,
 }) => {
   const router = useRouter();
-
+  const { colors, theme, setTheme } = useTheme();
   // Shared value drives both opacity/height for the online text and the profile name's margin.
   // Value will be 0 (offline) or 1 (online)
   const onlineValue = useSharedValue(isParticipantOnline ? 1 : 0);
@@ -41,7 +42,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Back Button */}
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color="#333" />
@@ -68,7 +69,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     height: 60,
-    backgroundColor: "#fad6be", // primary color
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,

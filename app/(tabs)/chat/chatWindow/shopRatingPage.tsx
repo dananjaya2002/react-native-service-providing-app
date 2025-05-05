@@ -25,8 +25,11 @@ import {
   IUserRatingsFirebaseDocument,
   IUserRatingUploadParams,
 } from "../../../../interfaces/iUserRatings";
+import { useTheme } from "@/context/ThemeContext";
 
 const ShopRatingPage = () => {
+  const { colors, theme, setTheme } = useTheme();
+
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -110,12 +113,12 @@ const ShopRatingPage = () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#F2F3F4" }}
+      style={{ flex: 1, backgroundColor: "#A4D6F8" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 90}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ justifyContent: "flex-end" }}>
+        <View style={{ flex: 1 }}>
           {/* Header Section */}
           <HeaderMain
             title="Rate the Service"
@@ -124,44 +127,59 @@ const ShopRatingPage = () => {
             showLogoutButton={false}
           />
 
-          <View style={styles.headerContainer}>
-            <Image
-              style={styles.headerImage}
-              source={{
-                uri: shopCard?.shopPageImageUrl || "https://placehold.co/400x200?text=No+Image", // Replace 400x200 with your desired dimensions
-              }}
-            />
-            <View style={styles.headerTextContainer}>
-              <Text style={styles.headerText}>{shopCard?.shopName || "loading.."}</Text>
+          <View style={styles.mainContainer}>
+            {/* Shop Info Card */}
+            <View style={styles.shopCardContainer}>
+              <Image
+                style={styles.shopImage}
+                source={{
+                  uri: shopCard?.shopPageImageUrl || "https://placehold.co/400x200?text=No+Image",
+                }}
+              />
+              <View style={styles.shopInfoContainer}>
+                <Text style={styles.shopName}>{shopCard?.shopName || "loading.."}</Text>
+                <Text style={styles.shopDescription}>
+                  Ratings: {shopCard?.totalRatingsCount || "loading.."}
+                </Text>
+              </View>
             </View>
-          </View>
-          {/* Content Section */}
-          <View style={styles.contentContainer}>
-            <Text style={styles.subtitle}>Share your feedback and rate your experience</Text>
-            {/* Comment Input */}
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Add your comment..."
-              placeholderTextColor="#888"
-              value={comment}
-              onChangeText={setComment}
-              multiline
-              scrollEnabled
-              textAlignVertical="top"
-              underlineColorAndroid="transparent"
-            />
-            {/* 5-Star Rating */}
-            <View style={styles.ratingContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => handleStarPress(star)}>
-                  <Ionicons
-                    name={rating >= star ? "star" : "star-outline"}
-                    size={36}
-                    color="#FFD700"
-                  />
-                </TouchableOpacity>
-              ))}
+
+            {/* Rating Stars - Moved up */}
+            <View style={styles.ratingSection}>
+              <Text style={styles.ratingLabel}>Rate your experience:</Text>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => handleStarPress(star)}
+                    style={styles.starButton}
+                  >
+                    <Ionicons
+                      name={rating >= star ? "star" : "star-outline"}
+                      size={40}
+                      color="#EF9B0F"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
+
+            {/* Comment Section */}
+            <View style={styles.commentSection}>
+              <Text style={styles.commentLabel}>Share your feedback:</Text>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="What did you like or dislike about the service?"
+                placeholderTextColor="#666"
+                value={comment}
+                onChangeText={setComment}
+                multiline
+                scrollEnabled
+                textAlignVertical="top"
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
             {/* Submit Button */}
             <TouchableOpacity
               style={[styles.submitButton, loading && { opacity: 0.5 }]}
@@ -182,78 +200,111 @@ const ShopRatingPage = () => {
 export default ShopRatingPage;
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: "#f2f2f2", // Light gray background
+    padding: 16,
   },
-  headerContainer: {
+  shopCardContainer: {
     flexDirection: "row",
-    backgroundColor: "#22c55e", // Green-500
-    marginHorizontal: 16,
-    marginTop: 16,
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     overflow: "hidden",
-    alignItems: "center",
-    padding: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginBottom: 10,
   },
-  headerImage: {
-    width: 80,
-    height: 80,
+  shopImage: {
+    width: 90,
+    height: 90,
     borderRadius: 8,
-    backgroundColor: "#facc15", // Yellow-300
   },
-  headerTextContainer: {
+  shopInfoContainer: {
     flex: 1,
-    justifyContent: "center",
-    paddingLeft: 16,
-  },
-  headerText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 20,
-  },
-  contentContainer: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 16,
-  },
-  commentInput: {
-    height: 100, // Fixed height prevents runaway growth
-    maxHeight: 150, // Allows scrolling when content exceeds this height
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
     padding: 12,
-    backgroundColor: "#fff",
-    fontSize: 16,
-    color: "#333",
-    marginBottom: 16,
+    justifyContent: "center",
   },
-  ratingContainer: {
+  shopName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  shopDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+  ratingSection: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  ratingLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  starsContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 24,
+    alignItems: "center",
+  },
+  starButton: {
+    padding: 5,
   },
   submitButton: {
-    backgroundColor: "#22c55e",
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: "#00296B",
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   submitButtonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
+  },
+  commentSection: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  commentLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+  },
+  commentInput: {
+    height: 120,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: "#333",
+    backgroundColor: "#f9f9f9",
+    textAlignVertical: "top",
   },
 });

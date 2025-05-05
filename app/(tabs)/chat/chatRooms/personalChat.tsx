@@ -91,6 +91,9 @@ export default function ChatList() {
 
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string, otherPartyUserId: string) => {
+    console.log("chatRoom:", chatRoom);
+    console.log("otherPartyUserId:", otherPartyUserId);
+    console.log("userDocRefID:", userDocRefID);
     try {
       router.push({
         pathname: "/(tabs)/chat/chatWindow/chatUi",
