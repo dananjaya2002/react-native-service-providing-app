@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from "react";
-import { lightColors, darkColors, ThemeName } from "../constants/colors";
+import { lightColors, darkColors, ThemeName } from "../constants/Colors";
 
 // shape of what we provide
 interface ThemeContextType {
