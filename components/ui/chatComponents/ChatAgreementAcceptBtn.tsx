@@ -1,8 +1,12 @@
 // /components/section2/chatComponents/chatAgreement.tsx
-import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, Text, ActivityIndicator } from "react-native";
 import { db } from "../../../FirebaseConfig";
+import { useChat } from "@/hooks/useChat";
+import { UserData } from "@/interfaces/UserData";
+import { StorageService } from "@/storage/asyncStorage";
+import { UserStorageService } from "@/storage/functions/userStorageService";
 
 interface ChatAgreementAcceptsCardProps {
   chatRoomDocRefId: string;
@@ -23,6 +27,22 @@ const ChatAgreementAcceptsCard: React.FC<ChatAgreementAcceptsCardProps> = ({
   const handlePressIn = () => setIsPressed(true);
   const handlePressOut = () => setIsPressed(false);
 
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  const { agreementStatus } = useChat(
+    chatRoomDocRefId,
+    userData?.userId ? userData.userId : "",
+    userRole
+  );
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const data = await UserStorageService.getUserData();
+      setUserData(data);
+    };
+    fetchUserData();
+  }, []);
+
   // On mount, check if agreement already exists as accepted
   useEffect(() => {
     const checkAgreementStatus = async () => {
@@ -35,6 +55,7 @@ const ChatAgreementAcceptsCard: React.FC<ChatAgreementAcceptsCardProps> = ({
             setAccepted(true);
           }
         }
+        console.log("Agreement status checked:", agreementStatus);
       } catch (error) {
         console.error("Error checking agreement status:", error);
       } finally {
@@ -42,7 +63,7 @@ const ChatAgreementAcceptsCard: React.FC<ChatAgreementAcceptsCardProps> = ({
       }
     };
     checkAgreementStatus();
-  }, [chatRoomDocRefId]);
+  }, [agreementStatus]);
 
   const handlePress = async () => {
     // Prevent duplicate writes and disable interaction for serviceProvider or during initial loading.
@@ -50,12 +71,31 @@ const ChatAgreementAcceptsCard: React.FC<ChatAgreementAcceptsCardProps> = ({
 
     setLoading(true);
     try {
-      // Update the Firestore document with new fields.
-      const docRef = doc(db, "Chat", chatRoomDocRefId);
-      await updateDoc(docRef, {
+      // Create references to both documents
+      const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
+      const agreementDocRef = doc(db, "Chat", chatRoomDocRefId, "ChatRoomMoreInfo", "agreement");
+      // Create a batch
+      const batch = writeBatch(db);
+
+      // Add update operations to the batch
+      batch.update(chatDocRef, {
         agreement: "accepted",
         acceptedTime: serverTimestamp(),
       });
+
+      // Set or update the agreement subcollection document
+      batch.set(
+        agreementDocRef,
+        {
+          agreement: "accepted",
+          acceptedTime: serverTimestamp(),
+        },
+        { merge: true }
+      ); // Use merge: true to update without overwriting existing fields
+
+      // Commit the batch
+      await batch.commit();
+
       setAccepted(true);
       if (onAccept) onAccept();
     } catch (error) {

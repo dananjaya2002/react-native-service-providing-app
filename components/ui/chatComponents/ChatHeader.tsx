@@ -9,12 +9,14 @@ interface ChatHeaderProps {
   profileImageUrl: string;
   profileName: string;
   isParticipantOnline: boolean;
+  onBackPress?: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
   profileImageUrl,
   profileName,
   isParticipantOnline,
+  onBackPress,
 }) => {
   const router = useRouter();
   const { colors, theme, setTheme } = useTheme();
@@ -41,10 +43,21 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     height: onlineValue.value * 18,
   }));
 
+  // Handle back button press
+  const handleBackPress = () => {
+    if (onBackPress) {
+      // Use the callback if provided
+      onBackPress();
+    } else {
+      // Fall back to default behavior
+      router.back();
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Back Button */}
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color="#333" />
       </TouchableOpacity>
 

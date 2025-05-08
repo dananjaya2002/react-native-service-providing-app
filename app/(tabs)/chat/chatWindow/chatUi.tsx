@@ -11,6 +11,7 @@ import {
   Text,
   Image,
   Alert,
+  BackHandler,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -80,7 +81,7 @@ export default function ChatScreen() {
     loadMoreMessages,
     sendMessage,
     loadingMore,
-    checkCommentAvailability,
+    agreementStatus,
     participantOnlineStatus,
   } = useChat(chatRoomDocRefId, userID, userRole);
 
@@ -168,11 +169,15 @@ export default function ChatScreen() {
     }
   }, [chatRoomDocRefId, userRole]);
 
+  useEffect(() => {
+    handleRatingPermission();
+    console.log("handleRatingPermission Triggered:", agreementStatus);
+  }, [chatRoomDocRefId, agreementStatus]);
+
   const handleRatingPermission = useCallback(async () => {
     if (chatRoomDocRefId && userRole === "customer") {
-      const { shouldDisplayCommentUI, waitingTime } = await checkCommentAvailability();
-      setCommentDisplayPermission(shouldDisplayCommentUI);
-      setCommentWaitingTime(waitingTime);
+      setCommentDisplayPermission(agreementStatus.shouldDisplayCommentUI);
+      setCommentWaitingTime(agreementStatus.waitingTime);
 
       // if (!shouldDisplayCommentUI) {
       //   // Handle case when comment is not available.
@@ -181,8 +186,10 @@ export default function ChatScreen() {
       //   console.log("Commenting is available.");
       //   // Proceed with rating functionality.
       // }
+      console.log("Comment Display Permission:", agreementStatus.shouldDisplayCommentUI);
+      console.log("Comment Waiting Time:", agreementStatus.waitingTime);
     }
-  }, [checkCommentAvailability]);
+  }, [agreementStatus]);
 
   // Check for the rating permission at the start
   useEffect(() => {
@@ -204,6 +211,18 @@ export default function ChatScreen() {
       transform: [{ translateY: animatedValue.value * 0 }], //initial translateY is 0.
     };
   });
+
+  const handleBackPress = () => {
+    // Reset the chat tab stack when leaving the chat UI
+    router.replace("/(tabs)/chat/chatRooms/shopChat");
+    router.setParams({ reset: "true" });
+    return true; // Indicate that the back press has been handled
+  };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", handleBackPress);
+    return () => backHandler.remove();
+  }, []);
 
   // -------------------------------------------------------------------------------
   // Render Chat Messages
