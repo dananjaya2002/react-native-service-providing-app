@@ -19,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import { uploadImageToCloud } from "../../utility/u_uploadImageNew"; // Import the Cloudinary upload function
 import { UserData } from "../../interfaces/UserData"; // Import the UserData interface
 import { UserStorageService } from "@/storage/functions/userStorageService";
+import { clearUserData } from "@/utility/u_cleanUpForNewUser";
 
 const Signin = () => {
   const [email, setEmail] = useState("");
@@ -105,6 +106,8 @@ const Signin = () => {
       // Save the user data to Firestore
       const userDocRef = doc(db, "Users", user.uid, "UserData", "UserLoginData");
       await setDoc(userDocRef, userData, { merge: true });
+
+      await clearUserData();
 
       // Save the user data to local storage
       await UserStorageService.saveUserData(userData);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Pressable, Text, StyleSheet, ActivityIndicator, View } from "react-native";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "../../../FirebaseConfig"; // adjust the path as needed
 
 interface AgreementFAButtonProps {
@@ -17,17 +17,37 @@ const AgreementFAButton: React.FC<AgreementFAButtonProps> = ({ onPress, chatRoom
   useEffect(() => {
     const fetchAgreementStatus = async () => {
       try {
-        const docRef = doc(db, "Chat", chatRoomDocRefId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          // Check for either accepted or sended status.
-          if (data.agreement === "accepted" || data.agreement === "sended") {
+        const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
+        const moreInfoDocRef = doc(db, "Chat", chatRoomDocRefId, "ChatRoomMoreInfo", "agreement");
+
+        // Fetch both documents in parallel
+        const [chatDocSnap, moreInfoDocSnap] = await Promise.all([
+          getDoc(chatDocRef),
+          getDoc(moreInfoDocRef),
+        ]);
+
+        // Check main chat document
+        if (chatDocSnap.exists()) {
+          const chatData = chatDocSnap.data();
+          if (chatData.agreement === "accepted" || chatData.agreement === "sended") {
             setIsSent(true);
-            if (data.acceptedTime) {
-              setSentDate(data.acceptedTime.toDate());
-            } else if (data.sendedTime) {
-              setSentDate(data.sendedTime.toDate());
+            if (chatData.acceptedTime) {
+              setSentDate(chatData.acceptedTime.toDate());
+            } else if (chatData.sendedTime) {
+              setSentDate(chatData.sendedTime.toDate());
+            }
+          }
+        }
+
+        // Also check the agreement document in the subcollection
+        if (!isSent && moreInfoDocSnap.exists()) {
+          const moreInfoData = moreInfoDocSnap.data();
+          if (moreInfoData.agreement === "accepted" || moreInfoData.agreement === "sended") {
+            setIsSent(true);
+            if (moreInfoData.acceptedTime) {
+              setSentDate(moreInfoData.acceptedTime.toDate());
+            } else if (moreInfoData.sendedTime) {
+              setSentDate(moreInfoData.sendedTime.toDate());
             }
           }
         }
@@ -37,6 +57,7 @@ const AgreementFAButton: React.FC<AgreementFAButtonProps> = ({ onPress, chatRoom
         setLoading(false);
       }
     };
+
     fetchAgreementStatus();
   }, [chatRoomDocRefId]);
 
@@ -45,12 +66,26 @@ const AgreementFAButton: React.FC<AgreementFAButtonProps> = ({ onPress, chatRoom
     setLoading(true);
     try {
       const docRef = doc(db, "Chat", chatRoomDocRefId);
-      // Update the document with agreement fields.
-      await updateDoc(docRef, {
+      const moreInfoDocRef = doc(db, "Chat", chatRoomDocRefId, "ChatRoomMoreInfo", "agreement");
+
+      // Create a batch
+      const batch = writeBatch(db);
+
+      // Add both operations to the batch
+      batch.update(docRef, {
         agreement: "sended",
         sendedTime: serverTimestamp(),
       });
-      // After updating, fetch the doc to get the server timestamp value.
+
+      batch.set(moreInfoDocRef, {
+        agreement: "sended",
+        sendedTime: serverTimestamp(),
+      });
+
+      // Commit the batch
+      await batch.commit();
+
+      // After updating, fetch the doc to get the server timestamp value
       const updatedSnap = await getDoc(docRef);
       const updatedData = updatedSnap.data();
       if (updatedData?.sendedTime) {

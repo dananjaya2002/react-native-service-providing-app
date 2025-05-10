@@ -40,7 +40,7 @@ const Login = () => {
         throw new Error("Failed to fetch user data.");
       }
 
-      clearUserData(); // Clear any existing user data before saving new data
+      await clearUserData(); // Clear any existing user data before saving new data
       await getUserFavoritesServices();
 
       // Save user data to local storage

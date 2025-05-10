@@ -46,3 +46,14 @@ export interface ChatRoom {
 
 export type UserRoles = "customer" | "serviceProvider";
 export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
+export type AgreementStatus = "accepted" | "sended";
+
+export interface ChatAgreement {
+  agreement: AgreementStatus;
+  sendedTime: Timestamp | null;
+}
+
+export interface ChatAgreementTracking {
+  shouldDisplayCommentUI: boolean;
+  waitingTime: number;
+}

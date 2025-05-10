@@ -83,7 +83,7 @@ const Dev_UserSimulation = () => {
   }
 
   const onItemPress = async (doc: UserData) => {
-    clearUserData(); // Clear any existing user data before saving new data
+    await clearUserData(); // Clear any existing user data before saving new data
     // Transform the data before saving it.
     const formattedDoc = transformUserData(doc);
     await UserStorageService.saveUserData(formattedDoc);

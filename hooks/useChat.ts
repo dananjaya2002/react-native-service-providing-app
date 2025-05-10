@@ -15,7 +15,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "../FirebaseConfig";
-import { MessageTypes, ChatMessage, UserRoles } from "../interfaces/iChat";
+import { MessageTypes, ChatMessage, UserRoles, ChatAgreementTracking } from "../interfaces/iChat";
 
 //export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
 
@@ -36,7 +36,6 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
   const [notUploadedMessages, setNotUploadedMessages] = useState<ChatMessage[]>([]);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [agreementStatus, setAgreementStatus] = useState(false);
 
   // Subscribe to confirmed messages from Firestore.
   useEffect(() => {
@@ -179,6 +178,34 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
     }
   };
 
+  const [agreementStatus, setAgreementStatus] = useState<ChatAgreementTracking>({
+    shouldDisplayCommentUI: false,
+    waitingTime: 0,
+  });
+
+  useEffect(() => {
+    if (!chatRoomDocRefId) return;
+
+    const agreementRef = doc(db, "Chat", chatRoomDocRefId, "ChatRoomMoreInfo", "agreement");
+
+    // Real-time listener
+    const unsubscribe = onSnapshot(
+      agreementRef,
+      async () => {
+        // Re-use your existing function
+        const availability = await checkCommentAvailability();
+        setAgreementStatus(availability);
+      },
+      (error) => {
+        console.error("Agreement listener error:", error);
+        // Safe fallback
+        setAgreementStatus({ shouldDisplayCommentUI: false, waitingTime: 0 });
+      }
+    );
+
+    return () => unsubscribe();
+  }, [chatRoomDocRefId]);
+
   /**
    * Checks the agreement status on the chat room document.
    * - If the document has an "agreement" field set to "accepted" and an "acceptedTime" timestamp,
@@ -186,11 +213,8 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
    * - If the difference is less than 20 minutes, it returns isCommentAvailable = false along with the waitingTime.
    * - If more than 20 minutes have passed, it returns isCommentAvailable = true.
    */
-  const checkCommentAvailability = async (): Promise<{
-    shouldDisplayCommentUI: boolean;
-    waitingTime: number;
-  }> => {
-    const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
+  const checkCommentAvailability = async (): Promise<ChatAgreementTracking> => {
+    const chatDocRef = doc(db, "Chat", chatRoomDocRefId, "ChatRoomMoreInfo", "agreement");
     const chatDocSnap = await getDoc(chatDocRef);
 
     if (!chatDocSnap.exists()) {
@@ -309,7 +333,7 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
     sendMessage,
     notUploadedMessages,
     loadingMore,
-    checkCommentAvailability,
+    agreementStatus,
     participantOnlineStatus,
   };
 }
