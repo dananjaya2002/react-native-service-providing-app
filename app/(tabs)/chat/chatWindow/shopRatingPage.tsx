@@ -72,12 +72,12 @@ const ShopRatingPage = () => {
   }, [serviceProviderId]);
 
   const submitComments = async () => {
-    router.replace({
-      pathname: "/(tabs)",
-      params: { reset: "true" },
-    });
+    // router.replace({
+    //   pathname: "/(tabs)",
+    //   params: { reset: "true" },
+    // });
 
-    return; // Dev purpose stop
+    // return; // Dev purpose stop
     if (rating === 0) {
       alert("Please select a rating");
       return;
