@@ -269,26 +269,54 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
 
     const unsubscribe = onSnapshot(participantStatusDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const ONLINE_THRESHOLD = 60000; // 60 seconds
+        const now = Date.now();
         if (userRole === "customer") {
-          setParticipantOnlineStatus(docSnapshot.data().serviceProvider as boolean);
+          // Check service provider status
+          const spIsOnline = data.serviceProvider === true;
+          const spLastActive = data.serviceProviderLastActive?.toMillis
+            ? data.serviceProviderLastActive.toMillis()
+            : 0;
+
+          // Consider online only if both flag is true AND last active is recent
+          setParticipantOnlineStatus(spIsOnline && now - spLastActive < ONLINE_THRESHOLD);
         } else if (userRole === "serviceProvider") {
-          setParticipantOnlineStatus(docSnapshot.data().customer as boolean);
+          // Check customer status
+          const custIsOnline = data.customer === true;
+          const custLastActive = data.customerLastActive?.toMillis
+            ? data.customerLastActive.toMillis()
+            : 0;
+
+          // Consider online only if both flag is true AND last active is recent
+          setParticipantOnlineStatus(custIsOnline && now - custLastActive < ONLINE_THRESHOLD);
         }
       } else {
         console.warn("participantOnlineStatus document does not exist.");
+        setParticipantOnlineStatus(false);
       }
     });
 
     return () => unsubscribe();
-  }, [chatRoomDocRefId]);
+  }, [chatRoomDocRefId, userRole]);
 
   // Set the participant online status when the component mounts and unmounts.
+  // Modify your existing component mount/unmount effect
+
   useEffect(() => {
+    if (!chatRoomDocRefId) return;
+
     if (userRole === "customer") {
-      updateParticipantOnlineStatus({ customer: true });
+      updateParticipantOnlineStatus({
+        customer: true,
+        customerLastActive: serverTimestamp(),
+      });
     }
     if (userRole === "serviceProvider") {
-      updateParticipantOnlineStatus({ serviceProvider: true });
+      updateParticipantOnlineStatus({
+        serviceProvider: true,
+        serviceProviderLastActive: serverTimestamp(),
+      });
     }
 
     return () => {
@@ -304,6 +332,8 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
   const updateParticipantOnlineStatus = async (status: {
     customer?: boolean;
     serviceProvider?: boolean;
+    customerLastActive?: any;
+    serviceProviderLastActive?: any;
   }) => {
     if (!chatRoomDocRefId) return;
 
@@ -320,6 +350,67 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
       console.log("Participant online status updated:", status);
     } catch (error) {
       console.error("Error updating participant online status:", error);
+    }
+  };
+
+  // state to track if heartbeat is active
+  const [isHeartbeatActive, setIsHeartbeatActive] = useState(false);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Set up heartbeat mechanism
+  useEffect(() => {
+    if (!chatRoomDocRefId || !userID) return;
+
+    // Start heartbeat when component mounts
+    const startHeartbeat = () => {
+      setIsHeartbeatActive(true);
+
+      // Clear any existing interval
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+
+      // Set new interval (every 30 seconds)
+      heartbeatIntervalRef.current = setInterval(() => {
+        if (userRole === "customer") {
+          updateHeartbeat({ customerLastActive: serverTimestamp() });
+        } else if (userRole === "serviceProvider") {
+          updateHeartbeat({ serviceProviderLastActive: serverTimestamp() });
+        }
+      }, 30000); // 30 seconds interval
+    };
+
+    startHeartbeat();
+
+    // Clean up on unmount
+    return () => {
+      setIsHeartbeatActive(false);
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+    };
+  }, [chatRoomDocRefId, userRole, userID]);
+
+  // Function to update heartbeat timestamp
+  const updateHeartbeat = async (heartbeatData: {
+    customerLastActive?: any;
+    serviceProviderLastActive?: any;
+  }) => {
+    if (!chatRoomDocRefId) return;
+
+    try {
+      const participantStatusDocRef = doc(
+        db,
+        "Chat",
+        chatRoomDocRefId,
+        "ChatRoomMoreInfo",
+        "participantOnlineStatus"
+      );
+
+      await setDoc(participantStatusDocRef, heartbeatData, { merge: true });
+    } catch (error) {
+      console.error("Error updating heartbeat:", error);
     }
   };
 

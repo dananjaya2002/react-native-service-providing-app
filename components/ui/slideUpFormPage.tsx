@@ -271,7 +271,7 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
               bottomOffset={84}
               showsVerticalScrollIndicator={true}
               bounces={true}
-              style={{}}
+              style={{ flex: 1 }}
             >
               <View style={{ marginBottom: 15 }}>
                 <ImagePickerBox
@@ -324,7 +324,7 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
                 placeholder="Service Info"
                 placeholderTextColor="#888"
                 value={shopServiceInfo}
-                onChangeText={setSelectedShopLocation}
+                onChangeText={setShopServiceInfo}
                 multiline
               />
               <TouchableOpacity style={styles.button} onPress={handleUpdate}>
@@ -372,6 +372,7 @@ const styles = StyleSheet.create({
   sheetContent: {
     flex: 1,
     padding: 20,
+    marginBottom: 40,
   },
   header: {
     fontSize: 20,

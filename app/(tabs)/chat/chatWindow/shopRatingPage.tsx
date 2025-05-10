@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,6 +11,7 @@ import {
   Keyboard,
   Dimensions,
   ScrollView,
+  BackHandler,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -19,7 +20,7 @@ import { UserStorageService } from "../../../../storage/functions/userStorageSer
 import { UserData } from "../../../../interfaces/UserData";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../../FirebaseConfig";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ShopList } from "@/interfaces/iShop";
 import { getShopCardData, uploadUserRatings } from "@/utility/u_uploadUserRatings";
 import {
@@ -44,6 +45,21 @@ const ShopRatingPage = () => {
   const handleStarPress = (star: number) => {
     setRating(star);
   };
+
+  // Custom back handling
+  const handleCustomBack = useCallback(() => {
+    router.replace("/(tabs)/chat/chatWindow/chatUi");
+
+    return true; // Prevents default back behavior
+  }, []);
+
+  // Handle hardware back button (Android) a
+  useFocusEffect(
+    useCallback(() => {
+      const backHandler = BackHandler.addEventListener("hardwareBackPress", handleCustomBack);
+      return () => backHandler.remove();
+    }, [handleCustomBack])
+  );
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -76,8 +92,8 @@ const ShopRatingPage = () => {
     //   pathname: "/(tabs)",
     //   params: { reset: "true" },
     // });
-
     // return; // Dev purpose stop
+
     if (rating === 0) {
       alert("Please select a rating");
       return;

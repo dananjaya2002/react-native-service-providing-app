@@ -21,7 +21,7 @@ import UserComments from "@/components/ui/userComment";
 import FloatingButtonBar from "@/components/ui/FloatingButtonBar";
 
 import { useShop } from "@/context/ShopContext";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import UpdateSheet, { UpdateSheetRef } from "../../../components/ui/slideUpFormPage";
 import UserReviewStars from "@/components/ui/userReviewStars";
 import ShopContactInfo from "@/components/ui/shopContactInfo";
@@ -48,6 +48,7 @@ const Shop = () => {
   }));
 
   const router = useRouter();
+  const navigation = useNavigation();
 
   const [ratingsList, setRatingsList] = useState<any[]>([]);
   const [lastDoc, setLastCommentDoc] = useState<any>(null);
