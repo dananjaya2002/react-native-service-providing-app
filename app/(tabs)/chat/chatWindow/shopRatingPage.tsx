@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Dimensions,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
@@ -71,6 +72,12 @@ const ShopRatingPage = () => {
   }, [serviceProviderId]);
 
   const submitComments = async () => {
+    router.replace({
+      pathname: "/(tabs)",
+      params: { reset: "true" },
+    });
+
+    return; // Dev purpose stop
     if (rating === 0) {
       alert("Please select a rating");
       return;
@@ -115,10 +122,10 @@ const ShopRatingPage = () => {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#A4D6F8" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 90}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 35}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }}>
           {/* Header Section */}
           <HeaderMain
             title="Rate the Service"
@@ -126,7 +133,6 @@ const ShopRatingPage = () => {
             showProfileIcon={true}
             showLogoutButton={false}
           />
-
           <View style={styles.mainContainer}>
             {/* Shop Info Card */}
             <View style={styles.shopCardContainer}>
@@ -143,7 +149,6 @@ const ShopRatingPage = () => {
                 </Text>
               </View>
             </View>
-
             {/* Rating Stars - Moved up */}
             <View style={styles.ratingSection}>
               <Text style={styles.ratingLabel}>Rate your experience:</Text>
@@ -163,7 +168,6 @@ const ShopRatingPage = () => {
                 ))}
               </View>
             </View>
-
             {/* Comment Section */}
             <View style={styles.commentSection}>
               <Text style={styles.commentLabel}>Share your feedback:</Text>
@@ -179,7 +183,6 @@ const ShopRatingPage = () => {
                 underlineColorAndroid="transparent"
               />
             </View>
-
             {/* Submit Button */}
             <TouchableOpacity
               style={[styles.submitButton, loading && { opacity: 0.5 }]}
@@ -191,7 +194,7 @@ const ShopRatingPage = () => {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
