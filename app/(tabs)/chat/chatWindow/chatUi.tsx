@@ -99,10 +99,12 @@ export default function ChatScreen() {
     const fetchOtherPartyData = async () => {
       try {
         if (userRole === "customer") {
-          const data = await getUserData(otherPartyUserId);
+          const data = await getShopListData(otherPartyUserId);
+          console.log("getUserData:", data);
           setOtherPartyData(data);
         } else if (userRole === "serviceProvider") {
-          const data = await getShopListData(otherPartyUserId);
+          const data = await getUserData(otherPartyUserId);
+          console.log("getShopListData:", data);
           setOtherPartyData(data);
         }
       } catch (error) {
@@ -274,7 +276,7 @@ export default function ChatScreen() {
         <Animated.View
           style={[
             {
-              backgroundColor: "#fad6be",
+              backgroundColor: "#48ACF0",
               height: 60,
               width: "100%",
               justifyContent: "center",

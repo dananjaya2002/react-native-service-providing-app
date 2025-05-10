@@ -35,6 +35,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
+          href: "/(tabs)",
           tabBarIcon: ({ color, size }) => (
             <IconSymbol size={size ?? 28} name="house.fill" color={color} />
           ),
@@ -46,6 +47,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: "Chat",
+          href: "/(tabs)/chat/chatRooms/personalChat",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubble" size={size ?? 28} color={color} />
           ),
@@ -57,6 +59,7 @@ export default function TabLayout() {
         name="shop"
         options={{
           title: "Shop",
+          href: "/(tabs)/shop/userShopPage",
           tabBarIcon: ({ color, size }) => <Ionicons name="cart" size={size ?? 28} color={color} />,
         }}
       />
@@ -66,6 +69,7 @@ export default function TabLayout() {
         name="favorites"
         options={{
           title: "Favorites",
+          href: "/(tabs)/favorites",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart" size={size ?? 28} color={color} />
           ),

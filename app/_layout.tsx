@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import "../utility/U_Dev_CustomLogger";
 import { useTheme } from "../context/ThemeContext";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -41,30 +42,32 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1 }}>
-          <ThemeProvider>
-            <ShopProvider>
-              <KeyboardProvider>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  <Stack.Screen name="check" options={{ headerShown: false }} />
-                  <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-                  <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
-                  <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />
-                  <Stack.Screen name="Test/Test_TextEditor" options={{ headerShown: false }} />
-                  <Stack.Screen name="shopSection" options={{ headerShown: false }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-              </KeyboardProvider>
-            </ShopProvider>
+      <BottomSheetModalProvider>
+        <SafeAreaProvider>
+          <SafeAreaView style={{ flex: 1 }}>
+            <ThemeProvider>
+              <ShopProvider>
+                <KeyboardProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
+                    <Stack.Screen name="check" options={{ headerShown: false }} />
+                    <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+                    <Stack.Screen name="(auth)/signin" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="chat/chatUi" options={{ headerShown: false }} />
+                    <Stack.Screen name="Test/Test_ImageUpload" options={{ headerShown: false }} />
+                    <Stack.Screen name="Test/Test_TextEditor" options={{ headerShown: false }} />
+                    <Stack.Screen name="shopSection" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                </KeyboardProvider>
+              </ShopProvider>
 
-            <StatusBar style="dark" backgroundColor={colors.background} />
-          </ThemeProvider>
-        </SafeAreaView>
-      </SafeAreaProvider>
+              <StatusBar style="dark" backgroundColor={colors.background} />
+            </ThemeProvider>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }
