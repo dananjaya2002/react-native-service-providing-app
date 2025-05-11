@@ -50,7 +50,7 @@ const Index = () => {
         if (userData) {
           await getUserFavoritesServices(); // Store User Favorites in local storage
           setTimeout(() => {
-            console.log("User data found:", userData);
+            console.log("User data found 🟢");
             router.push("/(tabs)"); // Navigate to the home page if user data exists
           }, 1000); // Add a slight delay for better UX
         } else {

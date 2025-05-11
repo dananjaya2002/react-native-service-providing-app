@@ -328,7 +328,7 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
                 multiline
               />
               <TouchableOpacity style={styles.button} onPress={handleUpdate}>
-                <Text style={styles.buttonText}>Updated</Text>
+                <Text style={styles.buttonText}>Update</Text>
               </TouchableOpacity>
             </KeyboardAwareScrollView>
             {/* <KeyboardToolbar doneText={"Complete"} /> */}
