@@ -139,6 +139,13 @@ const HomeScreen: React.FC = () => {
     setLastDoc(null);
     setHasMore(true);
 
+    // Check if search results are empty
+    if (!results || results.length === 0) {
+      console.log("Search results are empty, falling back to filters");
+      doFiltering(); // Call doFiltering when search results are empty
+      return;
+    }
+
     const searchShopResults = await getSearchResultShops(results);
     const resultsWithId = searchShopResults.map((item, index) => ({
       ...item,
@@ -191,9 +198,6 @@ const HomeScreen: React.FC = () => {
     setLoading(true);
     try {
       const shopCollection = collection(db, "ShopList");
-
-      console.log("\nshopLocations:", selectedLocations);
-      console.log("\nshopCategory:", selectedCategory);
 
       const constraints = buildQueryConstraints();
 

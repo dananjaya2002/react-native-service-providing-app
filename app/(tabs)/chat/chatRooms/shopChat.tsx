@@ -158,7 +158,7 @@ export default function ChatList() {
       <TouchableOpacity
         style={styles.chatItem}
         onPress={() => {
-          navigateToChat(item.id, item.serviceProvider.docRef);
+          navigateToChat(item.id, item.customer.docRef);
         }}
         accessible={true}
         accessibilityLabel={`Chat with ${otherUserName}`}

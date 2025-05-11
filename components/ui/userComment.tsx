@@ -15,7 +15,6 @@ const UserComments: React.FC<UserComment> = ({
   comment = "no data",
   customerId = "no data",
 }) => {
-  console.log("uploadedDate:", uploadedDate);
   // Convert date to ddMMYYYY format
   const formatDate = (uploadedDate: Timestamp) => {
     if (!uploadedDate || !(uploadedDate instanceof Timestamp)) {

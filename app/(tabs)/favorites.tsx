@@ -87,13 +87,14 @@ const favorites = () => {
   }
 
   async function handleSave(): Promise<void> {
-    if (favorites.current.length === 0) {
-      Alert.alert("Info", "No favorites to save.");
-      return;
-    }
     try {
       setIsUpdating(true);
       await updateUserFavoritesServices(favorites.current);
+      if (favorites.current.length === 0) {
+        Alert.alert("Success", "All favorites have been removed.");
+      } else {
+        Alert.alert("Success", "Favorites saved successfully.");
+      }
     } catch (error) {
       console.error("Error updating favorites:", error);
       Alert.alert("Error", "Failed to update favorites. Please try again later.");
