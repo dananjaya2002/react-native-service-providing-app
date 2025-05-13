@@ -162,3 +162,24 @@ export const resetSyncState = async () => {
   await clearShopSearchList();
   console.log("🔄 Sync state reset completely");
 };
+
+// Add this new function to force a complete resync
+export const forceFullResync = async () => {
+  console.log("🔄 Forcing full data resync from Firestore");
+
+  // Clean up existing listener if any
+  if (globalUnsubscribe) {
+    globalUnsubscribe();
+    globalUnsubscribe = null;
+  }
+
+  // Reset sync state
+  await AsyncStorage.removeItem(SYNC_INITIALIZED_KEY);
+  await AsyncStorage.removeItem(LISTENER_ACTIVE_KEY);
+
+  // Clear local data
+  await clearShopSearchList();
+
+  // Start fresh sync
+  return startRealtimeSync();
+};
