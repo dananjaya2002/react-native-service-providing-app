@@ -142,7 +142,7 @@ const CustomerShopView = () => {
       }
 
       const chatRoomId = await createNewChatRoom(shopDataForChatRoom);
-      router.replace({
+      router.push({
         pathname: "/(tabs)/chat/chatWindow/chatUi",
         params: {
           userID: userData.userId,
