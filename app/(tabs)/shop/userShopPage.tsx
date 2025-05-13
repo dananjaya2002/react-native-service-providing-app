@@ -21,7 +21,7 @@ import UserComments from "@/components/ui/userComment";
 import FloatingButtonBar from "@/components/ui/FloatingButtonBar";
 
 import { useShop } from "@/context/ShopContext";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import UpdateSheet, { UpdateSheetRef } from "../../../components/ui/slideUpFormPage";
 import UserReviewStars from "@/components/ui/userReviewStars";
 import ShopContactInfo from "@/components/ui/shopContactInfo";
@@ -48,6 +48,7 @@ const Shop = () => {
   }));
 
   const router = useRouter();
+  const navigation = useNavigation();
 
   const [ratingsList, setRatingsList] = useState<any[]>([]);
   const [lastDoc, setLastCommentDoc] = useState<any>(null);
@@ -161,6 +162,8 @@ const Shop = () => {
     phoneNumber: string;
     category: string;
     shopPageImageUrl: string;
+    shopLocation: string;
+    shopServiceInfo: string;
   }) => {
     if (!userData) {
       console.error("User data is not available.");
@@ -171,9 +174,12 @@ const Shop = () => {
     if (
       data.title !== shopData.shopName ||
       data.description !== shopData.shopDescription ||
-      data.shopPageImageUrl !== shopData.shopPageImageUrl
+      data.shopPageImageUrl !== shopData.shopPageImageUrl ||
+      data.category !== shopData.shopCategory ||
+      data.shopLocation !== shopData.shopLocation
     ) {
-      console.log("Received updated values:", data);
+      console.log("Full Update:: Received updated values:", data);
+
       updateShopMainPage(
         userData.userId,
         data.title,
@@ -181,9 +187,13 @@ const Shop = () => {
         data.phoneNumber,
         data.category,
         data.shopPageImageUrl,
-        true
+        data.shopServiceInfo,
+        true,
+        data.shopLocation
       );
     } else {
+      console.log("Partial Update:: Received updated values:", data);
+
       updateShopMainPage(
         userData.userId,
         data.title,
@@ -191,7 +201,9 @@ const Shop = () => {
         data.phoneNumber,
         data.category,
         data.shopPageImageUrl,
-        false
+        data.shopServiceInfo,
+        false,
+        data.shopLocation
       );
     }
 
@@ -209,6 +221,8 @@ const Shop = () => {
         phoneNumber: data.phoneNumber,
         shopCategory: data.category,
         shopPageImageUrl: data.shopPageImageUrl,
+        shopLocation: data.shopLocation,
+        serviceInfo: data.shopServiceInfo,
       };
     });
   };
@@ -256,7 +270,7 @@ const Shop = () => {
       <View style={[styles.headerColumn, { backgroundColor: colors.background }]}>
         <View style={styles.headerTopBar}>
           <View style={styles.headerButtonPlaceholder} />
-          <Text style={[styles.headerTitle]}>Explore Services</Text>
+          <Text style={[styles.headerTitle]}>My Shop</Text>
           <View style={styles.userIconContainer}>
             {userData?.profileImageUrl ? (
               <Image source={{ uri: userData?.profileImageUrl }} style={styles.profileImage} />
@@ -383,7 +397,6 @@ const Shop = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "red", // primary color
   },
   loadingContainer: {
     flex: 1,
@@ -454,7 +467,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   shopDescription: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: "left",
     fontWeight: "normal",
   },
@@ -462,10 +475,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   locationBadge: {
-    backgroundColor: "#F7F7F7", // primary color
+    backgroundColor: "#F0F8FF", // primary color
     borderRadius: 8,
-    marginLeft: 24,
-    paddingHorizontal: 16,
+    marginLeft: 4,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: "#E0E0E0",
     fontSize: 14,
@@ -478,8 +491,8 @@ const styles = StyleSheet.create({
   categoryBadge: {
     backgroundColor: "#F7F7F7", // primary color
     borderRadius: 8,
-    marginLeft: 8,
-    paddingHorizontal: 16,
+    marginLeft: 4,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: "#E0E0E0",
     fontSize: 14,
@@ -493,7 +506,7 @@ const styles = StyleSheet.create({
     height: "auto",
     paddingVertical: 8,
     paddingHorizontal: 12,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   serviceInfoText: {
     marginTop: 8,
@@ -511,7 +524,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginHorizontal: 16,
     marginBottom: 8,
-    marginTop: 16,
+    marginTop: 8,
   },
   profileImage: {
     width: 28,

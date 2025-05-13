@@ -33,9 +33,18 @@ export const getUserData = async (id: string): Promise<UserData | null> => {
       console.warn("User Info info not found.");
       return null;
     }
-    const customerData = docSnap.data() as UserData;
+    const data = docSnap.data();
 
-    return customerData;
+    // Create a properly structured UserData object with default values where needed
+    const userData: UserData = {
+      userId: id,
+      isServiceProvider: data.isServiceProvider || false,
+      userName: data.userName || "",
+      profileImageUrl: data.profileImageUrl || "",
+    };
+
+    // Ensure userId is added from the passed id parameter
+    return userData;
   } catch (error) {
     console.error("Error fetching data: ", error);
     return null;

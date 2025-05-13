@@ -53,7 +53,7 @@ export const fetchAndStoreServiceCategories = async (): Promise<boolean> => {
     // Store the categories if data is retrieved
     if (serviceCategories.length > 0) {
       await SystemDataStorage.saveServiceCategories(serviceCategories);
-      console.log("Service Categories successfully stored ✅", serviceCategories);
+      console.log("Service Categories successfully stored ✅");
       return true;
     } else {
       console.warn("No Service Categories to store.");
@@ -103,7 +103,7 @@ export const getAndStoreCities = async (): Promise<boolean> => {
     // Store the cities if data is retrieved
     if (cities.length > 0) {
       await SystemDataStorage.saveCities(cities);
-      console.log("Cities successfully stored ✅", cities);
+      console.log("Cities successfully stored ✅");
       return true;
     } else {
       console.warn("No Cities to store.");

@@ -18,30 +18,48 @@ const FloatingButtonBar: React.FC<ButtonProps> = ({
   const insets = useSafeAreaInsets();
 
   return (
-    <View
-      className="w-full h-16 flex-row absolute items-center justify-evenly px-2"
-      style={[{ bottom: insets.bottom + 8 }]}
-    >
-      <TouchableOpacity
-        className="flex-1 h-full bg-blue-600/90 px-4 py-3 rounded-3xl w-28 justify-center mx-2"
-        style={[styles.shadow]}
-        onPress={onLeftPress}
-      >
-        <Text className="text-white font-bold text-lg text-center">{leftButtonName}</Text>
+    <View style={[styles.container, { bottom: insets.bottom + 8 }]}>
+      <TouchableOpacity style={[styles.leftButton, styles.shadow]} onPress={onLeftPress}>
+        <Text style={styles.buttonText}>{leftButtonName}</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        className="flex-1 h-full bg-blue-600/90 px-4 py-3 rounded-3xl justify-center "
-        style={[styles.shadow]}
-        onPress={onRightPress}
-      >
-        <Text className="text-white font-bold text-center text-lg">{rightButtonName}</Text>
+      <TouchableOpacity style={[styles.rightButton, styles.shadow]} onPress={onRightPress}>
+        <Text style={styles.buttonText}>{rightButtonName}</Text>
       </TouchableOpacity>
-      {/* You can add more buttons here */}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    width: "100%",
+    height: 48,
+    flexDirection: "row",
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+    paddingHorizontal: 8,
+  },
+  leftButton: {
+    flex: 1,
+    height: "100%",
+    backgroundColor: "rgba(37, 99, 235, 0.9)",
+    borderRadius: 12,
+    justifyContent: "center",
+    marginHorizontal: 8,
+  },
+  rightButton: {
+    flex: 1,
+    height: "100%",
+    backgroundColor: "rgba(37, 99, 235, 0.9)",
+    borderRadius: 12,
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 18,
+    textAlign: "center",
+  },
   shadow: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },

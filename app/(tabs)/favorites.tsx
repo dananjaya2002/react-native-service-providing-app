@@ -1,121 +1,89 @@
-// app/(tabs)/bookmarks.tsx
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  BackHandler,
-} from "react-native";
-import {
-  getUserFavoritesServices,
-  updateUserFavoritesServices,
-} from "@/utility/u_handleUserFavorites";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { updateUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 
 import { ShopList } from "@/interfaces/iShop";
 import ShopCard from "@/components/ui/shopCard";
 import { TapGestureHandlerStateChangeEvent } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import HeaderMain from "@/components/ui/header_Main";
-import { useNavigation } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import FBASaveButton from "@/components/ui/buttons/saveButton_FAB";
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { useFocusEffect } from "@react-navigation/native";
 
-const favorites = () => {
-  const navigation = useNavigation();
-
+const Favorites = () => {
+  // State
   const favorites = useRef<ShopList[]>([]);
-
   const [loading, setLoading] = useState<boolean>(true);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
-  // This will run every time the screen comes into focus
+
+  // Fetch favorites when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      console.log("Screen is focused");
       fetchBookmarks();
-      // Optional: Return a cleanup function that runs when screen loses focus
-      return () => {
-        console.log("Screen lost focus");
-      };
-    }, []) // Empty dependency array means this only depends on screen focus/unfocus
+      return () => {};
+    }, [])
   );
 
+  // Initial fetch on mount
   useEffect(() => {
     fetchBookmarks();
   }, []);
 
+  // Fetch bookmarks from local storage
   const fetchBookmarks = async () => {
     setLoading(true);
     try {
-      const userFavorites = await UserStorageService.getUserFavorites(); // Fetch data from local storage
+      const userFavorites = await UserStorageService.getUserFavorites();
       favorites.current = userFavorites || [];
     } catch (error) {
-      console.error("Error fetching bookmarks:", error);
       Alert.alert("Error", "Failed to fetch bookmarks. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Event handlers
   const handleShopClick = (item: ShopList, event: TapGestureHandlerStateChangeEvent): void => {
     router.push(`/customer/${item.userDocId}`);
   };
 
   const handleFavoriteIconClick = (item: ShopList): void => {
-    console.log(`Favorite icon clicked for shop with ID ${item.id}`);
     favorites.current = favorites.current.filter((favorite) => favorite.id !== item.id);
   };
 
-  useEffect(() => {
-    console.log("---------- Favorites updated:", favorites.current.length);
-  }, [favorites]);
-
-  // loading indicator
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#007bff" />
-        <Text className="mt-4 text-lg font-semibold text-gray-600">Loading, please wait...</Text>
-      </View>
-    );
-  }
-
-  async function handleSave(): Promise<void> {
-    if (favorites.current.length === 0) {
-      Alert.alert("Info", "No favorites to save.");
-      return;
-    }
+  // Save changes to favorites
+  const handleSave = async (): Promise<void> => {
     try {
       setIsUpdating(true);
       await updateUserFavoritesServices(favorites.current);
+
+      if (favorites.current.length === 0) {
+        Alert.alert("Success", "All favorites have been removed.");
+      } else {
+        Alert.alert("Success", "Favorites saved successfully.");
+      }
     } catch (error) {
-      console.error("Error updating favorites:", error);
       Alert.alert("Error", "Failed to update favorites. Please try again later.");
     } finally {
       setIsUpdating(false);
     }
-  }
+  };
 
-  // if (isUpdating) {
-  //   return (
-  //     <View className="flex-1 justify-center items-center bg-white m-14">
-  //       <ActivityIndicator size="large" color="#007bff" />
-  //       <Text className="mt-4 text-lg font-semibold text-gray-600">
-  //         Updating favorites, please wait...
-  //       </Text>
-  //     </View>
-  //   );
-  // }
+  // Loading state
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007bff" />
+        <Text style={styles.loadingText}>Loading, please wait...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <HeaderMain title="Favorites" />
+
       {favorites.current.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No favorites Added</Text>
@@ -136,54 +104,37 @@ const favorites = () => {
           />
         </View>
       )}
+
       <FBASaveButton onPress={handleSave} />
-      {isUpdating ? (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              width: 200,
-              padding: 20,
-              backgroundColor: "#fff", // White background for the box
-              borderRadius: 10,
-              alignItems: "center",
-              justifyContent: "center",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5, // Shadow for Android
-            }}
-          >
+
+      {isUpdating && (
+        <View style={styles.overlay}>
+          <View style={styles.updateBox}>
             <ActivityIndicator size="large" color="#007bff" />
-            <Text style={{ marginTop: 16, fontSize: 16, fontWeight: "600", color: "#333" }}>
-              Updating...
-            </Text>
+            <Text style={styles.updateText}>Updating...</Text>
           </View>
         </View>
-      ) : null}
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  customButton: {
-    backgroundColor: "#e0e0e0",
-    borderRadius: 10,
-  },
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#4b5563",
   },
   emptyContainer: {
     flex: 1,
@@ -229,6 +180,39 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
   },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  updateBox: {
+    width: 200,
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  updateText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  customButton: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 10,
+  },
   fab: {
     position: "absolute",
     bottom: 16,
@@ -243,4 +227,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default favorites;
+export default Favorites;

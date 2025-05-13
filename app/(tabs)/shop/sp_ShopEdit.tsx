@@ -127,7 +127,7 @@ const shopEditService: React.FC = () => {
   const toggleSelection = (item: ShopServices) => {
     const isSelected = selectedItems.some((selected) => selected.id === item.id); // Check if the item is already selected
     if (isSelected) {
-      const newSelected = selectedItems.filter((i) => i !== item);
+      const newSelected = selectedItems.filter((i) => i.id !== item.id);
       setSelectedItems(newSelected); // Remove the item from selected items
       // If no items are selected, exit multi-select mode
       if (newSelected.length === 0) setMultiSelectMode(false);
@@ -195,8 +195,9 @@ const shopEditService: React.FC = () => {
         return;
       }
       setLoading(true);
+      const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
       const newServiceObject: ShopServices = {
-        id: shopServiceData.length.toString(),
+        id: uniqueId,
         title: sheetTitle,
         imageUrl: sheetImageUrl,
         description: sheetDescription,
@@ -260,7 +261,7 @@ const shopEditService: React.FC = () => {
   const renderItem = ({ item }: { item: ShopServices }) => {
     if (item.title === "") {
       // Render a transparent placeholder for odd-numbered items
-      return <View className="flex-1 m-2 p-2 opacity-0" />;
+      return <View style={styles.placeholderItem} />;
     }
     const isSelected = selectedItems.includes(item);
 
@@ -270,32 +271,30 @@ const shopEditService: React.FC = () => {
         onPress={() => {
           // If in multi-select mode, toggle selection instead of normal press action
           if (multiSelectMode) {
+            console.log("Multi-select mode: toggling selection for item:", item);
             toggleSelection(item);
           } else {
+            console.log("Regular press action on item:", item);
             handleRegularPressAction(item);
           }
         }}
-        className="flex-1 m-2 p-2 bg-white rounded-xl shadow-xl relative"
+        style={styles.serviceItem}
       >
-        <View className="h-14 justify-center bg-white">
-          <Text className="text-black font-bold text-md text-center " numberOfLines={2}>
+        <View style={styles.titleWrapper}>
+          <Text style={styles.titleText} numberOfLines={2}>
             {item.title}
           </Text>
         </View>
 
-        <Image
-          source={{ uri: item.imageUrl }}
-          resizeMode="contain"
-          className="w-full h-40 rounded-lg"
-        />
-        <View className="flex-1 h-auto w-full items-center justify-center my-1 ">
-          <Text className="text-black font-normal text-sm " numberOfLines={5}>
+        <Image source={{ uri: item.imageUrl }} resizeMode="contain" style={styles.serviceImage} />
+        <View style={styles.descriptionWrapper}>
+          <Text style={styles.descriptionText} numberOfLines={5}>
             {item.description}
           </Text>
         </View>
         {/* Overlay a semi-transparent dark view with an icon when selected */}
         {multiSelectMode && isSelected && (
-          <View className="absolute inset-0 rounded-xl bg-black/60 justify-center items-center">
+          <View style={styles.selectedOverlay}>
             <Ionicons name="trash-outline" size={48} color="#e53a3a" />
           </View>
         )}
@@ -322,8 +321,8 @@ const shopEditService: React.FC = () => {
           router.back(); // Navigate to the previous screen using Expo Router
         }}
       />
-      <View style={[{ flex: 1 }]}>
-        <View className=" h-32 w-screen py-2 px-4">
+      <View style={{ flex: 1 }}>
+        <View style={styles.addServiceSection}>
           {/* Add new Service Section */}
           <Pressable
             onPress={addNewServiceButtonPress}
@@ -346,11 +345,8 @@ const shopEditService: React.FC = () => {
         />
         {/* Render the action button only in multi-select mode */}
         {multiSelectMode && (
-          <Pressable
-            onPress={onDeleteSelectedItemPressed}
-            className="bg-red-600 py-4 px-10 rounded-2xl absolute bottom-8 right-8 shadow-xl"
-          >
-            <Text className="text-white font-bold">Delete</Text>
+          <Pressable onPress={onDeleteSelectedItemPressed} style={styles.deleteButton}>
+            <Text style={styles.deleteButtonText}>Delete</Text>
           </Pressable>
         )}
       </View>
@@ -407,6 +403,90 @@ const shopEditService: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  placeholderItem: {
+    flex: 1,
+    margin: 8,
+    padding: 8,
+    opacity: 0,
+  },
+  serviceItem: {
+    flex: 1,
+    margin: 8,
+    padding: 8,
+    backgroundColor: "white",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    position: "relative",
+  },
+  titleWrapper: {
+    height: 56,
+    justifyContent: "center",
+    backgroundColor: "white",
+  },
+  titleText: {
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  serviceImage: {
+    width: "100%",
+    height: 160,
+    borderRadius: 8,
+  },
+  descriptionWrapper: {
+    flex: 1,
+    height: "auto",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 4,
+  },
+  descriptionText: {
+    color: "black",
+    fontWeight: "normal",
+    fontSize: 14,
+  },
+  selectedOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addServiceSection: {
+    height: 128,
+    width: "100%",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  deleteButton: {
+    backgroundColor: "#e53e3e",
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 16,
+    position: "absolute",
+    bottom: 32,
+    right: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  deleteButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
   bottomSheetTextInputContainer: {
     marginVertical: 12,
     paddingHorizontal: 16,
@@ -454,13 +534,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
-
   addServiceButtonTextContainer: {
     flex: 1,
     flexDirection: "row",

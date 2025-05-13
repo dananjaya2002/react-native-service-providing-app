@@ -1,119 +1,84 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import LottieView from "lottie-react-native";
+
 import { fetchAndStoreServiceCategories, getAndStoreCities } from "@/utility/u_getSystemInfo";
-import { Svg, Path, Rect, Circle, Polygon } from "react-native-svg"; // Import components for SVG rendering
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
-import LottieView from "lottie-react-native";
-import { syncFirestoreToLocalDB } from "@/db/syncFirestore";
 import { startRealtimeSync } from "@/db/realtimeSync";
 
 const Index = () => {
-  const router = useRouter(); // Get router instance
-
+  const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // setTimeout(() => {
-    //   router.push("/DevSection/DevUI");
-    // }, 1000);
-    // return;
-
     const initializeApp = async () => {
       try {
-        console.log("Initializing app...");
-        const isServiceUpdated = await updateServiceCategories(); // Call the function to update service categories
-        const isLocationsUpdated = await getAndStoreCities(); // Call the function to get and store cities
+        // Update service categories and city data
+        const isServiceUpdated = await updateServiceCategories();
+        const isLocationsUpdated = await getAndStoreCities();
 
-        // // Database Sync
-        // // OPTION A: Use only one-time sync
-        // console.log("Syncing shop search data to local database...");
-        // await syncFirestoreToLocalDB();
-        // console.log("Shop search data sync complete ✅");
-
-        // Start realtime sync to keep the database updated
-        // OPTION B: Use only realtime sync (which will populate the database on first run)
-        console.log("Starting realtime data sync...");
+        // Start realtime sync for database
         await startRealtimeSync();
 
-        if (isServiceUpdated!) {
+        // Validate initialization data
+        if (!isServiceUpdated) {
           Alert.alert("Error", "Service Category Data is not updated!");
+          setLoading(false);
           return;
         }
+
         if (!isLocationsUpdated) {
           Alert.alert("Error", "City Data is not updated");
+          setLoading(false);
           return;
         }
-        // Check if user data exists
+
+        // Check if user data exists and navigate accordingly
         const userData = await UserStorageService.getUserData();
         if (userData) {
-          await getUserFavoritesServices(); // Store User Favorites in local storage
+          await getUserFavoritesServices();
           setTimeout(() => {
-            console.log("User data found:", userData);
-            router.push("/(tabs)"); // Navigate to the home page if user data exists
-          }, 1000); // Add a slight delay for better UX
+            router.push("/(tabs)");
+          }, 1000);
         } else {
           setTimeout(() => {
-            console.log("No user data found. Redirecting to login...");
-            router.push("/(auth)/login"); // Navigate to the login page if no user data
-            setLoading(false); // Set loading to false after navigation
-          }, 1000); // Add a slight delay for better UX
+            router.push("/(auth)/login");
+            setLoading(false);
+          }, 1000);
         }
       } catch (error) {
         setLoading(false);
-        console.error("Error during initialization: ", error);
-      } finally {
+        Alert.alert(
+          "Initialization Error",
+          "Failed to initialize the application. Please restart the app."
+        );
       }
     };
 
     initializeApp();
-  }, []);
+  }, [router]);
 
-  const updateServiceCategories = async () => {
+  const updateServiceCategories = async (): Promise<boolean> => {
     try {
-      console.log("Updating Service Categories...");
       const success = await fetchAndStoreServiceCategories();
-      if (success) {
-        console.log("Service Categories updated successfully ✅");
-      } else {
-        console.warn("No Service Categories to update.");
-      }
+      return success || false;
     } catch (error) {
-      console.error("Error updating Service Categories: ", error);
+      Alert.alert("Error", "Failed to update service categories");
+      return false;
     }
   };
-
-  // if (loading) {
-  //   // Show loading screen while initializing
-  //   return (
-  //     <View style={styles.loadingContainer}>
-  //       <LottieView
-  //         source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
-  //         autoPlay
-  //         loop
-  //         style={styles.animation}
-  //       />
-  //       {loading && (
-  //         <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
-  //       )}
-
-  //       {/* Loading Text */}
-  //       <Text style={styles.loadingText}>Lanka Service</Text>
-  //     </View>
-  //   );
-  // }
 
   return (
     <View style={styles.loadingContainer}>
       <LottieView
-        source={require("../assets/lottie/business-salesman.json")} // Path to your animation file
+        source={require("../assets/lottie/business-salesman.json")}
         autoPlay
         loop
         style={styles.animation}
       />
       <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />
-      {/* Loading Text */}
       <Text style={styles.loadingText}>Lanka Service</Text>
     </View>
   );
@@ -136,8 +101,8 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   animation: {
-    width: 400, // Adjust the width as needed
-    height: 400, // Adjust the height as needed
+    width: 400,
+    height: 400,
   },
 });
 

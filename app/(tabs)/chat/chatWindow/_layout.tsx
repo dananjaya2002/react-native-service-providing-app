@@ -17,7 +17,7 @@ export default function ChatWindowLayout() {
           headerStyle: { backgroundColor: "#f9f9f9" },
           headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
           headerTintColor: "#333",
-          animation: "slide_from_right", // Retain the animation
+          animation: "slide_from_right",
           animationDuration: 150,
           headerTitle: "Rate the Service",
         }}

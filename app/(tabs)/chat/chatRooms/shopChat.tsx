@@ -1,5 +1,4 @@
-// (tab)/chat/personalChat.tsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -8,36 +7,14 @@ import {
   View,
   ActivityIndicator,
   Alert,
-  BackHandler,
   Image,
 } from "react-native";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { useRouter } from "expo-router";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../../../FirebaseConfig";
-import { Timestamp, DocumentReference } from "firebase/firestore";
 import { UserStorageService } from "../../../../storage/functions/userStorageService";
-// Define types
-import { UserData, UserInfo } from "../../../../interfaces/UserData";
+import { UserData } from "../../../../interfaces/UserData";
 import { ChatRoom } from "../../../../interfaces/iChat";
-// type UserInfo = {
-//   docRef: DocumentReference; // Reference to the user document in Firestore
-//   name: string;
-//   profileImageUrl: string;
-// };
-
-// type ChatRoom = {
-//   id: string;
-//   customerRef: string;
-//   serviceProvider: UserInfo;
-//   customer: UserInfo;
-//   name?: string;
-//   lastMessage?: string;
-//   timestamp?: Timestamp;
-// };
-
-/**
- * User's Shop Chat Page
- */
 
 export default function ChatList() {
   const router = useRouter();
@@ -47,40 +24,31 @@ export default function ChatList() {
 
   const userRoleDocFieldPath = "serviceProvider.docRef";
 
-  // Fetch saved user data asynchronously
+  // Fetch saved user data
   useEffect(() => {
     async function fetchUserData() {
       try {
         const savedUserData = (await UserStorageService.getUserData()) as UserData;
         setUserDocRefID(savedUserData.userId);
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        Alert.alert("Error", "Failed to load user data. Please try again.");
       }
     }
     fetchUserData();
   }, []);
 
-  /**
-   *
-   * Fetch Data from the firebase
-   *
-   */
+  // Fetch chat rooms from Firebase
   useEffect(() => {
-    if (!userDocRefID) {
-      // Don't run query until we have a valid userDocRefID
-      return;
-    }
+    if (!userDocRefID) return;
 
-    // Indicate loading has started
     setIsLoading(true);
-
     const chatCollectionRef = collection(db, "Chat");
     const chatQuery = query(chatCollectionRef, where(userRoleDocFieldPath, "==", userDocRefID));
-    // Attach the real-time listener
+
+    // Set up real-time listener
     const unsubscribe = onSnapshot(
       chatQuery,
       (chatSnapshot) => {
-        // Map over documents to build chat rooms with latest message info
         const chatRooms = chatSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -90,7 +58,6 @@ export default function ChatList() {
         setIsLoading(false);
       },
       (error) => {
-        console.error("Error fetching chat rooms:", error);
         setIsLoading(false);
         Alert.alert(
           "Error",
@@ -105,8 +72,6 @@ export default function ChatList() {
 
   // Navigate to chat screen
   const navigateToChat = (chatRoom: string, otherPartyUserId: string) => {
-    //router.push(`/chat/chatUi?chatRoomDocRefId=${chatRoom}`);
-
     try {
       router.push({
         pathname: "/(tabs)/chat/chatWindow/chatUi",
@@ -118,48 +83,51 @@ export default function ChatList() {
         },
       });
     } catch (error) {
-      console.error("Error navigating to chat:", error);
       Alert.alert("Navigation Error", "Failed to navigate to the chat room. Please try again.");
     }
   };
 
+  // Format timestamp for display
+  const formatTimestamp = (timestamp: any): string => {
+    if (!timestamp) return "Just now";
+    if (typeof timestamp === "string") return timestamp;
+
+    const date = timestamp.toDate();
+    const today = new Date();
+
+    const isToday =
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+
+    if (isToday) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  // Format last message for display
+  const formatLastMessage = (message?: string): string => {
+    if (message === "<Agreement Requested>") return "Agreement Sent";
+    if (message?.startsWith("http")) return "Image";
+    return message || "No messages yet";
+  };
+
   // Render each chat item
   const renderChatItem = ({ item }: { item: ChatRoom }) => {
-    let otherUserName = item.customer.name;
-    let otherUserProfilePicURL = item.customer.profileImageUrl;
-    let timestampText;
+    const otherUserName = item.customer.name;
+    const otherUserProfilePicURL = item.customer.profileImageUrl;
+    const timestampText = formatTimestamp(item.timestamp);
 
-    // Converting Time
-    if (!item.timestamp) {
-      timestampText = "Just now";
-    } else if (typeof item.timestamp === "string") {
-      timestampText = item.timestamp;
-      console.log("\n\nis timestampText: ", typeof item.timestamp === "string");
-    } else {
-      const date = item.timestamp.toDate();
-      const today = new Date();
-
-      const isToday =
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear();
-
-      if (isToday) {
-        timestampText = date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        });
-      } else {
-        timestampText = date.toLocaleDateString();
-      }
-    }
     return (
       <TouchableOpacity
         style={styles.chatItem}
-        onPress={() => {
-          navigateToChat(item.id, item.serviceProvider.docRef);
-        }}
+        onPress={() => navigateToChat(item.id, item.customer.docRef)}
         accessible={true}
         accessibilityLabel={`Chat with ${otherUserName}`}
       >
@@ -173,11 +141,7 @@ export default function ChatList() {
         <View style={styles.chatContent}>
           <Text style={styles.chatName}>{otherUserName || "Unknown User"}</Text>
           <Text style={styles.chatMessage} numberOfLines={1}>
-            {item.lastMessage === "<Agreement Requested>"
-              ? "Agreement Sent"
-              : item.lastMessage?.startsWith("http")
-              ? "Image"
-              : item.lastMessage || "No messages yet"}
+            {formatLastMessage(item.lastMessage)}
           </Text>
         </View>
         <View style={styles.chatMeta}>
@@ -186,8 +150,6 @@ export default function ChatList() {
       </TouchableOpacity>
     );
   };
-
-  // --------------  Main UI rendering Section --------------
 
   return (
     <View style={styles.container}>
@@ -239,11 +201,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 10,
-  },
-  avatarText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   chatContent: {
     flex: 1,
