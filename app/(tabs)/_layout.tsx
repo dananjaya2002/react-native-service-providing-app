@@ -1,31 +1,28 @@
-// (tab)/_layout.tsx
-import { Tabs, useSegments } from "expo-router";
 import React from "react";
 import { Platform } from "react-native";
+import { Tabs, useSegments } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
 import { IconSymbol } from "@/components/unUsed/IconSymbol";
 import TabBarBackground from "@/components/unUsed/TabBarBackground";
-import { Ionicons } from "@expo/vector-icons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 export default function TabLayout() {
   const segments = useSegments();
   const isChatRoute = segments[2] === "chatWindow";
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarBackground: TabBarBackground,
-
-        // Static colors: inactive = white, active = dark blue
-        tabBarActiveTintColor: "#48ACF0", // dark blue
-        tabBarInactiveTintColor: "#FFFFFF", // white
-
+        tabBarActiveTintColor: "#48ACF0",
+        tabBarInactiveTintColor: "#FFFFFF",
         tabBarStyle: {
           display: isChatRoute ? "none" : "flex",
-          backgroundColor: "#004887", // your bright blue
+          backgroundColor: "#004887",
           height: Platform.select({ ios: 51, android: 52, default: 51 }),
           paddingBottom: Platform.OS === "ios" ? 20 : 10,
-          borderTopWidth: 0, // remove default border
+          borderTopWidth: 0,
           borderTopColor: "#004887",
         },
       }}

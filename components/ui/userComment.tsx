@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Timestamp } from "firebase/firestore";
 
@@ -49,32 +49,116 @@ const UserComments: React.FC<UserComment> = ({
   };
 
   return (
-    <View className="bg-white p-4 rounded-xl shadow-md mb-1 border border-gray-300 mx-3">
-      <View className="flex-row items-center mb-2  justify-between">
-        <View className="flex-row items-center">
-          <Image
-            source={{
-              uri: profileImageUrl,
-            }}
-            className="w-10 h-10 rounded-full"
-            resizeMode="cover"
-          />
-          <View className="ml-3 ">
-            <Text className="font-bold text-base">{name}</Text>
-            <Text className="text-xs text-gray-500">{formatDate(uploadedDate)}</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        {/* First Column - Profile Image */}
+        <Image
+          source={{
+            uri: profileImageUrl,
+          }}
+          style={styles.profileImage}
+          resizeMode="cover"
+        />
+
+        {/* Second Column - Name and Date/Ratings */}
+        <View style={styles.contentContainer}>
+          {/* Row 1 - Name */}
+          <Text style={styles.userName}>{name}</Text>
+
+          {/* Row 2 - Date and Ratings */}
+          <View style={styles.secondRowContainer}>
+            {/* Column 1 - Date */}
+            <Text style={styles.dateText}>{formatDate(uploadedDate)}</Text>
+
+            {/* Column 2 - Ratings */}
+            <View style={styles.ratingsContainer}>
+              {renderStars()}
+              <Text style={styles.ratingText}>({ratings.toFixed(1)})</Text>
+            </View>
           </View>
         </View>
-        <View className="flex-row items-center ">
-          {renderStars()}
-          <Text className="ml-2 text-sm font-bold ">({ratings.toFixed(1)})</Text>
-        </View>
       </View>
-      <View className="border-t border-gray-300 mb-1" />
-      <View className="bg-gray-50 p-2 rounded-lg shadow-sm">
-        <Text className="text-gray-800 text-base leading-tight">{comment}</Text>
+      <View style={styles.divider} />
+      <View style={styles.commentContainer}>
+        <Text style={styles.commentText}>{comment}</Text>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    marginHorizontal: 12,
+  },
+  header: {
+    flexDirection: "row",
+    marginBottom: 8,
+    alignItems: "flex-start",
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  userName: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  secondRowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  dateText: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
+  ratingsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  ratingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  divider: {
+    borderTopWidth: 1,
+    borderColor: "#d1d5db",
+    marginBottom: 4,
+  },
+  commentContainer: {
+    backgroundColor: "#f9fafb",
+    padding: 8,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  commentText: {
+    color: "#1f2937",
+    fontSize: 16,
+    lineHeight: 20,
+  },
+});
 
 export default UserComments;

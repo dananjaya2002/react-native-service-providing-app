@@ -142,8 +142,6 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
         try {
           const serviceCategories = await SystemDataStorage.getServiceCategories();
           const locationList = await SystemDataStorage.getCities();
-          console.log("locationList: ", locationList);
-          console.log("ShopLocation: ", shopLocation);
 
           // setup categories
           if (serviceCategories) {
@@ -242,13 +240,14 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
      */
     const handleUpdate = () => {
       const selectedCategory = categoryList.find((item) => item.value === category);
+      const selectedLocation = locationList.find((item) => item.value === selectedShopLocation);
       onUpdate({
         title,
         description,
         phoneNumber,
-        category: selectedCategory?.label || "", // send label back if that's what parent expects
+        category: selectedCategory?.label || "", // send label back
         shopPageImageUrl: pickedShopPageImageUrl,
-        shopLocation: selectedShopLocation,
+        shopLocation: selectedLocation?.label || "", // now send label back instead of value
         shopServiceInfo: shopServiceInfo,
       });
       handleSlideDown(); // Close the sheet.
@@ -281,52 +280,84 @@ const UpdateSheet = forwardRef<UpdateSheetRef, UpdateSheetProps>(
                   }}
                 />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="Title"
-                placeholderTextColor="#888"
-                value={title}
-                onChangeText={setTitle}
-              />
-              <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                data={categoryList}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Category"
-                value={category}
-                onChange={(item) => setCategory(item.value)}
-              />
-              <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                data={locationList}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Location"
-                value={selectedShopLocation}
-                onChange={(item) => setSelectedShopLocation(item.value)}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Phone Number"
-                placeholderTextColor="#888"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-              />
-              <View className="h-8"></View>
-              <TextInput
-                style={[styles.input, styles.multilineInput]}
-                placeholder="Service Info"
-                placeholderTextColor="#888"
-                value={shopServiceInfo}
-                onChangeText={setShopServiceInfo}
-                multiline
-              />
+
+              <View style={styles.formGroup}>
+                <Text style={styles.labelText}>Title</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Title"
+                  placeholderTextColor="#888"
+                  value={title}
+                  onChangeText={setTitle}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.labelText}>Category</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={categoryList}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Category"
+                  value={category}
+                  onChange={(item) => setCategory(item.value)}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.labelText}>Locations</Text>
+                <Dropdown
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={locationList}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Location"
+                  value={selectedShopLocation}
+                  onChange={(item) => setSelectedShopLocation(item.value)}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.labelText}>Phone Number</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#888"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.labelText}>Description</Text>
+                <TextInput
+                  style={[styles.input, styles.multilineInput]}
+                  placeholder="Description"
+                  placeholderTextColor="#888"
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.labelText}>Service Info</Text>
+                <TextInput
+                  style={[styles.input, styles.multilineInput]}
+                  placeholder="Service Info"
+                  placeholderTextColor="#888"
+                  value={shopServiceInfo}
+                  onChangeText={setShopServiceInfo}
+                  multiline
+                />
+              </View>
+
               <TouchableOpacity style={styles.button} onPress={handleUpdate}>
                 <Text style={styles.buttonText}>Update</Text>
               </TouchableOpacity>
@@ -372,38 +403,49 @@ const styles = StyleSheet.create({
   sheetContent: {
     flex: 1,
     padding: 20,
-    marginBottom: 40,
+    marginBottom: 80,
+  },
+  formGroup: {
+    marginBottom: 15,
   },
   header: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 15,
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 20,
     textAlign: "center",
     color: "#333",
+  },
+  labelText: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 6,
+    color: "#848484",
   },
   input: {
     height: 45,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 10,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    paddingHorizontal: 12,
     fontSize: 16,
     color: "#333",
+    backgroundColor: "#f9f9f9",
   },
   multilineInput: {
-    height: 80,
+    height: 90,
     textAlignVertical: "top",
+    paddingTop: 10,
+    paddingBottom: 10,
   },
   dropdown: {
     height: 45,
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 10,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    paddingHorizontal: 12,
     fontSize: 16,
     color: "#333",
+    backgroundColor: "#f9f9f9",
   },
   placeholderStyle: {
     fontSize: 16,
@@ -419,7 +461,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
+    marginTop: 20,
+    marginBottom: 10,
+    elevation: 2,
   },
   buttonText: {
     color: "#fff",
