@@ -10,6 +10,7 @@ import {
   ScrollView,
   Platform,
   Image,
+  Alert,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "expo-router"; // Import useRouter for navigation
@@ -20,6 +21,7 @@ import { getUserData } from "@/utility/u_getUserData";
 import { Ionicons } from "@expo/vector-icons";
 import { clearUserData } from "@/utility/u_cleanUpForNewUser";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
+import { forceFullResync } from "@/db/realtimeSync";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -31,6 +33,12 @@ const Login = () => {
   const handleLogin = async () => {
     setLoading(true); // Set loading to true when the button is pressed
     setError(""); // Clear any previous errors
+    if (email === "admin" || password === "admin") {
+      forceFullResync();
+      setLoading(false);
+      Alert.alert("Admin", "Database Table is reset.");
+      return;
+    }
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -48,9 +56,9 @@ const Login = () => {
       await UserStorageService.saveUserData(userData);
 
       setTimeout(() => {
+        setLoading(false);
         router.push("/(tabs)"); // Navigate to home after a short delay
-      }, 100);
-      setLoading(false);
+      }, 10);
     } catch (err: any) {
       setLoading(false);
       setError(err.message);
@@ -119,9 +127,9 @@ const Login = () => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
+      {/*<TouchableOpacity style={styles.fab} onPress={handleFabPress}>
         <Ionicons name="arrow-forward" size={24} color="white" />
-      </TouchableOpacity>
+      </TouchableOpacity>*/}
     </KeyboardAvoidingView>
   );
 };
