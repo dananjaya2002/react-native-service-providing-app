@@ -50,7 +50,7 @@ export const fetchUserComments = async ({
 
     if (initialLoad || !lastDoc) {
       ratingsQuery = query(ratingsRef, orderBy("uploadedDate", "desc"), limit(limitCount));
-    } else { 
+    } else {
       ratingsQuery = query(
         ratingsRef,
         orderBy("uploadedDate", "desc"),
@@ -66,7 +66,6 @@ export const fetchUserComments = async ({
       const data = docSnap.data() as Omit<UserComment, "id">;
       return { id: docSnap.id, ...data };
     });
-    console.log("\nComments: ", comments);
 
     // Store the last document snapshot for pagination
     const newLastDoc =

@@ -1,8 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
 import { Dimensions, ScrollView, View, StyleSheet, Pressable, Image, Text } from "react-native";
-
-import { collection, doc, getDoc, getDocs, query, VectorValue, where } from "firebase/firestore";
-import { db } from "../../FirebaseConfig"; // Import Firebase db instance
 
 // TypeScript interfaces
 import { ShopServices } from "../../interfaces/iShop";
@@ -36,21 +32,17 @@ const HorizontalScrollView: React.FC<HorizontalScrollViewProps> = ({ items }) =>
       contentContainerStyle={{ paddingHorizontal: 10 }}
     >
       {items.map((item, index) => (
-        <Pressable
-          key={index}
-          onPress={() => handlePress(item)}
-          className="w-80 mx-1 rounded-2xl overflow-hidden bg-white  border border-neutral-300 shadow-xl"
-        >
-          <View className="h-12 justify-center bg-white">
-            <Text className="text-black font-bold text-md text-center " numberOfLines={1}>
+        <Pressable key={index} onPress={() => handlePress(item)} style={styles.itemContainer}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleText} numberOfLines={1}>
               {item.title}
             </Text>
           </View>
-          <View className="h-64">
-            <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />
           </View>
-          <View className="flex-1 h-auto w-full items-center justify-center my-2 px-4">
-            <Text className="text-black font-normal text-sm " numberOfLines={5}>
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionText} numberOfLines={5}>
               {item.description}
             </Text>
           </View>
@@ -59,4 +51,53 @@ const HorizontalScrollView: React.FC<HorizontalScrollViewProps> = ({ items }) =>
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  itemContainer: {
+    width: 260,
+    marginHorizontal: 4,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  titleContainer: {
+    height: 40,
+    justifyContent: "center",
+    backgroundColor: "white",
+  },
+  titleText: {
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  imageContainer: {
+    height: 230,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  descriptionContainer: {
+    flex: 1,
+    height: "auto",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 2,
+    paddingHorizontal: 8,
+  },
+  descriptionText: {
+    color: "black",
+    fontWeight: "normal",
+    fontSize: 12,
+  },
+});
 export default HorizontalScrollView;

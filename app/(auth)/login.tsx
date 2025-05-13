@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  Image,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "expo-router"; // Import useRouter for navigation
@@ -65,37 +66,59 @@ const Login = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust behavior based on platform
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={styles.inner}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={require("../../assets/images/login_Image.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+
           <Text style={styles.title}>Login</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholderTextColor="#999"
+            />
+          </View>
+
           {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" /> // Show loading indicator
+            <ActivityIndicator size="large" color="#48ACF0" />
           ) : (
-            <Button title="Login" onPress={handleLogin} disabled={loading} /> // Disable button while loading
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
+              <Text style={styles.loginButtonText}>Login</Text>
+            </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => router.push("/(auth)/signin")}>
-            <Text style={styles.link}>Don't have an account? Sign Up</Text>
+
+          <TouchableOpacity
+            style={styles.signupContainer}
+            onPress={() => router.push("/(auth)/signin")}
+          >
+            <Text style={styles.link}>
+              Don't have an account? <Text style={styles.signupText}>Sign Up</Text>
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-      {/* Floating Action Button */}
+
       <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
         <Ionicons name="arrow-forward" size={24} color="white" />
       </TouchableOpacity>
@@ -111,33 +134,71 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     justifyContent: "center",
-    padding: 20,
+    padding: 30,
+  },
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  logo: {
+    width: "80%",
+    height: 300,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+    color: "#333",
+  },
+  inputContainer: {
+    marginBottom: 25,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
+    borderColor: "#e0e0e0",
+    padding: 15,
+    marginBottom: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
   },
   error: {
-    color: "red",
-    marginBottom: 10,
+    color: "#ff3b30",
+    marginBottom: 15,
     textAlign: "center",
+    fontWeight: "500",
+  },
+  loginButton: {
+    backgroundColor: "#48ACF0",
+    paddingVertical: 15,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  loginButtonText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  signupContainer: {
+    marginTop: 25,
+    alignItems: "center",
   },
   link: {
-    marginTop: 20,
-    color: "blue",
+    color: "#666",
     textAlign: "center",
+    fontSize: 15,
+  },
+  signupText: {
+    color: "#48ACF0",
+    fontWeight: "bold",
     textDecorationLine: "underline",
   },
-  // FAB styles
   fab: {
     position: "absolute",
     width: 56,
@@ -146,7 +207,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     right: 20,
     bottom: 20,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#48ACF0",
     borderRadius: 28,
     elevation: 8,
     shadowColor: "#000",

@@ -11,7 +11,9 @@ import { Alert } from "react-native";
  * @param phoneNumber - The updated phone number.
  * @param category - The updated shop category.
  * @param shopPageImageUrl - The updated shop image URL.
+ * @param serviceInfo - The updated service information.
  * @param shouldDoFullUpdate - Flag to determine whether to update all related documents.
+ * @param shopLocation - The updated shop location.
  * @returns A promise resolving to true if the update was successful, or false otherwise.
  */
 export const updateShopMainPage = async (
@@ -21,14 +23,27 @@ export const updateShopMainPage = async (
   phoneNumber: string,
   category: string,
   shopPageImageUrl: string,
-  shouldDoFullUpdate: boolean
+  serviceInfo: string,
+  shouldDoFullUpdate: boolean,
+  shopLocation: string
 ): Promise<boolean> => {
   try {
-    if (!userID || !title || !description || !phoneNumber || !category) {
+    if (
+      !userID ||
+      !title ||
+      !description ||
+      !phoneNumber ||
+      !category ||
+      !serviceInfo ||
+      !shopLocation
+    ) {
       console.error(
-        "❌ Error: userID, title, description, phoneNumber, and category are required."
+        "❌ Error: userID, title, description, phoneNumber, category, serviceInfo, and shopLocation are required."
       );
-      Alert.alert("Error", "userID, title, description, phoneNumber, and category are required.");
+      Alert.alert(
+        "Error",
+        "userID, title, description, phoneNumber, category, serviceInfo, and shopLocation are required."
+      );
       return false;
     }
 
@@ -41,8 +56,7 @@ export const updateShopMainPage = async (
       // Partial update: update only phoneNumber, serviceInfo, and shopCategory.
       batch.update(userShopDocRef, {
         phoneNumber: phoneNumber,
-        shopDescription: description, // using description as serviceInfo here
-        shopCategory: category,
+        serviceInfo: serviceInfo,
       });
     } else {
       // Full update: update multiple documents.
@@ -53,6 +67,8 @@ export const updateShopMainPage = async (
         phoneNumber: phoneNumber,
         shopCategory: category,
         shopPageImageUrl: shopPageImageUrl,
+        serviceInfo: serviceInfo,
+        shopLocation: shopLocation,
       });
 
       // 2. Update the document in the ShopList collection.
@@ -62,6 +78,7 @@ export const updateShopMainPage = async (
         shopDescription: description,
         shopPageImageUrl: shopPageImageUrl,
         shopCategory: category,
+        shopLocation: shopLocation,
       });
 
       // 3. Update the document in the System/SearchList/ShopListCollection.

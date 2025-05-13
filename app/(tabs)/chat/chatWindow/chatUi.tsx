@@ -4,12 +4,10 @@ import {
   TextInput,
   View,
   TouchableOpacity,
-  ActivityIndicator,
   StyleSheet,
   Platform,
   Keyboard,
   Text,
-  Image,
   Alert,
   BackHandler,
 } from "react-native";
@@ -25,7 +23,6 @@ import ChatMessageItem from "@/components/ui/chatComponents/ChatMessageItem";
 import AgreementFAButton from "@/components/ui/chatComponents/AgreementFAButton";
 import ChatHeader from "@/components/ui/chatComponents/ChatHeader";
 
-// interfaces
 import { UserRoles } from "../../../../interfaces/iChat";
 import Animated, {
   Easing,
@@ -34,48 +31,33 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { UserData } from "@/interfaces/UserData";
-import { ShopList, ShopPageData } from "@/interfaces/iShop";
-import { getShopPageData } from "@/utility/U_getUserShopPageData";
 import { getShopListData } from "@/utility/u_getShopListData";
-
-// export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
-// type UserRoles = "customer" | "serviceProvider";
 
 /**
  * ChatScreen Component
  *
- * This component represents the chat screen of the application. It provides functionality for
- * sending and receiving messages, uploading images, requesting agreements, and rating services.
- * It also handles user interactions and displays chat messages in a list.
- *
- * @component
- *
- * @localparam {string} chatRoomDocRefId - The document reference ID of the chat room.
- * @localparam {string} userID - The ID of the current user.
- * @localparam {UserRoles} userRole - The role of the current user, either "customer" or "serviceProvider".
- * @localparam {string} otherPartyUserId - The ID of the other party in the chat.
- *
- * @returns {JSX.Element} The rendered chat screen component.
+ * This component handles messaging between customers and service providers,
+ * with features for text messages, images, agreements, and ratings.
  */
 export default function ChatScreen() {
-  // Retrieve the dynamic parameters from the URL
+  // Route params
   const { chatRoomDocRefId, userID, userRole, otherPartyUserId } = useLocalSearchParams<{
     chatRoomDocRefId: string;
     userID: string;
     userRole: UserRoles;
     otherPartyUserId: string;
   }>();
-  // Reference to the FlatList for scrolling
+
+  // References
   const chatListRef = useRef<FlatList>(null);
 
-  // Comment display permission and waiting time state
+  // State
   const [commentDisplayPermission, setCommentDisplayPermission] = useState<boolean>(false);
   const [commentWaitingTime, setCommentWaitingTime] = useState<number>(0);
-
-  // Other state variables
   const [currentMessage, setCurrentMessage] = useState("");
   const [otherPartyData, setOtherPartyData] = useState<UserData | null>(null);
-  // custom hook to manage chat messages
+
+  // Chat hook
   const {
     chatArray,
     loadMoreMessages,
@@ -85,38 +67,28 @@ export default function ChatScreen() {
     participantOnlineStatus,
   } = useChat(chatRoomDocRefId, userID, userRole);
 
-  // User Online Status ------------------------------------------------------------------------------------
+  // Fetch other party's data
   useEffect(() => {
-    console.log("Participant Online Status:", participantOnlineStatus);
-  }, [participantOnlineStatus]);
-
-  // Get the other party's data from firebase
-  useEffect(() => {
-    console.log("Fetching other party data...");
-    console.log("Other Party User ID:", otherPartyUserId);
     if (!otherPartyUserId) return;
 
     const fetchOtherPartyData = async () => {
       try {
         if (userRole === "customer") {
           const data = await getShopListData(otherPartyUserId);
-          console.log("getUserData:", data);
           setOtherPartyData(data);
         } else if (userRole === "serviceProvider") {
           const data = await getUserData(otherPartyUserId);
-          console.log("getShopListData:", data);
           setOtherPartyData(data);
         }
       } catch (error) {
-        console.error("Error fetching other party data:", error);
         Alert.alert("Error", "Failed to fetch other party data.");
       }
     };
 
     fetchOtherPartyData();
-  }, [otherPartyUserId]);
+  }, [otherPartyUserId, userRole]);
 
-  // Handle Send Text Message
+  // Text Message Handling
   const handleSendTextMessage = useCallback(async () => {
     if (!currentMessage.trim()) return;
     const textMessage = currentMessage.trim();
@@ -124,20 +96,18 @@ export default function ChatScreen() {
     await sendMessage({ messageType: "textMessage", value: textMessage });
   }, [currentMessage, sendMessage]);
 
-  // -----------------------------------------------------------------------------------
-  // Image Selection and Upload Section
-
+  // Image Message Handling
   const handleSendImageMessage = useCallback(
     async (imageUri: string) => {
       try {
         const imageUrl = await uploadImageToCloud(imageUri);
         if (!imageUrl) {
-          console.error("Image upload failed");
+          Alert.alert("Error", "Image upload failed");
           return;
         }
         await sendMessage({ messageType: "imageURL", value: imageUrl });
       } catch (error) {
-        console.error("Error sending image message:", error);
+        Alert.alert("Error", "Failed to send image");
       }
     },
     [sendMessage]
@@ -146,88 +116,67 @@ export default function ChatScreen() {
   const handleImageSelection = useCallback(async () => {
     Keyboard.dismiss();
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (status !== "granted") {
-      alert("Camera roll permissions required!");
+      Alert.alert("Permission Required", "Camera roll permissions required!");
       return;
     }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.5,
     });
-    if (result.canceled) {
-      return;
-    }
+
+    if (result.canceled) return;
+
     const imageUri = result.assets[0].uri;
     await handleSendImageMessage(imageUri);
   }, [handleSendImageMessage]);
 
-  // -----------------------------------------------------------------------------------
-  // Agreement Section
-
+  // Agreement Handling
   const handleAgreementRequest = useCallback(() => {
     if (chatRoomDocRefId && userRole === "serviceProvider") {
       sendMessage({ messageType: "AgreementRequest", value: "<Agreement Requested>" });
     }
-  }, [chatRoomDocRefId, userRole]);
+  }, [chatRoomDocRefId, userRole, sendMessage]);
 
+  // Rating Permission Handling
   useEffect(() => {
     handleRatingPermission();
-    console.log("handleRatingPermission Triggered:", agreementStatus);
   }, [chatRoomDocRefId, agreementStatus]);
 
-  const handleRatingPermission = useCallback(async () => {
+  const handleRatingPermission = useCallback(() => {
     if (chatRoomDocRefId && userRole === "customer") {
       setCommentDisplayPermission(agreementStatus.shouldDisplayCommentUI);
       setCommentWaitingTime(agreementStatus.waitingTime);
-
-      // if (!shouldDisplayCommentUI) {
-      //   // Handle case when comment is not available.
-      //   console.log(`Please wait ${Math.ceil(waitingTime / 60000)} minute(s) before commenting.`);
-      // } else {
-      //   console.log("Commenting is available.");
-      //   // Proceed with rating functionality.
-      // }
-      console.log("Comment Display Permission:", agreementStatus.shouldDisplayCommentUI);
-      console.log("Comment Waiting Time:", agreementStatus.waitingTime);
     }
-  }, [agreementStatus]);
+  }, [agreementStatus, chatRoomDocRefId, userRole]);
 
-  // Check for the rating permission at the start
-  useEffect(() => {
-    handleRatingPermission();
-  }, [chatRoomDocRefId, userRole]);
-
-  // Rating option display UI animation
+  // Rating UI Animation
   const animatedValue = useSharedValue(0);
+
   useEffect(() => {
-    if (userRole === "customer" && commentDisplayPermission) {
-      animatedValue.value = 1;
-    } else {
-      animatedValue.value = 0;
-    }
-  }, [commentDisplayPermission]);
+    animatedValue.value = userRole === "customer" && commentDisplayPermission ? 1 : 0;
+  }, [commentDisplayPermission, userRole]);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: animatedValue.value * 0 }], //initial translateY is 0.
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: animatedValue.value * 0 }],
+  }));
 
-  const handleBackPress = () => {
-    // Reset the chat tab stack when leaving the chat UI
+  // Navigation Handling
+  const handleBackPress = useCallback(() => {
     router.replace("/(tabs)/chat/chatRooms/shopChat");
     router.setParams({ reset: "true" });
-    return true; // Indicate that the back press has been handled
-  };
+    return true;
+  }, []);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener("hardwareBackPress", handleBackPress);
     return () => backHandler.remove();
-  }, []);
+  }, [handleBackPress]);
 
-  // -------------------------------------------------------------------------------
-  // Render Chat Messages
+  // Render Message Items
   const renderChatMessage = useCallback(
     ({ item }: { item: any }) => (
       <ChatMessageItem
@@ -237,7 +186,7 @@ export default function ChatScreen() {
         userRole={userRole}
       />
     ),
-    [userID]
+    [userID, chatRoomDocRefId, userRole]
   );
 
   return (
@@ -246,7 +195,7 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 30}
     >
-      {/* Chat Header with Profile Image and Name */}
+      {/* Chat Header */}
       <ChatHeader
         profileImageUrl={
           otherPartyData?.profileImageUrl ||
@@ -255,12 +204,13 @@ export default function ChatScreen() {
         profileName={otherPartyData?.userName || "....."}
         isParticipantOnline={participantOnlineStatus}
       />
-      {/* AgreementFAButton - Service Provider */}
+
+      {/* Agreement Button for Service Providers */}
       {userRole === "serviceProvider" && (
         <AgreementFAButton chatRoomDocRefId={chatRoomDocRefId} onPress={handleAgreementRequest} />
       )}
 
-      {/* Message List Display */}
+      {/* Message List */}
       <FlatList
         ref={chatListRef}
         data={chatArray}
@@ -271,7 +221,8 @@ export default function ChatScreen() {
         onEndReachedThreshold={0.1}
         style={{ flex: 1 }}
       />
-      {/* Rating Button Section */}
+
+      {/* Rating Button for Customers */}
       {userRole === "customer" && commentDisplayPermission && (
         <Animated.View
           style={[
@@ -340,13 +291,12 @@ export default function ChatScreen() {
         </Animated.View>
       )}
 
-      {/* Message Input Section */}
+      {/* Message Input Area */}
       <View style={styles.messageInputContainer}>
-        {/* Image button on the left */}
         <TouchableOpacity onPress={handleImageSelection} style={styles.imageButton}>
           <Ionicons name="image-outline" size={24} color="#333" />
         </TouchableOpacity>
-        {/* Message input field in the center */}
+
         <TextInput
           style={styles.messageInputField}
           value={currentMessage}
@@ -354,7 +304,7 @@ export default function ChatScreen() {
           onChangeText={setCurrentMessage}
           onSubmitEditing={handleSendTextMessage}
         />
-        {/* Send button on the right */}
+
         <TouchableOpacity
           onPress={handleSendTextMessage}
           disabled={!currentMessage.trim()}
