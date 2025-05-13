@@ -255,6 +255,19 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
       "participantOnlineStatus"
     );
 
+    // First, ensure document exists with initialized values
+    setDoc(
+      participantStatusDocRef,
+      {
+        // Initialize with empty values if document doesn't exist
+        customer: false,
+        serviceProvider: false,
+        customerLastActive: serverTimestamp(),
+        serviceProviderLastActive: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
     const unsubscribe = onSnapshot(participantStatusDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
@@ -268,8 +281,10 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
             ? data.serviceProviderLastActive.toMillis()
             : 0;
 
-          // Consider online only if both flag is true AND last active is recent
-          setParticipantOnlineStatus(spIsOnline && now - spLastActive < ONLINE_THRESHOLD);
+          // Consider online if flag is true AND last active timestamp exists and is recent
+          setParticipantOnlineStatus(
+            spIsOnline && spLastActive > 0 && now - spLastActive < ONLINE_THRESHOLD
+          );
         } else if (userRole === "serviceProvider") {
           // Check customer status
           const custIsOnline = data.customer === true;
@@ -277,8 +292,10 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
             ? data.customerLastActive.toMillis()
             : 0;
 
-          // Consider online only if both flag is true AND last active is recent
-          setParticipantOnlineStatus(custIsOnline && now - custLastActive < ONLINE_THRESHOLD);
+          // Consider online if flag is true AND last active timestamp exists and is recent
+          setParticipantOnlineStatus(
+            custIsOnline && custLastActive > 0 && now - custLastActive < ONLINE_THRESHOLD
+          );
         }
       } else {
         setParticipantOnlineStatus(false);

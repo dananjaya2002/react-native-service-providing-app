@@ -48,9 +48,9 @@ const Login = () => {
       await UserStorageService.saveUserData(userData);
 
       setTimeout(() => {
+        setLoading(false);
         router.push("/(tabs)"); // Navigate to home after a short delay
-      }, 100);
-      setLoading(false);
+      }, 10);
     } catch (err: any) {
       setLoading(false);
       setError(err.message);
@@ -119,9 +119,9 @@ const Login = () => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
+      {/*<TouchableOpacity style={styles.fab} onPress={handleFabPress}>
         <Ionicons name="arrow-forward" size={24} color="white" />
-      </TouchableOpacity>
+      </TouchableOpacity>*/}
     </KeyboardAvoidingView>
   );
 };

@@ -6,13 +6,14 @@ import LottieView from "lottie-react-native";
 import { fetchAndStoreServiceCategories, getAndStoreCities } from "@/utility/u_getSystemInfo";
 import { UserStorageService } from "@/storage/functions/userStorageService";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
-import { startRealtimeSync } from "@/db/realtimeSync";
+import { forceFullResync, startRealtimeSync } from "@/db/realtimeSync";
 
 const Index = () => {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // forceFullResync(); // Uncomment this line to force a full resync of the database
     const initializeApp = async () => {
       try {
         // Update service categories and city data
