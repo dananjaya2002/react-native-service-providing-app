@@ -10,11 +10,20 @@ import { clearUserData } from "@/utility/u_cleanUpForNewUser";
 import { getUserFavoritesServices } from "@/utility/u_handleUserFavorites";
 
 const docIds: string[] = [
-  "3pb3ivjRuAQmMjaSK15v",
+  "7OFWCDUdU8hxGHXjSFcmUFMUJWA2",
+  "nOBPhGvTjVYtssv0qQqIsh4TefN2",
+  "CftyRElb1JVxv13kHfbiVI3nCs22",
+  "YPgshfs9YaZbnPSrr2eHcAzFvk03",
+  "8IdNtylQxsNTZX64x8Yj8nfnZSG2",
+  "coGCeQZJg1VR3tSEp4PfMUNglTl1",
+  "4PzYYTbgQ6WTrXYkHkNQm2Tf6Ul1",
+  "MKtxSyhPt5cMzxtfUPhRZ4RPM3I2",
+  "aJA6eWEHb6R6ixC5ewky2yEMQaz1",
   "D16ZnkrnqunSDhbuZEvd",
-  "EcF2dYNoKXXSZcOyrhmK",
-  "KK58uPO3PKmAEuGZZxtY",
 ];
+
+//D16ZnkrnqunSDhbuZEvd
+//UPj9MG3Wd9XNHIgWqdQjTQXphpJ2
 
 const Dev_UserSimulation = () => {
   const [docsData, setDocsData] = useState<UserData[]>([]);
@@ -96,25 +105,20 @@ const Dev_UserSimulation = () => {
   let colorIndex = 0;
 
   return (
-    <View className="flex-1 bg-gray-100 justify-center items-center">
-      <Text className="text-2xl font-bold text-black mb-4">
-        Development Area For Select a User Quickly
-      </Text>
-      <Text className="text-lg font-medium text-black mb-4">
-        All these users are actual users from the database.
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.titleText}>Development Area For Select a User Quickly</Text>
+      <Text style={styles.subtitleText}>All these users are actual users from the database.</Text>
       {docsData.map((doc) => {
         const currentColor = colors[colorIndex % colors.length]; // Cycle through colors
         colorIndex++;
         return (
           <TouchableOpacity
             key={doc.userName}
-            className="px-20 py-3 rounded-lg justify-center items-center m-4"
-            style={{ backgroundColor: currentColor }}
+            style={[styles.userButton, { backgroundColor: currentColor }]}
             onPress={() => onItemPress(doc)}
           >
-            <Text className="text-white font-bold text-lg">{doc.userName}</Text>
-            <Text className="text-white font-bold text-sm">ID: {doc.userId}</Text>
+            <Text style={styles.userName}>{doc.userName}</Text>
+            <Text style={styles.userId}>ID: {doc.userId}</Text>
           </TouchableOpacity>
         );
       })}
@@ -122,6 +126,43 @@ const Dev_UserSimulation = () => {
   );
 };
 
-export default Dev_UserSimulation;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f3f4f6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "black",
+    marginBottom: 16,
+  },
+  subtitleText: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: "black",
+    marginBottom: 16,
+  },
+  userButton: {
+    paddingHorizontal: 80,
+    paddingVertical: 12,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 16,
+  },
+  userName: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 18,
+  },
+  userId: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+});
 
-const styles = StyleSheet.create({});
+export default Dev_UserSimulation;

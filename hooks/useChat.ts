@@ -1,4 +1,3 @@
-// hooks/useChat.ts
 import { useState, useEffect, useRef } from "react";
 import {
   collection,
@@ -17,31 +16,32 @@ import {
 import { db } from "../FirebaseConfig";
 import { MessageTypes, ChatMessage, UserRoles, ChatAgreementTracking } from "../interfaces/iChat";
 
-//export type MessageTypes = "textMessage" | "imageURL" | "AgreementRequest";
-
-// export interface ChatMessage {
-//   id: string;
-//   senderId: string;
-//   messageType: MessageTypes;
-//   value: string;
-//   // Use a proper timestamp type if available, otherwise keep as any.
-//   timestamp: any | null;
-//   status: "pending" | "sent" | "error";
-// }
-
 const PAGE_SIZE = 10;
 
 export function useChat(chatRoomDocRefId: string, userID: string, userRole: UserRoles) {
+  // Message state
   const [chatArray, setChatArray] = useState<ChatMessage[]>([]);
   const [notUploadedMessages, setNotUploadedMessages] = useState<ChatMessage[]>([]);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Subscribe to confirmed messages from Firestore.
+  // Agreement and online status
+  const [agreementStatus, setAgreementStatus] = useState<ChatAgreementTracking>({
+    shouldDisplayCommentUI: false,
+    waitingTime: 0,
+  });
+  const [participantOnlineStatus, setParticipantOnlineStatus] = useState<boolean>(false);
+
+  // Heartbeat mechanism
+  const [isHeartbeatActive, setIsHeartbeatActive] = useState(false);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Subscribe to messages from Firestore
   useEffect(() => {
     if (!chatRoomDocRefId) return;
     const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
     const q = query(messagesRef, orderBy("timestamp", "desc"), limit(PAGE_SIZE));
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetched = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -49,7 +49,7 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
         status: "sent" as "sent",
       })) as ChatMessage[];
 
-      // Merge fetched messages with existing chatArray.
+      // Merge fetched messages with existing chatArray
       setChatArray((prev) => {
         const map = new Map<string, ChatMessage>();
         prev.forEach((msg) => map.set(msg.id, msg));
@@ -73,17 +73,20 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
           return timeB - timeA;
         });
       });
+
       if (snapshot.docs.length > 0) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       }
     });
+
     return () => unsubscribe();
   }, [chatRoomDocRefId]);
 
-  // Pagination: load more messages.
+  // Load more messages (pagination)
   const loadMoreMessages = async () => {
     if (!lastDoc || loadingMore) return;
     setLoadingMore(true);
+
     try {
       const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
       const q = query(
@@ -92,12 +95,14 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
         startAfter(lastDoc),
         limit(PAGE_SIZE)
       );
+
       const snapshot = await getDocs(q);
       const fetched = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
         status: "sent" as "sent",
       })) as ChatMessage[];
+
       setChatArray((prev) => {
         const map = new Map<string, ChatMessage>(prev.map((msg) => [msg.id, msg]));
         fetched.forEach((msg) => map.set(msg.id, msg));
@@ -115,37 +120,39 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
           return timeB - timeA;
         });
       });
+
       if (snapshot.docs.length > 0) {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       }
     } catch (error) {
-      console.error("Error loading more messages:", error);
+      // Error is handled gracefully without crashing the app
+    } finally {
+      setLoadingMore(false);
     }
-    setLoadingMore(false);
   };
 
-  // Send a message.
+  // Send a message
   const sendMessage = async (data: { messageType: MessageTypes; value: string }) => {
     const messagesRef = collection(db, `Chat/${chatRoomDocRefId}/Messages`);
     const newMessageRef = doc(messagesRef);
     const messageId = newMessageRef.id;
 
-    // Create an optimistic message with a provisional timestamp.
+    // Create an optimistic message with a provisional timestamp
     const optimisticMsg: ChatMessage = {
       id: messageId,
       senderId: userID,
       messageType: data.messageType,
       value: data.value,
-      timestamp: new Date(), // provisional timestamp
+      timestamp: new Date(),
       status: "pending",
     };
 
-    // Add the optimistic message.
+    // Add the optimistic message
     setChatArray((prev) => [optimisticMsg, ...prev]);
     setNotUploadedMessages((prev) => [...prev, optimisticMsg]);
 
     try {
-      const messageData: any = {
+      const messageData = {
         senderId: userID,
         messageType: data.messageType,
         value: data.value,
@@ -154,21 +161,22 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
 
       const batch = writeBatch(db);
       batch.set(newMessageRef, messageData);
+
       const chatDocRef = doc(db, "Chat", chatRoomDocRefId);
       batch.update(chatDocRef, {
         lastMessage: data.value,
         timestamp: serverTimestamp(),
       });
+
       await batch.commit();
 
-      // On success, update status to "sent".
+      // On success, update status to "sent"
       setChatArray((prev) =>
         prev.map((msg) => (msg.id === messageId ? { ...msg, status: "sent" } : msg))
       );
       setNotUploadedMessages((prev) => prev.filter((msg) => msg.id !== messageId));
     } catch (error) {
-      console.error("Error sending message:", error);
-      // On failure, mark as error.
+      // On failure, mark as error
       setChatArray((prev) =>
         prev.map((msg) => (msg.id === messageId ? { ...msg, status: "error" } : msg))
       );
@@ -178,11 +186,7 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
     }
   };
 
-  const [agreementStatus, setAgreementStatus] = useState<ChatAgreementTracking>({
-    shouldDisplayCommentUI: false,
-    waitingTime: 0,
-  });
-
+  // Monitor agreement status
   useEffect(() => {
     if (!chatRoomDocRefId) return;
 
@@ -192,13 +196,11 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
     const unsubscribe = onSnapshot(
       agreementRef,
       async () => {
-        // Re-use your existing function
         const availability = await checkCommentAvailability();
         setAgreementStatus(availability);
       },
-      (error) => {
-        console.error("Agreement listener error:", error);
-        // Safe fallback
+      () => {
+        // Safe fallback on error
         setAgreementStatus({ shouldDisplayCommentUI: false, waitingTime: 0 });
       }
     );
@@ -207,29 +209,24 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
   }, [chatRoomDocRefId]);
 
   /**
-   * Checks the agreement status on the chat room document.
-   * - If the document has an "agreement" field set to "accepted" and an "acceptedTime" timestamp,
-   *   it calculates the difference between the acceptedTime and now.
-   * - If the difference is less than 20 minutes, it returns isCommentAvailable = false along with the waitingTime.
-   * - If more than 20 minutes have passed, it returns isCommentAvailable = true.
+   * Checks if the user can comment based on agreement status
    */
   const checkCommentAvailability = async (): Promise<ChatAgreementTracking> => {
     const chatDocRef = doc(db, "Chat", chatRoomDocRefId, "ChatRoomMoreInfo", "agreement");
     const chatDocSnap = await getDoc(chatDocRef);
 
     if (!chatDocSnap.exists()) {
-      // Chat document doesn't exist. Since there's no agreement info, treat comments as not available.
       return { shouldDisplayCommentUI: false, waitingTime: 0 };
     }
 
     const data = chatDocSnap.data();
 
-    // Only proceed if the agreement is "accepted" and acceptedTime exists.
+    // Only proceed if the agreement is "accepted" and acceptedTime exists
     if (data.agreement !== "accepted" || !data.acceptedTime) {
       return { shouldDisplayCommentUI: false, waitingTime: 0 };
     }
 
-    // Agreement is accepted, so check the acceptedTime difference.
+    // Calculate time since agreement was accepted
     const acceptedTimeMillis = data.acceptedTime.toMillis
       ? data.acceptedTime.toMillis()
       : new Date(data.acceptedTime).getTime();
@@ -238,24 +235,15 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
     const twentyMinutes = 20 * 60 * 1000; // 20 minutes in milliseconds
 
     if (diff < twentyMinutes) {
-      // Comments are not available; return the remaining waiting time.
+      // Comments are visible but waiting time remains
       return { shouldDisplayCommentUI: true, waitingTime: twentyMinutes - diff };
     }
 
-    // More than 20 minutes have passed.
+    // More than 20 minutes have passed
     return { shouldDisplayCommentUI: true, waitingTime: 0 };
   };
 
-  /**
-   *
-   *
-   * User Online Status and Unread Messages Maintain Section
-   *
-   *
-   */
-  const [participantOnlineStatus, setParticipantOnlineStatus] = useState<boolean>(false);
-
-  // Subscribe to participant online status.
+  // Monitor participant online status
   useEffect(() => {
     if (!chatRoomDocRefId) return;
 
@@ -269,26 +257,52 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
 
     const unsubscribe = onSnapshot(participantStatusDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const ONLINE_THRESHOLD = 60000; // 60 seconds
+        const now = Date.now();
+
         if (userRole === "customer") {
-          setParticipantOnlineStatus(docSnapshot.data().serviceProvider as boolean);
+          // Check service provider status
+          const spIsOnline = data.serviceProvider === true;
+          const spLastActive = data.serviceProviderLastActive?.toMillis
+            ? data.serviceProviderLastActive.toMillis()
+            : 0;
+
+          // Consider online only if both flag is true AND last active is recent
+          setParticipantOnlineStatus(spIsOnline && now - spLastActive < ONLINE_THRESHOLD);
         } else if (userRole === "serviceProvider") {
-          setParticipantOnlineStatus(docSnapshot.data().customer as boolean);
+          // Check customer status
+          const custIsOnline = data.customer === true;
+          const custLastActive = data.customerLastActive?.toMillis
+            ? data.customerLastActive.toMillis()
+            : 0;
+
+          // Consider online only if both flag is true AND last active is recent
+          setParticipantOnlineStatus(custIsOnline && now - custLastActive < ONLINE_THRESHOLD);
         }
       } else {
-        console.warn("participantOnlineStatus document does not exist.");
+        setParticipantOnlineStatus(false);
       }
     });
 
     return () => unsubscribe();
-  }, [chatRoomDocRefId]);
+  }, [chatRoomDocRefId, userRole]);
 
-  // Set the participant online status when the component mounts and unmounts.
+  // Update participant online status on mount/unmount
   useEffect(() => {
+    if (!chatRoomDocRefId) return;
+
     if (userRole === "customer") {
-      updateParticipantOnlineStatus({ customer: true });
+      updateParticipantOnlineStatus({
+        customer: true,
+        customerLastActive: serverTimestamp(),
+      });
     }
     if (userRole === "serviceProvider") {
-      updateParticipantOnlineStatus({ serviceProvider: true });
+      updateParticipantOnlineStatus({
+        serviceProvider: true,
+        serviceProviderLastActive: serverTimestamp(),
+      });
     }
 
     return () => {
@@ -301,9 +315,12 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
     };
   }, [userRole, chatRoomDocRefId]);
 
+  // Helper function to update online status
   const updateParticipantOnlineStatus = async (status: {
     customer?: boolean;
     serviceProvider?: boolean;
+    customerLastActive?: any;
+    serviceProviderLastActive?: any;
   }) => {
     if (!chatRoomDocRefId) return;
 
@@ -317,15 +334,67 @@ export function useChat(chatRoomDocRefId: string, userID: string, userRole: User
       );
 
       await setDoc(participantStatusDocRef, status, { merge: true });
-      console.log("Participant online status updated:", status);
     } catch (error) {
-      console.error("Error updating participant online status:", error);
+      // Error handled silently to prevent crashes
     }
   };
 
-  // ==================================================================================================================
-  // Return Section
-  // ==================================================================================================================
+  // Set up heartbeat mechanism
+  useEffect(() => {
+    if (!chatRoomDocRefId || !userID) return;
+
+    // Start heartbeat when component mounts
+    const startHeartbeat = () => {
+      setIsHeartbeatActive(true);
+
+      // Clear any existing interval
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+
+      // Set new interval (every 30 seconds)
+      heartbeatIntervalRef.current = setInterval(() => {
+        if (userRole === "customer") {
+          updateHeartbeat({ customerLastActive: serverTimestamp() });
+        } else if (userRole === "serviceProvider") {
+          updateHeartbeat({ serviceProviderLastActive: serverTimestamp() });
+        }
+      }, 30000); // 30 seconds interval
+    };
+
+    startHeartbeat();
+
+    // Clean up on unmount
+    return () => {
+      setIsHeartbeatActive(false);
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+    };
+  }, [chatRoomDocRefId, userRole, userID]);
+
+  // Function to update heartbeat timestamp
+  const updateHeartbeat = async (heartbeatData: {
+    customerLastActive?: any;
+    serviceProviderLastActive?: any;
+  }) => {
+    if (!chatRoomDocRefId) return;
+
+    try {
+      const participantStatusDocRef = doc(
+        db,
+        "Chat",
+        chatRoomDocRefId,
+        "ChatRoomMoreInfo",
+        "participantOnlineStatus"
+      );
+
+      await setDoc(participantStatusDocRef, heartbeatData, { merge: true });
+    } catch (error) {
+      // Error handled silently to prevent crashes
+    }
+  };
 
   return {
     chatArray,

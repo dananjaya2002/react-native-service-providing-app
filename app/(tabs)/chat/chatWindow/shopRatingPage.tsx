@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,28 +9,25 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Dimensions,
   ScrollView,
+  BackHandler,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import HeaderMain from "@/components/ui/header_Main";
 import { UserStorageService } from "../../../../storage/functions/userStorageService";
 import { UserData } from "../../../../interfaces/UserData";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../../../../FirebaseConfig";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { ShopList } from "@/interfaces/iShop";
 import { getShopCardData, uploadUserRatings } from "@/utility/u_uploadUserRatings";
-import {
-  IUserRatingsFirebaseDocument,
-  IUserRatingUploadParams,
-} from "../../../../interfaces/iUserRatings";
+import { IUserRatingUploadParams } from "../../../../interfaces/iUserRatings";
 import { useTheme } from "@/context/ThemeContext";
 
 const ShopRatingPage = () => {
-  const { colors, theme, setTheme } = useTheme();
+  const { colors } = useTheme();
 
+  // State
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -41,56 +38,70 @@ const ShopRatingPage = () => {
     serviceProviderId: string;
   }>();
 
+  // Handle star rating selection
   const handleStarPress = (star: number) => {
     setRating(star);
   };
 
+  // Custom back handling
+  const handleCustomBack = useCallback(() => {
+    router.replace("/(tabs)/chat/chatWindow/chatUi");
+    return true; // Prevents default back behavior
+  }, []);
+
+  // Handle hardware back button (Android)
+  useFocusEffect(
+    useCallback(() => {
+      const backHandler = BackHandler.addEventListener("hardwareBackPress", handleCustomBack);
+      return () => backHandler.remove();
+    }, [handleCustomBack])
+  );
+
+  // Fetch shop and user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         if (!serviceProviderId) {
-          console.error("Service Provider ID is missing");
+          Alert.alert("Error", "Service Provider ID is missing");
           return;
         }
+
         const tempShopCardData = await getShopCardData(serviceProviderId);
         const tempUserData = await UserStorageService.getUserData();
-        console.log("tempShopCardData", tempShopCardData);
-        console.log("tempUserData", tempUserData);
+
         if (tempShopCardData === null) {
-          console.error("Error fetching shop card data");
+          Alert.alert("Error", "Could not retrieve shop information");
         } else if (tempUserData === null) {
-          console.error("Error fetching user data");
+          Alert.alert("Error", "Could not retrieve user information");
         } else {
           setShopCard(tempShopCardData);
           setUserData(tempUserData);
         }
       } catch (error) {
-        console.error("Error fetching Shop Data:", error);
+        Alert.alert("Error", "Failed to load shop information. Please try again.");
       }
     };
+
     fetchUserData();
   }, [serviceProviderId]);
 
+  // Submit rating
   const submitComments = async () => {
-    // router.replace({
-    //   pathname: "/(tabs)",
-    //   params: { reset: "true" },
-    // });
-
-    // return; // Dev purpose stop
     if (rating === 0) {
-      alert("Please select a rating");
+      Alert.alert("Missing Rating", "Please select a rating");
       return;
     }
+
     if (comment.trim().length === 0) {
-      alert("Comment cannot be empty");
+      Alert.alert("Missing Comment", "Please enter your feedback");
       return;
     }
+
     if (!shopCard) {
-      console.error("ShopCard data not found");
-      alert("ShopCard data not found");
+      Alert.alert("Error", "Shop information not available");
       return;
     }
+
     setLoading(true);
 
     const submitCommentObject: IUserRatingUploadParams = {
@@ -104,17 +115,18 @@ const ShopRatingPage = () => {
     const result = await uploadUserRatings(submitCommentObject);
 
     if (result) {
-      alert("Rating submitted successfully");
+      Alert.alert("Success", "Rating submitted successfully");
       setRating(0);
       setComment("");
       setLoading(false);
+
       // Navigate back to the previous screen after 2 seconds
       setTimeout(() => {
         router.back();
       }, 2000);
     } else {
       setLoading(false);
-      alert("Error submitting rating");
+      Alert.alert("Error", "Failed to submit rating. Please try again.");
     }
   };
 
@@ -133,6 +145,7 @@ const ShopRatingPage = () => {
             showProfileIcon={true}
             showLogoutButton={false}
           />
+
           <View style={styles.mainContainer}>
             {/* Shop Info Card */}
             <View style={styles.shopCardContainer}>
@@ -143,13 +156,14 @@ const ShopRatingPage = () => {
                 }}
               />
               <View style={styles.shopInfoContainer}>
-                <Text style={styles.shopName}>{shopCard?.shopName || "loading.."}</Text>
+                <Text style={styles.shopName}>{shopCard?.shopName || "Loading..."}</Text>
                 <Text style={styles.shopDescription}>
-                  Ratings: {shopCard?.totalRatingsCount || "loading.."}
+                  Ratings: {shopCard?.totalRatingsCount || "Loading..."}
                 </Text>
               </View>
             </View>
-            {/* Rating Stars - Moved up */}
+
+            {/* Rating Stars */}
             <View style={styles.ratingSection}>
               <Text style={styles.ratingLabel}>Rate your experience:</Text>
               <View style={styles.starsContainer}>
@@ -168,6 +182,7 @@ const ShopRatingPage = () => {
                 ))}
               </View>
             </View>
+
             {/* Comment Section */}
             <View style={styles.commentSection}>
               <Text style={styles.commentLabel}>Share your feedback:</Text>
@@ -183,6 +198,7 @@ const ShopRatingPage = () => {
                 underlineColorAndroid="transparent"
               />
             </View>
+
             {/* Submit Button */}
             <TouchableOpacity
               style={[styles.submitButton, loading && { opacity: 0.5 }]}
@@ -199,8 +215,6 @@ const ShopRatingPage = () => {
     </KeyboardAvoidingView>
   );
 };
-
-export default ShopRatingPage;
 
 const styles = StyleSheet.create({
   mainContainer: {
@@ -311,3 +325,5 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
 });
+
+export default ShopRatingPage;
