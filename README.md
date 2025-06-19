@@ -89,7 +89,28 @@ A mobile application built with React Native and Expo, utilizing Firebase as the
     npm install
     ```
 
-4.  **Start the development server:**
+4.  **Environment Setup:**
+
+    Create a `.env` file in the root directory with the following structure:
+
+    ```
+    # Firebase Configuration
+    FIREBASE_API_KEY=<Your Firebase API Key>
+    FIREBASE_AUTH_DOMAIN=<Your Firebase Auth Domain>
+    FIREBASE_PROJECT_ID=<Your Firebase Project ID>
+    FIREBASE_STORAGE_BUCKET=<Your Firebase Storage Bucket>
+    FIREBASE_MESSAGING_SENDER_ID=<Your Firebase Messaging Sender ID>
+    FIREBASE_APP_ID=<Your Firebase App ID>
+    FIREBASE_MEASUREMENT_ID=<Your Firebase Measurement ID>
+
+    # Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME=<Your Cloudinary Cloud Name>
+    CLOUDINARY_UPLOAD_PRESET=<Your Cloudinary Upload Preset>
+    ```
+
+    You can find these values in your Firebase project settings and Cloudinary dashboard.
+
+5.  **Start the development server:**
 
     ```bash
     npx expo start
