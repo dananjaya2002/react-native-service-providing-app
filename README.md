@@ -1,59 +1,110 @@
-# Welcome to Service providing app 👋
+# Service Advertising Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Get started
+<p>
+  <img alt="React Native" src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img alt="Expo" src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white" />
+  <img alt="Firebase" src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" />
+</p>
 
-1. Install dependencies
+A mobile application built with React Native and Expo, utilizing Firebase as the backend, to connect customers with service providers. Customers can easily find, view, bookmark, chat with, and rate service providers based on their needs. Additionally, any registered user can become a service provider through a simple process.
 
-   ```bash
-   npm install
-   ```
+## Table of Contents
 
-2. Start the app
+- [Service Advertising Mobile App](#service-advertising-mobile-app)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+- [](#)
+  - [Tech Stack](#tech-stack)
+  - [Installation](#installation)
 
-   ```bash
+## Features
+
+- **Browse Services:** Users can view a wide range of available services.
+- **Search Services:** Feature to search services and also filter services by category or city.
+- **Service Details:** Detailed view of each service, including shop info, descriptions, images, service info, and provider contact information.
+- **Bookmark Services:** Users can save their favorite service providers for easy access.
+- **Real-time Chat:** Integrated chat functionality allowing customers to communicate directly with service providers and make agreements.
+- **Rating and Reviews:** Customers can rate and leave reviews for service providers based on their experience.
+- **User Registration & Authentication:** Secure registration and login for both customers and service providers.
+- **Service Provider Onboarding:** Easy steps for registered users to become service providers and list their services.
+- **Shop Modifications:** User-friendly way to modify a user's Shop page.
+
+#
+
+<table>
+  Home page 
+  <tr>
+    <td><img src="readme_Assets/HomePage.gif" width="300"></td>
+    <td><img src="readme_Assets/ShopPage.gif" width="300"></td>
+  </tr>
+</table>
+
+<table>
+  Shop page 
+  <tr>
+    <td><img src="readme_Assets/userShopPage.png" width="300"></td>
+    <td><img src="readme_Assets/EditServicePage_DelecteService.png" width="300"></td>
+  </tr>
+</table>
+
+<table>
+  Chat Features 
+  <tr>
+    <td><img src="readme_Assets/chat_agreementRequest.png" width="300"></td>
+    <td><img src="readme_Assets/chat_customerChatRoomUI.png" width="300"></td> 
+  </tr>
+</table>
+
+## Tech Stack
+
+- **React Native:** A framework for building native mobile apps using JavaScript and React.
+- **Expo:** A framework and a platform for universal React applications.
+- **Firebase:**
+  - **Authentication:** For user registration and login.
+  - **Firestore:** As the NoSQL cloud database to store service information, user data, and chat messages.
+- **Cloudinary:** For storing images.
+
+## Installation
+
+1.  **Prerequisites:**
+
+    - [Node.js](https://nodejs.org/) (version >= 18 recommended)
+    - [npm](https://www.npmjs.com/) or [Yarn](https://yarnpkg.com/) package manager
+    - [Expo CLI](https://docs.expo.dev/get-started/installation/) (`npm install -g expo-cli`)
+    - A Firebase project (Web App type) set up in the [Firebase Console](https://console.firebase.google.com/) with Authentication and Firestore enabled.
+    - An Expo Free/Paid Account.
+
+2.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/dananjaya2002/react-native-service-providing-app.git
+    cd react-native-service-providing-app
+    ```
+
+3.  **Install Packages:**
+
+    ```bash
+    npm install
+    ```
+
+4.  **Start the development server:**
+
+    ```bash
     npx expo start
-   ```
+    # or
+    yarn start
+    ```
 
-In the output, you'll find options to open the app in a
+    This will open the Expo Developer Tools in your terminal, from where you can run the app on an emulator/simulator or a physical device using the Expo Developer mod app or Expo Go app.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+**Recommend: Building a Developer Build**
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+For accessing certain native features or for potentially better performance during development on a physical device, you might consider building a developer build. Refer to the Expo documentation for instructions:
 
-## Get a fresh project
+[https://docs.expo.dev/build/setup/](https://docs.expo.dev/build/setup/)
 
-When you're ready, run:
+**Note:** To run the app on a Windows PC, you will need an Android emulator installed and configured.
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-
-# Addional Insalls
-
-expo install expo-image-picker expo-image-manipulator expo-file-system
-npm install cloudinary
-expo install expo-image-picker
-npx expo install react-native-webview
-npm install react-native-pell-rich-editor react-native-render-html
-npm install uuid
+---
